@@ -1,0 +1,364 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4403B64BCF3910B853B93F8A /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27270E9D49719B4C4E95860A /* Cocoa.framework */; };
+		7BC10EC787E309BEC21398FE /* XmaxSDK in Frameworks */ = {isa = PBXBuildFile; productRef = F8829C532C02FAB86C47E1CA /* XmaxSDK */; };
+		86D6168F5F536B5CA91B403E /* RealtimeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91671F51C16A5AB79EAA0070 /* RealtimeComponents.swift */; };
+		C2ACB832134F712FA61CFE36 /* RealtimeSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77356DA9FD252880FEFF294C /* RealtimeSessionController.swift */; };
+		D702308119484BAA6DC18EE8 /* RealtimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501AAEB78BA4EA3003EC92DB /* RealtimeView.swift */; };
+		DC67A9F7CE5DD8755A622623 /* XLabApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA9D53EB98D4B342D2949AD /* XLabApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		27270E9D49719B4C4E95860A /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		501AAEB78BA4EA3003EC92DB /* RealtimeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RealtimeView.swift; sourceTree = "<group>"; };
+		730F7B3828B7F7E3D0BF00E7 /* XLab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XLab.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		77356DA9FD252880FEFF294C /* RealtimeSessionController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RealtimeSessionController.swift; sourceTree = "<group>"; };
+		91671F51C16A5AB79EAA0070 /* RealtimeComponents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RealtimeComponents.swift; sourceTree = "<group>"; };
+		9FA9D53EB98D4B342D2949AD /* XLabApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = XLabApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AA48E4F2FAA0858AEC620873 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4403B64BCF3910B853B93F8A /* Cocoa.framework in Frameworks */,
+				7BC10EC787E309BEC21398FE /* XmaxSDK in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		43F1B3804E4D788DC899FBC1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				D4D29C2BBD8615FC86291DDA /* OS X */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		5248FD8D46F0D3DC1016B850 /* XLab */ = {
+			isa = PBXGroup;
+			children = (
+				77356DA9FD252880FEFF294C /* RealtimeSessionController.swift */,
+				501AAEB78BA4EA3003EC92DB /* RealtimeView.swift */,
+				9FA9D53EB98D4B342D2949AD /* XLabApp.swift */,
+				91671F51C16A5AB79EAA0070 /* RealtimeComponents.swift */,
+			);
+			name = XLab;
+			path = XLab;
+			sourceTree = "<group>";
+		};
+		A0F1CE7F74699053B2D362C9 = {
+			isa = PBXGroup;
+			children = (
+				C8D7010B0AF02C99D4B584A8 /* Products */,
+				43F1B3804E4D788DC899FBC1 /* Frameworks */,
+				5248FD8D46F0D3DC1016B850 /* XLab */,
+			);
+			sourceTree = "<group>";
+		};
+		C8D7010B0AF02C99D4B584A8 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				730F7B3828B7F7E3D0BF00E7 /* XLab.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D4D29C2BBD8615FC86291DDA /* OS X */ = {
+			isa = PBXGroup;
+			children = (
+				27270E9D49719B4C4E95860A /* Cocoa.framework */,
+			);
+			name = "OS X";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		BF5AA4CF5DE357D891872B1D /* XLab */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A3D133945FFD5CBC81D65BDC /* Build configuration list for PBXNativeTarget "XLab" */;
+			buildPhases = (
+				E8F5429A39B819CB2F308005 /* Sources */,
+				AA48E4F2FAA0858AEC620873 /* Frameworks */,
+				D33DC7CFC13D08FB85264C66 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = XLab;
+			packageProductDependencies = (
+				F8829C532C02FAB86C47E1CA /* XmaxSDK */,
+			);
+			productName = XLab;
+			productReference = 730F7B3828B7F7E3D0BF00E7 /* XLab.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D1706D397D2BBF438DFF474A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+			};
+			buildConfigurationList = 10B53D52DA9D67B9B0E0D1AC /* Build configuration list for PBXProject "XLab" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A0F1CE7F74699053B2D362C9;
+			minimizedProjectReferenceProxies = 0;
+			packageReferences = (
+				F071D06B52545C98A4FCF657 /* XCLocalSwiftPackageReference ".." */,
+			);
+			preferredProjectObjectVersion = 100;
+			productRefGroup = C8D7010B0AF02C99D4B584A8 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BF5AA4CF5DE357D891872B1D /* XLab */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D33DC7CFC13D08FB85264C66 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E8F5429A39B819CB2F308005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C2ACB832134F712FA61CFE36 /* RealtimeSessionController.swift in Sources */,
+				D702308119484BAA6DC18EE8 /* RealtimeView.swift in Sources */,
+				DC67A9F7CE5DD8755A622623 /* XLabApp.swift in Sources */,
+				86D6168F5F536B5CA91B403E /* RealtimeComponents.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2F23913B69F6F82121570EA7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		4B4DD58C122878B707D82A89 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		94000D439C47A5639C9FA8D6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = XLab/XLab.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "X-Lab uses your camera for local preview and realtime video generation.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "X-Lab uses the microphone only when microphone input is enabled.";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ai.xmax.macos.XLab;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		D5E68CFD6D07931C654AE755 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = XLab/XLab.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "X-Lab uses your camera for local preview and realtime video generation.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "X-Lab uses the microphone only when microphone input is enabled.";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ai.xmax.macos.XLab;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		10B53D52DA9D67B9B0E0D1AC /* Build configuration list for PBXProject "XLab" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4B4DD58C122878B707D82A89 /* Debug */,
+				2F23913B69F6F82121570EA7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A3D133945FFD5CBC81D65BDC /* Build configuration list for PBXNativeTarget "XLab" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				94000D439C47A5639C9FA8D6 /* Release */,
+				D5E68CFD6D07931C654AE755 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		F071D06B52545C98A4FCF657 /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../..;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F8829C532C02FAB86C47E1CA /* XmaxSDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = XmaxSDK;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = D1706D397D2BBF438DFF474A /* Project object */;
+}

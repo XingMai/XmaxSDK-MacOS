@@ -1,0 +1,24 @@
+{
+  "originHash" : "c6b28dacf1343c90b170f481043e20bca4924bc7a69176c305515a03950b5dc3",
+  "pins" : [
+    {
+      "identity" : "agorainfra_macos",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AgoraIO/AgoraInfra_macOS.git",
+      "state" : {
+        "revision" : "644a6b9b8f0bc5600f55b5ed1f1d4b5a7b0e3d3d",
+        "version" : "1.3.5"
+      }
+    },
+    {
+      "identity" : "agorartcengine_macos",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AgoraIO/AgoraRtcEngine_macOS.git",
+      "state" : {
+        "revision" : "7f82061cb6fd5d975c4f75ffb9e22cf0bbe6fdaf",
+        "version" : "4.6.2"
+      }
+    }
+  ],
+  "version" : 3
+}

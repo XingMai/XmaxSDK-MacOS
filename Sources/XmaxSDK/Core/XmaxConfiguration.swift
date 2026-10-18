@@ -1,0 +1,59 @@
+//
+//  XmaxConfiguration.swift
+//  XmaxSDK
+//  Repo: https://github.com/XingMai/XmaxSDK-macOS
+//
+//  Author: 翁跃庭 (Yueting Weng)
+//  GitHub: https://github.com/WengYuehTing
+//
+//  Copyright (c) 2026 XMAX.AI PTE. LTD.
+//
+
+import Foundation
+
+/// SDK 全局配置。
+public struct XmaxConfiguration: Equatable, Sendable {
+
+    // 服务访问
+    /// 调用 Xmax 服务使用的 API Key。
+    public let apiKey: String
+
+    /// SDK 连接的服务环境，同时决定日志细项语言：国内为中文，海外为英文。
+    /// 日志语言全局生效，以最后创建的 Client 为准。
+    public let environment: XmaxEnvironment
+
+    // 日志配置
+    /// SDK 输出的日志类型；默认为不输出日志。
+    public let loggerOptions: XmaxLoggerOption
+
+    /// 创建 SDK 全局配置。
+    ///
+    /// - Parameters:
+    ///   - apiKey: 调用 Xmax 服务使用的 API Key。
+    ///   - environment: SDK 连接的服务环境；默认为国内环境。
+    ///   - loggerOptions: SDK 输出的日志类型；默认为空。
+    public init(
+        apiKey: String,
+        environment: XmaxEnvironment = .china,
+        loggerOptions: XmaxLoggerOption = []
+    ) {
+        let resolvedApiKey = apiKey.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        self.apiKey = resolvedApiKey
+        self.environment = environment
+        self.loggerOptions = loggerOptions
+    }
+
+    /// 确认 API Key 非空，供后续服务请求使用。
+    ///
+    /// - Throws: API Key 为空时抛出 `XmaxError`。
+    public func validate() throws {
+        guard !apiKey.isEmpty else {
+            throw XmaxError(
+                code: .invalidAPIKey,
+                message: "API key cannot be empty"
+            )
+        }
+    }
+}
