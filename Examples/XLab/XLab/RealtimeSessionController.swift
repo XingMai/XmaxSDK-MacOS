@@ -94,7 +94,10 @@ final class RealtimeSessionController: ObservableObject {
         uplinkStatistics = nil
         downlinkStatistics = nil
         networkQuality = nil
-        let client = XmaxClient(configuration: XmaxConfiguration(apiKey: apiKey))
+        let client = XmaxClient(configuration: XmaxConfiguration(
+            apiKey: apiKey,
+            loggerOptions: .all
+        ))
         let manager = makeManager(client, RealtimeConfiguration(
             model: model, isFrameInterpolationEnabled: interpolationEnabled
         ))
