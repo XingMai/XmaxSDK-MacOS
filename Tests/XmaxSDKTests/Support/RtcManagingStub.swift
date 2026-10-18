@@ -46,7 +46,7 @@ final class RtcManagingStub: RtcManaging, @unchecked Sendable {
     ) async throws -> Void
     typealias LeaveRoomHandler = @Sendable () async -> Void
 
-    // 测试配置
+    /// 测试配置
     private let encodingError: (any Error)?
     private let configureLocalVideoMirrorHandler: (@Sendable (CameraPosition) throws -> Void)?
     private let initializationError: (any Error)?
@@ -68,7 +68,7 @@ final class RtcManagingStub: RtcManaging, @unchecked Sendable {
     private let setRemoteVideoFrameListenerError: (any Error)?
     var flushHandler: (@Sendable () async throws -> Void)?
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var storedCalls: [RtcManagingCall] = []
     private weak var storedEventListener: (any RtcEventListener)?

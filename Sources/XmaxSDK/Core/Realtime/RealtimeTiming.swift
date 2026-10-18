@@ -14,15 +14,15 @@ import Foundation
 /// 记录实时生成启动链路各阶段耗时。
 final class RealtimeTiming: @unchecked Sendable {
 
-    // 并发控制
+    /// 并发控制
     private let lock = NSLock()
 
-    // 启动耗时记录
+    /// 启动耗时记录
     private var state = State()
     private var isMeasuring = false
     private let now: @Sendable () -> UInt64
 
-    // 主线程观察
+    /// 主线程观察
     private var listener: RealtimeLaunchTimingListener?
     private var listenerID = UUID()
     private var revision: UInt64 = 0
@@ -178,30 +178,30 @@ extension RealtimeTiming {
     /// 保存一次启动的阶段时间与任务标识，所有时间均为单调时钟纳秒值。
     struct State: Sendable {
 
-        // 启动起点
+        /// 启动起点
         var startedAt: UInt64?
 
-        // 服务端会话创建
+        /// 服务端会话创建
         var sessionStartedAt: UInt64?
         var sessionFinishedAt: UInt64?
 
-        // RTC 房间连接
+        /// RTC 房间连接
         var roomJoinStartedAt: UInt64?
         var roomJoinFinishedAt: UInt64?
 
-        // 本地流发布
+        /// 本地流发布
         var publicationStartedAt: UInt64?
         var publicationFinishedAt: UInt64?
 
-        // 生成请求与首帧
+        /// 生成请求与首帧
         var signalStartedAt: UInt64?
         var firstFrameAt: UInt64?
 
-        // 启动结果
+        /// 启动结果
         var readyAt: UInt64?
         var failureAt: UInt64?
 
-        // 生成任务
+        /// 生成任务
         var taskID: String?
     }
 

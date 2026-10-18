@@ -19,19 +19,15 @@ public protocol XmaxRealtimeManaging: Sendable {
     /// - Returns: 包含设备标识、名称和默认状态的设备列表。
     func listCameraDevices() async -> [CameraDevice]
 
-    // 实时配置
     /// 实时能力配置。
     var options: RealtimeConfiguration { get }
 
-    // 生命周期状态
     /// 当前实时连接与生成状态。
     var currentState: RealtimeState { get async }
 
-    // 渲染状态
     /// 当前实际生效的远端视频插帧状态。
     var isFrameInterpolationEnabled: Bool { get async }
 
-    // 音频状态
 
     /// 当前远端生成音频播放音量，取值范围为 `0...1`。
     /// 新建摄像头流后初始值为 0，可按需开启结果音频。

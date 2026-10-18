@@ -97,7 +97,7 @@ private extension RoomHeartbeatTests {
 
 private actor ManualRoomHeartbeatSleeper {
 
-    // 等待状态
+    /// 等待状态
     private var waiter: CheckedContinuation<Void, Never>?
     private var cancellationPending = false
 

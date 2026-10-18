@@ -14,11 +14,11 @@ import Foundation
 
 final class PermissionManagingStub: PermissionManaging, @unchecked Sendable {
 
-    // 测试配置
+    /// 测试配置
     private let cameraError: (any Error)?
     private let microphoneError: (any Error)?
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var storedCameraRequestCount = 0
     private var storedMicrophoneRequestCount = 0

@@ -318,7 +318,7 @@ private struct StorageApiRequest: Equatable, Sendable {
 
 private final class StorageApiServiceStub: ApiServicing, @unchecked Sendable {
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var storedResponses: [Result<Data, XmaxError>]
     private var storedRequests: [StorageApiRequest] = []
@@ -369,7 +369,7 @@ private struct StorageDownloadRecord: Equatable, Sendable {
 
 private final class StorageManagerStub: StorageManaging, @unchecked Sendable {
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var storedUploads: [StorageUploadRecord] = []
     private var storedDownloads: [StorageDownloadRecord] = []

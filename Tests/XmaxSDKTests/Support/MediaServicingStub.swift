@@ -15,13 +15,13 @@ import Foundation
 
 final class MediaServicingStub: MediaServicing, @unchecked Sendable {
 
-    // 测试配置
+    /// 测试配置
     let model: RealtimeModel
     private let resolvedSize: CGSize
     private let resolutionError: (any Error)?
     private let frameInterpolationSupported: Bool
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var storedRequestedSizes: [CGSize] = []
 

@@ -15,7 +15,6 @@ import AppKit
 @MainActor
 public final class XmaxRealtimeVideoView: NSView {
 
-    // 公共配置
     /// 本地摄像头视频轨道。
     public var localTrack: RealtimeVideoTrack? {
         didSet { localVideoView.track = localTrack }
@@ -37,7 +36,7 @@ public final class XmaxRealtimeVideoView: NSView {
         }
     }
 
-    // 视频视图
+    /// 视频视图
     private let localVideoView = XmaxVideoView()
     private let remoteVideoView = XmaxVideoView()
 

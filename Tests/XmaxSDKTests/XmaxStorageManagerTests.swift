@@ -205,10 +205,10 @@ private final class XmaxStorageServiceStub:
     StorageServicing,
     @unchecked Sendable {
 
-    // 测试配置
+    /// 测试配置
     private let error: (any Error)?
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var storedCalls: [XmaxStorageServiceCall] = []
 
@@ -393,7 +393,7 @@ private struct XmaxStorageProgressValue: Equatable, Sendable {
 
 private final class XmaxStorageProgressRecorder: @unchecked Sendable {
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var storedValues: [XmaxStorageProgressValue] = []
 

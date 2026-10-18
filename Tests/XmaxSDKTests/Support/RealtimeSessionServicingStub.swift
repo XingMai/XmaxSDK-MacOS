@@ -22,12 +22,12 @@ enum RealtimeSessionServicingCall: Equatable {
 final class RealtimeSessionServicingStub: RealtimeSessionServicing,
     @unchecked Sendable {
 
-    // 测试配置
+    /// 测试配置
     private let session: RealtimeSession
     private let createError: (any Error)?
     private let closeError: (any Error)?
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var storedCalls: [RealtimeSessionServicingCall] = []
     private var heartbeatFailureHandler:

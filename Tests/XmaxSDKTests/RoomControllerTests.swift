@@ -286,7 +286,7 @@ private extension RoomControllerTests {
 
 private final class LockedInvocationCounter: @unchecked Sendable {
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var storedValue = 0
 

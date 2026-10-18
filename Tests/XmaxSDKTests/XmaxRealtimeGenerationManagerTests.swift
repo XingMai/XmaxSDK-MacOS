@@ -510,7 +510,7 @@ private extension XmaxRealtimeGenerationManagerTests {
 
 private final class RemoteStreamRecorder: @unchecked Sendable {
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var storedValues: [RemoteStream?] = []
 

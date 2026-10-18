@@ -903,10 +903,10 @@ private extension RealtimeCoordinatorTests {
 
 private actor RealtimeCoordinatorProbe {
 
-    // 操作状态
+    /// 操作状态
     private(set) var operationStarted = false
 
-    // 清理记录
+    /// 清理记录
     private(set) var cleanupScopes: [
         RealtimeCoordinator.TerminationScope
     ] = []
@@ -924,7 +924,7 @@ private actor RealtimeCoordinatorProbe {
 
 private final class RealtimeCoordinatorEventRecorder: @unchecked Sendable {
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var events: [String] = []
 
@@ -941,7 +941,7 @@ private final class RealtimeCoordinatorEventRecorder: @unchecked Sendable {
 
 private final class RealtimeCoordinatorErrorRecorder: @unchecked Sendable {
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var error: XmaxError?
 

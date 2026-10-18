@@ -273,7 +273,7 @@ private struct RealtimeApiRequest: Equatable, Sendable {
 
 private final class RealtimeApiServiceStub: ApiServicing, @unchecked Sendable {
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var storedResponses: [RealtimeApiResponse]
     private var storedRequests: [RealtimeApiRequest] = []
@@ -326,7 +326,7 @@ private enum RealtimeApiResponse: Sendable {
 
 private final class PendingRealtimeApiResponse: @unchecked Sendable {
 
-    // 并发状态
+    /// 并发状态
     private let lock = NSLock()
     private var continuation: CheckedContinuation<
         Result<Data, XmaxError>,
@@ -369,7 +369,7 @@ private final class PendingRealtimeApiResponse: @unchecked Sendable {
 
 private final class ManualRealtimeHeartbeatSleeper: @unchecked Sendable {
 
-    // 异步事件流
+    /// 异步事件流
     private let stream: AsyncStream<Void>
     private let continuation: AsyncStream<Void>.Continuation
 

@@ -13,7 +13,7 @@ import XmaxSDK
 @MainActor
 final class RealtimeSessionController: ObservableObject {
 
-    // 用户配置：与 Web 的 localStorage 一致，保存在当前用户的应用设置中。
+    /// 用户配置：与 Web 的 localStorage 一致，保存在当前用户的应用设置中。
     @Published var apiKey = UserDefaults.standard.string(forKey: "xmax.xlab.apiKey") ?? "" {
         didSet { UserDefaults.standard.set(apiKey, forKey: "xmax.xlab.apiKey") }
     }
@@ -28,7 +28,7 @@ final class RealtimeSessionController: ObservableObject {
         }
     }
 
-    // 显示状态
+    /// 显示状态
     @Published private(set) var sessionActive = false
     @Published private(set) var localStream: RealtimeMediaStream?
     @Published private(set) var remoteStream: RealtimeMediaStream?
@@ -46,7 +46,7 @@ final class RealtimeSessionController: ObservableObject {
     @Published private(set) var interpolationSwitching = false
     @Published private(set) var remoteAudioVolume: Float = 0
 
-    // SDK 资源与操作归属
+    /// SDK 资源与操作归属
     private var client: XmaxClient?
     private var manager: (any XmaxRealtimeManaging)?
     private var lifecycleID = UUID()

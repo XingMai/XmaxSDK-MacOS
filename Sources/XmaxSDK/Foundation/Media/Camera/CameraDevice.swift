@@ -14,7 +14,6 @@ import Foundation
 /// 描述当前可用的 macOS 摄像头，不持有系统采集资源。
 public struct CameraDevice: Identifiable, Equatable, Sendable {
 
-    // 设备信息
     /// 系统分配的设备标识，可用于创建或切换摄像头流。
     public let id: String
 

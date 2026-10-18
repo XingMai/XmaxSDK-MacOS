@@ -19,7 +19,6 @@ protocol MediaControlling: Actor, InteractionControlling {
     /// - Returns: 包含设备标识、名称和默认状态的设备列表。
     func listCameraDevices() -> [CameraDevice]
 
-    // 本地媒体状态
     /// 当前活动的本地视频轨道。
     var currentTrack: RealtimeVideoTrack? { get }
 

@@ -16,7 +16,7 @@ import Foundation
 /// 不创建厂商引擎的 RTC 替身。
 final class RtcPlatformStub: RtcPlatform, @unchecked Sendable {
 
-    // 房间工厂
+    /// 房间工厂
     private let makeRoom: @Sendable (String) throws -> any RtcRoom
 
     init(makeRoom: @escaping @Sendable (String) throws -> any RtcRoom = { _ in RtcRoomStub() }) {
@@ -40,11 +40,11 @@ final class RtcPlatformStub: RtcPlatform, @unchecked Sendable {
 
 final class RtcRoomStub: RtcRoom, @unchecked Sendable {
 
-    // 可控操作
+    /// 可控操作
     private let onJoin: @Sendable () throws -> Void
     private let onFlush: @Sendable () async throws -> Void
 
-    // 监听及调用记录
+    /// 监听及调用记录
     private let lock = NSLock()
     private var listener: (@Sendable (RtcRoomEvent) -> Void)?
     private var lastListener: (@Sendable (RtcRoomEvent) -> Void)?

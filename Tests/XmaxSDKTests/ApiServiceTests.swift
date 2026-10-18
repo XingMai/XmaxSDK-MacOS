@@ -347,7 +347,7 @@ private struct ApiTestBody: Codable, Equatable, Sendable {
 
 private final class ApiURLProtocolStub: URLProtocol {
 
-    // 共享状态
+    /// 共享状态
     private static let state = ApiURLProtocolStubState()
 
     static var request: URLRequest? {
@@ -401,15 +401,15 @@ private final class ApiURLProtocolStub: URLProtocol {
 
 private final class ApiURLProtocolStubState: @unchecked Sendable {
 
-    // 并发控制
+    /// 并发控制
     private let lock = NSLock()
 
-    // 响应配置
+    /// 响应配置
     private var statusCode = 200
     private var data = Data()
     private var error: (any Error)?
 
-    // 运行状态
+    /// 运行状态
     private var capturedRequest: URLRequest?
 
     var request: URLRequest? {

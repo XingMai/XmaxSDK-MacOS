@@ -15,12 +15,12 @@ final class CameraCaptureManagingStub: CameraCaptureManaging, @unchecked Sendabl
         case stop
     }
 
-    // 测试配置
+    /// 测试配置
     let devices: [CameraDevice]
     let startError: (any Error)?
     let switchError: (any Error)?
 
-    // 调用记录
+    /// 调用记录
     private let lock = NSLock()
     private var recordedCalls: [Call] = []
     private var frameListener: (@Sendable (VideoFrame) throws -> Void)?

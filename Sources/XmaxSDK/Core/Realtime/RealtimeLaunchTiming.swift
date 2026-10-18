@@ -16,7 +16,6 @@
 /// 总耗时包含阶段间的业务编排，因此不必等于四项耗时之和。
 public struct RealtimeLaunchTiming: Equatable, Sendable {
 
-    // 连接阶段
     /// 创建服务端会话的耗时。
     public let sessionMs: Double?
 
@@ -26,7 +25,6 @@ public struct RealtimeLaunchTiming: Equatable, Sendable {
     /// 发布本地媒体流的耗时。
     public let publishMs: Double?
 
-    // 生成阶段
     /// 提交生成信令到第一张可显示结果帧就绪的耗时。
     public let firstFrameMs: Double?
 

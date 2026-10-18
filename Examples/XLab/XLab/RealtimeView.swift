@@ -71,7 +71,7 @@ struct RealtimeView: View {
         .onDisappear { controller.viewDidDisappear() }
     }
 
-    // 品牌与会话设置
+    /// 品牌与会话设置
     private func header(viewportWidth: CGFloat) -> some View {
         let controlHeight = min(48, max(35, viewportWidth * 0.0055 + 26))
         let logoHeight = min(52, max(34, viewportWidth * 0.008 + 24))
@@ -157,7 +157,7 @@ struct RealtimeView: View {
         }
     }
 
-    // 启动页沿用 Web 的尺寸公式、麦克风开关和单一启动入口。
+    /// 启动页沿用 Web 的尺寸公式、麦克风开关和单一启动入口。
     private func landingPage(viewportWidth: CGFloat) -> some View {
         let fontSize = min(45, max(27, viewportWidth * 0.01 + 18))
         let smallSize = min(15, max(12, viewportWidth * 0.0028 + 9.5))

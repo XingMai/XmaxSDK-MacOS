@@ -18,7 +18,6 @@ import CoreVideo
 @MainActor
 public final class XmaxVideoView: NSView {
 
-    // 公共配置
     /// 当前显示的视频轨道；为空时清除绑定。
     public var track: RealtimeVideoTrack? {
         didSet {
@@ -36,16 +35,16 @@ public final class XmaxVideoView: NSView {
         }
     }
 
-    // 渲染状态
+    /// 渲染状态
     private weak var attachedTrack: RealtimeVideoTrack?
     var frameDisplayHandler: (() -> Void)?
 
-    // 视频预览
+    /// 视频预览
     private var decodedVideoLayer: AVSampleBufferDisplayLayer?
     private var decodedVideoTimebase: CMTimebase?
     private var nextDecodedVideoPresentationTime = CMTime.invalid
 
-    // 本地预览缓冲资源
+    /// 本地预览缓冲资源
     private var localPreviewPixelBufferPool: CVPixelBufferPool?
     private var localPreviewFormat: VideoFormat?
     private var localPreviewFormatDescription: CMVideoFormatDescription?
@@ -506,7 +505,7 @@ extension XmaxVideoView {
         }
     }
 
-    // 帧校验错误
+    /// 帧校验错误
     static var invalidImageFrameError: XmaxError {
         XmaxError(code: .mediaError, message: "Video preview frame is invalid")
     }

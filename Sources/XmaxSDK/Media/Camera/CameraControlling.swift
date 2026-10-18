@@ -24,7 +24,6 @@ protocol CameraControlling: Sendable {
     /// - Returns: 当前可选择的系统视频设备。
     func listCameraDevices() -> [CameraDevice]
 
-    // 本地媒体状态
     /// 当前本地相机视频轨道；尚未创建或已停止时为空。
     var currentTrack: RealtimeVideoTrack? { get }
 
