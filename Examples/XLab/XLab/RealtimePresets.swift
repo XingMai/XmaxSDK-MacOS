@@ -17,7 +17,7 @@ enum RealtimeExampleMode: String, CaseIterable, Identifiable, Sendable {
         case .charx: "Character Swap"
         case .clothx: "Virtual Try-On"
         case .vibex: "Style Transfer"
-        case .free: "Free Input"
+        case .free: "Free Prompt"
         }
     }
 
