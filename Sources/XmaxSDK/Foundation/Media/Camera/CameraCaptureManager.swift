@@ -44,10 +44,24 @@ final class CameraCaptureManager: NSObject, CameraCaptureManaging, @unchecked Se
                 id: device.uniqueID,
                 name: device.localizedName,
                 isDefault: device.uniqueID == defaultID,
-                position: device.position == .front ? .front :
-                    (device.position == .back ? .back : .unspecified)
+                position: Self.resolvePosition(device.position, deviceType: device.deviceType)
             )
         }
+    }
+
+    /// 将系统摄像头位置转换为 SDK 位置；macOS 内置摄像头未报告位置时按前置处理。
+    ///
+    /// - Parameters:
+    ///   - position: 系统报告的摄像头位置。
+    ///   - deviceType: 用于识别内置摄像头的设备类型。
+    /// - Returns: 预览和上传镜像共同使用的摄像头位置。
+    static func resolvePosition(
+        _ position: AVCaptureDevice.Position,
+        deviceType: AVCaptureDevice.DeviceType
+    ) -> CameraPosition {
+        if position == .front { return .front }
+        if position == .back { return .back }
+        return deviceType == .builtInWideAngleCamera ? .front : .unspecified
     }
 
     /// 查询系统视频设备，不启动采集会话。
