@@ -3,21 +3,21 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 本地媒体文件中视频、音频和时间线所需的元数据。
+/// Video, audio, and timeline metadata for a local media file.
 struct MediaFileMetadata: Equatable, Sendable {
 
-    /// 视频显示规格
+    /// Video display format
     let width: Int
     let height: Int
     let rotation: VideoRotation
 
-    /// 播放信息
+    /// Playback information
     let durationSeconds: Double
     let hasAudio: Bool
 }

@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,7 +11,7 @@
 
 import Foundation
 
-/// 接收文件上传或下载进度。
+/// Receives file upload or download progress.
 ///
-/// - Parameter progress: 包含已完成字节数与总字节数的进度信息。
+/// - Parameter progress: Progress containing completed and total byte counts.
 public typealias XmaxStorageProgressHandler = @Sendable (Progress) -> Void

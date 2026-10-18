@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -510,7 +510,7 @@ private extension XmaxRealtimeGenerationManagerTests {
 
 private final class RemoteStreamRecorder: @unchecked Sendable {
 
-    /// 并发状态
+    /// Concurrent state
     private let lock = NSLock()
     private var storedValues: [RemoteStream?] = []
 

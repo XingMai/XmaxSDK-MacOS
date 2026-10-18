@@ -3,19 +3,19 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 上下行共用的编码码率预算。
+/// The shared upstream and downstream encoding bitrate budget.
 enum EncodingBitratePolicy {
-    /// 优先使用指定码率，并为缺省项计算编码预算。
+    /// Uses explicit bitrates first and calculates defaults for omitted bounds.
     ///
-    /// - Parameter videoFormat: 包含尺寸、帧率和可选码率上下界的视频规格。
-    /// - Returns: 以 kbps 表示的最小和最大码率。
-    /// - Throws: 视频规格无效、码率超出整数范围或上下界冲突时抛出错误。
+    /// - Parameter videoFormat: The video format with dimensions, frame rate, and optional bitrate bounds.
+    /// - Returns: The minimum and maximum bitrate in kbps.
+    /// - Throws: An error on invalid format, bitrate overflow, or conflicting bounds.
     static func resolve(_ videoFormat: RealtimeVideoFormat) throws -> (minimum: Int, maximum: Int) {
         try videoFormat.validate()
         let minimum: Int
@@ -51,15 +51,15 @@ enum EncodingBitratePolicy {
     }
 }
 
-// 根据编码参数参考表，按上传像素面积和帧率插值计算最高码率预算。
-// 默认最低码率为 100kbps；最高码率采用画质优先参考值的 0.6 倍，且不低于 100kbps。
-// 表外规格按参考比例外推。
-// 参考：https://docs.byteplus.com/id/docs/byteplus-rtc/docs-70122
+// Interpolates the maximum bitrate budget from upload pixel area and frame rate using reference tables.
+// The minimum defaults to 100kbps; the maximum is 0.6 times the quality-priority reference, at least 100kbps.
+// Extrapolates formats outside the table using reference ratios.
+// Reference: https://docs.byteplus.com/id/docs/byteplus-rtc/docs-70122
 private extension EncodingBitratePolicy {
-    /// 表示分辨率或帧率与推荐码率的对应参考点。
+    /// A reference point mapping resolution or frame rate to recommended bitrate.
     typealias BitratePoint = (value: Double, bitrate: Double)
 
-    /// 码率参考表
+    /// Bitrate reference tables
     static let referenceBitratesAt15FPS: [BitratePoint] = [
         (120 * 120, 50),
         (160 * 120, 65),
@@ -89,39 +89,39 @@ private extension EncodingBitratePolicy {
         (1920 * 1080, 3150)
     ]
 
-    /// 按像素面积和帧率插值计算参考最高码率。
+    /// Interpolates reference maximum bitrate by pixel area and frame rate.
     ///
     /// - Parameters:
-    ///   - pixels: 视频像素总面积。
-    ///   - fps: 每秒视频帧数。
-    /// - Returns: 尚未应用预算系数的参考最高码率，单位为 kbps。
+    ///   - pixels: The total video pixel area.
+    ///   - fps: The video frames per second.
+    /// - Returns: The reference maximum bitrate in kbps before the budget multiplier.
     static func resolveMaximumBitrate(pixels: Double, fps: Double) -> Double {
         let bitrate15 = interpolate(pixels, points: referenceBitratesAt15FPS)
         let bitrate30: Double
         let first30 = referenceBitratesAt30FPS[0]
         if pixels < first30.value {
-            // 小尺寸沿用 15fps 的尺寸曲线，衔接 30fps 的首个参考点。
+            // Small dimensions follow the 15fps curve, connecting to the first 30fps reference point.
             let reference15 = interpolate(first30.value, points: referenceBitratesAt15FPS)
             bitrate30 = bitrate15 * (first30.bitrate / reference15)
         } else {
             bitrate30 = interpolate(pixels, points: referenceBitratesAt30FPS)
         }
 
-        // 10fps 以 640×480 的 400kbps 为参考，沿用 15fps 的尺寸曲线。
+        // The 10fps curve follows the 15fps shape using 400kbps at 640×480 as its reference.
         let bitrate10 = bitrate15 * (400.0 / 500)
-        // 60fps 沿用 30fps 的尺寸曲线，匹配 1080p 的最高码率参考值。
+        // The 60fps curve follows the 30fps shape and matches the 1080p maximum bitrate reference.
         let maximum60 = bitrate30 * (6500.0 / 3150)
         return interpolate(fps, points: [
             (10, bitrate10 * 2), (15, bitrate15 * 2), (30, bitrate30 * 2), (60, maximum60)
         ])
     }
 
-    /// 在相邻参考点间线性插值，表外按最近端点比例外推。
+    /// Interpolates linearly between adjacent points and extrapolates using the nearest endpoint ratio.
     ///
     /// - Parameters:
-    ///   - value: 待求值的像素面积或帧率。
-    ///   - points: 按横坐标升序排列的非空参考点。
-    /// - Returns: 插值或外推得到的码率。
+    ///   - value: The pixel area or frame rate to evaluate.
+    ///   - points: Nonempty reference points sorted by ascending x coordinate.
+    /// - Returns: The interpolated or extrapolated bitrate.
     static func interpolate(_ value: Double, points: [BitratePoint]) -> Double {
         let first = points[0]
         if value <= first.value {

@@ -3,29 +3,29 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 接收 RTC 媒体和数据信令事件。
+/// Receives RTC media and data signaling events.
 protocol RtcEventListener: AnyObject {
 
-    /// 接收远端用户的视频发布状态变化。
+    /// Receives remote user video publication state changes.
     ///
     /// - Parameters:
-    ///   - userID: 远端 RTC 用户标识。
-    ///   - published: 当前是否已发布视频。
+    ///   - userID: The remote RTC user identifier.
+    ///   - published: Whether video is currently published.
     @MainActor
     func onRemoteVideoPublished(
         userID: String,
         published: Bool
     )
 
-    /// 接收导致当前 RTC 连接或信令传输无法继续的错误。
+    /// Receives errors preventing the RTC connection or signaling transport from continuing.
     ///
-    /// - Parameter error: 连接或信令传输错误。
+    /// - Parameter error: The connection or signaling transport error.
     @MainActor
     func onRtcFailure(_ error: XmaxError)
 }

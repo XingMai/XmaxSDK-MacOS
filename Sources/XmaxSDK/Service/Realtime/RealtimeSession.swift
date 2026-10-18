@@ -3,23 +3,23 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// Xmax 实时生成会话。
+/// An Xmax realtime generation session.
 struct RealtimeSession: Equatable, Sendable {
 
-    /// 会话信息
+    /// Session information
     let id: String
     let userID: String?
     let status: String?
 
-    /// RTC 连接
+    /// RTC connection
     let connection: RealtimeSessionConnection?
 
-    /// 关闭原因
+    /// Close reason
     let closeReason: String?
 }

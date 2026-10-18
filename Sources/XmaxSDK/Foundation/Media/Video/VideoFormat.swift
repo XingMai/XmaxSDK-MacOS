@@ -3,27 +3,27 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 表示视频帧的固定尺寸和像素格式。
+/// Fixed video frame dimensions and pixel format.
 struct VideoFormat: Equatable, Sendable {
 
-    /// 帧规格
+    /// Frame format
     let width: Int
     let height: Int
     let pixelFormat: VideoPixelFormat
 
-    /// 创建具有有效尺寸的像素格式。
+    /// Creates a pixel format with valid dimensions.
     ///
     /// - Parameters:
-    ///   - width: 帧宽度，单位为像素，必须大于零。
-    ///   - height: 帧高度，单位为像素，必须大于零。
-    ///   - pixelFormat: 帧数据使用的像素格式。
-    /// - Throws: 宽度或高度非正数时抛出配置错误。
+    ///   - width: The frame width in pixels; must be positive.
+    ///   - height: The frame height in pixels; must be positive.
+    ///   - pixelFormat: The frame data pixel format.
+    /// - Throws: A configuration error for nonpositive width or height.
     init(
         width: Int,
         height: Int,

@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -12,55 +12,55 @@
 @preconcurrency import AgoraRtcKit
 import Foundation
 
-/// 封装单次声网连接、用户映射、发布订阅和 DataStream 信令。
+/// Wraps one Agora connection, user mappings, publication, subscription, and DataStream signaling.
 final class AgoraRtcRoom: RtcRoom, @unchecked Sendable {
 
-    /// 平台资源
+    /// Platform resources
     private let platform: AgoraRtcPlatform
     private let roomID: String
     let connection = AgoraRtcConnection()
     private var bridge: RtcRoomEventBridge?
     private var videoSink: RtcRemoteVideoSink?
 
-    /// 用户与事件
+    /// Users and events
     private var listener: (@Sendable (RtcRoomEvent) -> Void)?
     private var accounts: [UInt: String] = [:]
     private var publications: [UInt: Bool] = [:]
     private var frameListeners: [UInt: RtcRemoteVideoFrameListener] = [:]
 
-    /// 信令资源
+    /// Signaling resources
     private var dataStreamID = 0
     private var sender: RtcMessageQueue?
 
-    /// 连接状态（由 platform.lock 保护）
+    /// Connection state (protected by platform.lock)
     private var account: String?
     private(set) var isJoined = false
     private(set) var isClosed = false
 
-    /// 创建服务于单次连接的声网房间。
+    /// Creates an Agora room for one connection.
     ///
     /// - Parameters:
-    ///   - platform: 持有声网引擎的平台适配器。
-    ///   - roomID: RTC 房间标识。
+    ///   - platform: The platform adapter retaining the Agora engine.
+    ///   - roomID: The RTC room identifier.
     init(platform: AgoraRtcPlatform, roomID: String) {
         self.platform = platform
         self.roomID = roomID
         connection.channelId = roomID
     }
 
-    /// 设置房间事件回调。
+    /// Sets the room event callback.
     ///
-    /// - Parameter listener: 中性事件回调；传入 nil 清除监听。
+    /// - Parameter listener: The neutral event callback; nil clears it.
     func setEventListener(_ listener: (@Sendable (RtcRoomEvent) -> Void)?) {
         platform.lock.withLock {
             self.listener = isClosed ? nil : listener
         }
     }
 
-    /// 发起进房；成功通过 joined 事件通知。
+    /// Initiates joining; success is reported through the joined event.
     ///
-    /// - Parameter configuration: 房间、用户账号和令牌。
-    /// - Throws: 进房调用立即失败时抛出错误。
+    /// - Parameter configuration: The room, user account, and token.
+    /// - Throws: An error if the join call fails immediately.
     func join(configuration: RoomJoinConfiguration) throws {
         try platform.lock.withLock {
             guard !isClosed, account == nil, configuration.roomID == roomID else {
@@ -108,7 +108,7 @@ final class AgoraRtcRoom: RtcRoom, @unchecked Sendable {
         }
     }
 
-    /// 停止回调、清理信令和帧监听，并离开房间；重复调用无副作用。
+    /// Stops callbacks, clears signals and frame listeners, and leaves the room; repeated calls are harmless.
     func destroy() {
         platform.lock.withLock {
             guard !isClosed else { return }
@@ -131,10 +131,10 @@ final class AgoraRtcRoom: RtcRoom, @unchecked Sendable {
         }
     }
 
-    /// 更新本地视频发布状态。
+    /// Updates local video publication state.
     ///
-    /// - Parameter publish: 是否发布外部视频轨。
-    /// - Throws: 发布配置失败时抛出错误。
+    /// - Parameter publish: Whether to publish the external video track.
+    /// - Throws: An error if publication configuration fails.
     func publishLocalVideo(_ publish: Bool) throws {
         try platform.lock.withLock {
             try requireJoined()
@@ -147,10 +147,10 @@ final class AgoraRtcRoom: RtcRoom, @unchecked Sendable {
         }
     }
 
-    /// 更新本地音频发布状态。
+    /// Updates local audio publication state.
     ///
-    /// - Parameter publish: 是否发布当前音频源。
-    /// - Throws: 发布配置失败时抛出错误。
+    /// - Parameter publish: Whether to publish the current audio source.
+    /// - Throws: An error if publication configuration fails.
     func publishLocalAudio(_ publish: Bool) throws {
         try platform.lock.withLock {
             try requireJoined()
@@ -164,12 +164,12 @@ final class AgoraRtcRoom: RtcRoom, @unchecked Sendable {
         }
     }
 
-    /// 更新远端视频订阅。
+    /// Updates remote video subscription.
     ///
     /// - Parameters:
-    ///   - userID: 服务端分配的 RTC 用户账号。
-    ///   - subscribe: 是否订阅视频。
-    /// - Throws: 用户映射或订阅失败时抛出错误。
+    ///   - userID: The server-assigned RTC user account.
+    ///   - subscribe: Whether to subscribe to video.
+    /// - Throws: An error on user mapping or subscription failure.
     func subscribeRemoteVideo(userID: String, subscribe: Bool) throws {
         try platform.lock.withLock {
             try requireJoined()
@@ -182,12 +182,12 @@ final class AgoraRtcRoom: RtcRoom, @unchecked Sendable {
         }
     }
 
-    /// 更新远端音频订阅。
+    /// Updates remote audio subscription.
     ///
     /// - Parameters:
-    ///   - userID: 服务端分配的 RTC 用户账号。
-    ///   - subscribe: 是否订阅音频。
-    /// - Throws: 用户映射或订阅失败时抛出错误。
+    ///   - userID: The server-assigned RTC user account.
+    ///   - subscribe: Whether to subscribe to audio.
+    /// - Throws: An error on user mapping or subscription failure.
     func subscribeRemoteAudio(userID: String, subscribe: Bool) throws {
         try platform.lock.withLock {
             try requireJoined()
@@ -200,12 +200,12 @@ final class AgoraRtcRoom: RtcRoom, @unchecked Sendable {
         }
     }
 
-    /// 设置远端音频播放音量。
+    /// Sets remote audio playback volume.
     ///
     /// - Parameters:
-    ///   - volume: 0 到 100 的音量。
-    ///   - userID: RTC 用户账号。
-    /// - Throws: 用户映射或音量配置失败时抛出错误。
+    ///   - volume: The volume from 0 to 100.
+    ///   - userID: The RTC user account.
+    /// - Throws: An error on user mapping or volume configuration failure.
     func setRemoteAudioVolume(_ volume: Int, for userID: String) throws {
         try platform.lock.withLock {
             try requireJoined()
@@ -218,12 +218,12 @@ final class AgoraRtcRoom: RtcRoom, @unchecked Sendable {
         }
     }
 
-    /// 设置远端解码帧监听。
+    /// Sets the remote decoded frame listener.
     ///
     /// - Parameters:
-    ///   - listener: 帧回调；传入 nil 清除监听。
-    ///   - userID: RTC 用户账号。
-    /// - Throws: 用户映射失败时抛出错误。
+    ///   - listener: The frame callback; nil clears it.
+    ///   - userID: The RTC user account.
+    /// - Throws: An error if user mapping fails.
     func setRemoteVideoFrameListener(_ listener: RtcRemoteVideoFrameListener?, for userID: String)
         throws
     {
@@ -233,13 +233,13 @@ final class AgoraRtcRoom: RtcRoom, @unchecked Sendable {
         }
     }
 
-    /// 将信令加入房间发送队列。
+    /// Enqueues a signal for the room.
     ///
     /// - Parameters:
-    ///   - message: 完整 JSON 信令。
-    ///   - reportFailure: 异步发送失败时是否通知房间故障；false 仅记录日志并由等待调用抛出。
-    /// - Returns: 本条信令的发送任务。
-    /// - Throws: 信令无效或队列不可用时抛出错误。
+    ///   - message: The complete JSON signal.
+    ///   - reportFailure: Whether asynchronous send failure reports a room fault; false only logs and throws to the awaiting caller.
+    /// - Returns: The send task for this signal.
+    /// - Throws: An error if the signal is invalid or the queue unavailable.
     @discardableResult
     func sendRoomMessage(_ message: String, reportFailure: Bool = true) throws -> Task<Void, any Error> {
         try platform.lock.withLock {
@@ -251,9 +251,9 @@ final class AgoraRtcRoom: RtcRoom, @unchecked Sendable {
         }
     }
 
-    /// 等待此前排队的信令提交给 RTC。
+    /// Waits for earlier queued signals to be submitted to RTC.
     ///
-    /// - Throws: 发送失败、离房或调用取消时抛出错误。
+    /// - Throws: An error on send failure, room departure, or cancellation.
     func awaitPendingMessages() async throws {
         let sender = try platform.lock.withLock {
             try requireJoined()
@@ -264,9 +264,9 @@ final class AgoraRtcRoom: RtcRoom, @unchecked Sendable {
 }
 
 private extension AgoraRtcRoom {
-    /// 将平台连接回调转换为房间事件，并在解锁后通知监听器。
+    /// Converts platform connection callbacks to room events and notifies listeners after unlocking.
     ///
-    /// - Parameter event: 声网连接回调事件。
+    /// - Parameter event: The Agora connection callback event.
     func handle(_ event: RtcRoomEventBridge.Event) {
         let events: [RtcRoomEvent] = platform.lock.withLock {
             guard !isClosed else { return [] }
@@ -324,14 +324,14 @@ private extension AgoraRtcRoom {
             }
         }
 
-        // 离开平台锁后再通知生命周期层，避免与调用方向形成反向持锁。
+        // Notifies the lifecycle layer outside the platform lock to avoid reverse lock ordering.
         for event in events { emit(event) }
     }
 
-    /// 建立有序信令通道并完成房间初始化。
+    /// Creates an ordered signaling channel and finishes room initialization.
     ///
-    /// - Parameter uid: 本地用户的数字标识。
-    /// - Throws: 信令数据通道创建失败时抛出错误。
+    /// - Parameter uid: The local user's numeric identifier.
+    /// - Throws: An error if signaling data channel creation fails.
     func prepareJoinedRoom(uid: UInt) throws {
         connection.localUid = uid
         let config = AgoraDataStreamConfig()
@@ -359,18 +359,18 @@ private extension AgoraRtcRoom {
         isJoined = true
     }
 
-    /// 向仍有效的房间监听器发送事件。
+    /// Sends an event to a valid room listener.
     ///
-    /// - Parameter event: 待通知的房间事件。
+    /// - Parameter event: The room event to report.
     func emit(_ event: RtcRoomEvent) {
         let callback = platform.lock.withLock { isClosed ? nil : listener }
         callback?(event)
     }
 
-    /// 获取已知用户的当前视频发布事件。
+    /// Gets current video publication events for known users.
     ///
-    /// - Parameter uid: 远端用户数字标识。
-    /// - Returns: 可解析的发布事件；状态或账号不可用时返回空数组。
+    /// - Parameter uid: The remote user's numeric identifier.
+    /// - Returns: Resolvable publication events; an empty array if state or account information is unavailable.
     func publicationEvents(uid: UInt) -> [RtcRoomEvent] {
         guard let published = publications[uid],
             let event = publicationEvent(uid: uid, published: published)
@@ -378,20 +378,20 @@ private extension AgoraRtcRoom {
         return [event]
     }
 
-    /// 将数字用户发布状态转换为账号事件。
+    /// Converts numeric user publication state to an account-based event.
     ///
     /// - Parameters:
-    ///   - uid: 远端用户数字标识。
-    ///   - published: 视频是否已发布。
-    /// - Returns: 账号可用且已进房时返回发布事件，否则返回 `nil`。
+    ///   - uid: The remote user's numeric identifier.
+    ///   - published: Whether video is published.
+    /// - Returns: The publication event if the account is available and the room joined; otherwise `nil`.
     func publicationEvent(uid: UInt, published: Bool) -> RtcRoomEvent? {
         guard isJoined, let account = accounts[uid] else { return nil }
         return .publication(userID: account, published: published)
     }
 
-    /// 从平台补全尚未缓存的用户账号。
+    /// Retrieves uncached user accounts from the platform.
     ///
-    /// - Parameter uid: 远端用户数字标识。
+    /// - Parameter uid: The remote user's numeric identifier.
     func resolveAccount(uid: UInt) {
         guard accounts[uid] == nil else { return }
         accounts[uid] =
@@ -400,11 +400,11 @@ private extension AgoraRtcRoom {
             )?.userAccount
     }
 
-    /// 从缓存或平台查询用户账号对应的数字标识。
+    /// Looks up a user account's numeric identifier in the cache or platform.
     ///
-    /// - Parameter account: 远端用户账号。
-    /// - Returns: 账号对应的数字用户标识。
-    /// - Throws: 账号映射不可用时抛出错误。
+    /// - Parameter account: The remote user account.
+    /// - Returns: The numeric identifier for the account.
+    /// - Throws: An error if account mapping is unavailable.
     func resolveUID(_ account: String) throws -> UInt {
         if let uid = accounts.first(where: { $0.value == account })?.key { return uid }
         if let info = platform.engine.getUserInfo(
@@ -416,21 +416,21 @@ private extension AgoraRtcRoom {
         throw XmaxError(code: .rtcError, message: "RTC user account is not available: \(account)")
     }
 
-    /// 校验房间尚未关闭且已完成连接。
+    /// Checks that the room is connected and not closed.
     ///
-    /// - Throws: 房间未连接或已关闭时抛出错误。
+    /// - Throws: An error if the room is disconnected or closed.
     func requireJoined() throws {
         guard !isClosed, isJoined else {
             throw XmaxError(code: .rtcError, message: "RTC room is not joined")
         }
     }
 
-    /// 更新当前连接的媒体选项。
+    /// Updates media options for the current connection.
     ///
     /// - Parameters:
-    ///   - options: 待应用的发布或订阅配置。
-    ///   - operation: 用于错误描述的操作名称。
-    /// - Throws: 平台更新配置失败时抛出错误。
+    ///   - options: The publication or subscription configuration to apply.
+    ///   - operation: The operation name used in error descriptions.
+    /// - Throws: An error if the platform configuration update fails.
     func update(_ options: AgoraRtcChannelMediaOptions, operation: String) throws {
         try AgoraRtcPlatform.checkResult(
             platform.engine.updateChannelEx(with: options, connection: connection),

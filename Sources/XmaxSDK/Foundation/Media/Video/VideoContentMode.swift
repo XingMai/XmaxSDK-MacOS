@@ -3,18 +3,18 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 视频内容在渲染容器中的显示模式。
+/// The video content display mode within its rendering container.
 public enum VideoContentMode: String, CaseIterable, Sendable {
 
-    /// 等比完整显示，允许容器留空。
+    /// Fits all content proportionally, allowing empty space.
     case fit
 
-    /// 等比铺满容器，允许裁剪画面。
+    /// Fills the container proportionally, allowing cropping.
     case fill
 }

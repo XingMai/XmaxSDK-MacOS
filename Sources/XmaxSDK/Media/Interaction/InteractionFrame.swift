@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,13 +11,13 @@
 
 import CoreGraphics
 
-/// 一次从渲染视口采集到的交互输入。
+/// An interaction sample captured from a render viewport.
 struct InteractionFrame: Sendable {
 
-    /// 触控采样
+    /// Touch sample
     let points: [CGPoint]
 
-    /// 显示映射
+    /// Display mapping
     let viewportSize: CGSize
     let contentMode: VideoContentMode
     var displayedVideoSize: CGSize? = nil
@@ -25,7 +25,7 @@ struct InteractionFrame: Sendable {
 
 extension RealtimeVideoFormat {
 
-    /// 像素尺寸
+    /// Pixel dimensions
     var size: CGSize {
         CGSize(width: width, height: height)
     }

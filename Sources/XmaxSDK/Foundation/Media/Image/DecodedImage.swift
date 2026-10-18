@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -12,49 +12,49 @@
 import Foundation
 @preconcurrency import CoreGraphics
 
-/// 表示 SDK 内部已经完成方向处理和像素解码的图片。
+/// An internal SDK image with orientation applied and pixels decoded.
 protocol DecodedImage: Sendable {
 
-    /// 图片解码后的实际像素尺寸。
+    /// The decoded image dimensions in pixels.
     var size: CGSize { get }
 
-    /// 按目标比例居中裁剪并缩放图片，生成可复用的视频帧。
+    /// Center-crops and scales the image to the target aspect ratio, creating a reusable video frame.
     ///
     /// - Parameters:
-    ///   - width: 目标帧宽度，单位为像素。
-    ///   - height: 目标帧高度，单位为像素。
-    /// - Returns: 包含 BGRA 像素和缓冲区复用标识、初始时间戳为零的视频帧。
-    /// - Throws: 尺寸无效、内存大小溢出或裁剪及像素绘制失败时抛出错误。
+    ///   - width: The target frame width in pixels.
+    ///   - height: The target frame height in pixels.
+    /// - Returns: A BGRA frame with a buffer reuse identifier and an initial timestamp of zero.
+    /// - Throws: An error on invalid dimensions, memory size overflow, or cropping or pixel drawing failure.
     func makeVideoFrame(
         width: Int,
         height: Int
     ) throws -> VideoFrame
 }
 
-/// 持有已经应用方向信息的 Core Graphics 图片并生成视频帧。
+/// Retains an oriented Core Graphics image and produces video frames.
 final class CoreGraphicsDecodedImage: DecodedImage, @unchecked Sendable {
 
-    /// 图片资源
+    /// Image resources
     private let image: CGImage
 
-    /// 图片信息
+    /// Image information
     let size: CGSize
 
-    /// 持有已应用方向信息的 Core Graphics 图片。
+    /// Retains a Core Graphics image with orientation applied.
     ///
-    /// - Parameter image: 作为后续裁剪和缩放源的像素图片。
+    /// - Parameter image: The pixel image used for subsequent cropping and scaling.
     init(image: CGImage) {
         self.image = image
         size = CGSize(width: image.width, height: image.height)
     }
 
-    /// 按目标比例居中裁剪并缩放图片，生成可复用的视频帧。
+    /// Center-crops and scales the image to the target aspect ratio, creating a reusable video frame.
     ///
     /// - Parameters:
-    ///   - width: 目标帧宽度，单位为像素。
-    ///   - height: 目标帧高度，单位为像素。
-    /// - Returns: 包含 BGRA 像素和缓冲区复用标识、初始时间戳为零的视频帧。
-    /// - Throws: 尺寸无效、内存大小溢出或裁剪及像素绘制失败时抛出错误。
+    ///   - width: The target frame width in pixels.
+    ///   - height: The target frame height in pixels.
+    /// - Returns: A BGRA frame with a buffer reuse identifier and an initial timestamp of zero.
+    /// - Throws: An error on invalid dimensions, memory size overflow, or cropping or pixel drawing failure.
     func makeVideoFrame(
         width: Int,
         height: Int
@@ -141,14 +141,14 @@ final class CoreGraphicsDecodedImage: DecodedImage, @unchecked Sendable {
         )
     }
 
-    /// 计算保留目标宽高比的居中裁剪区域。
+    /// Calculates a centered crop preserving the target aspect ratio.
     ///
     /// - Parameters:
-    ///   - sourceWidth: 源图片宽度，单位为像素。
-    ///   - sourceHeight: 源图片高度，单位为像素。
-    ///   - targetWidth: 目标输出宽度，单位为像素。
-    ///   - targetHeight: 目标输出高度，单位为像素。
-    /// - Returns: 位于源图坐标系内的整数像素裁剪区域。
+    ///   - sourceWidth: The source image width in pixels.
+    ///   - sourceHeight: The source image height in pixels.
+    ///   - targetWidth: The target output width in pixels.
+    ///   - targetHeight: The target output height in pixels.
+    /// - Returns: An integer-pixel crop rectangle in source image coordinates.
     static func centerCropRect(
         sourceWidth: Int,
         sourceHeight: Int,
@@ -182,11 +182,11 @@ final class CoreGraphicsDecodedImage: DecodedImage, @unchecked Sendable {
 }
 
 private extension CoreGraphicsDecodedImage {
-    /// 计算 BGRA 图像的每行字节数。
+    /// Calculates the BGRA image byte count per row.
     ///
-    /// - Parameter width: 图像宽度，单位为像素。
-    /// - Returns: 每行四字节像素占用的总字节数。
-    /// - Throws: 宽度计算产生整数溢出时抛出媒体错误。
+    /// - Parameter width: The image width in pixels.
+    /// - Returns: The total row byte count for four-byte pixels.
+    /// - Throws: A media error if width calculation overflows.
     static func bytesPerRow(width: Int) throws -> Int {
         let (value, overflow) = width.multipliedReportingOverflow(by: 4)
         guard !overflow else {
@@ -195,10 +195,10 @@ private extension CoreGraphicsDecodedImage {
         return value
     }
 
-    /// 创建图片处理错误。
+    /// Creates an image processing error.
     ///
-    /// - Parameter message: 图片处理失败的可读说明。
-    /// - Returns: 具有媒体错误码的 SDK 错误。
+    /// - Parameter message: A readable image processing failure description.
+    /// - Returns: An SDK error with the media error code.
     static func processingError(_ message: String) -> XmaxError {
         XmaxError(code: .mediaError, message: message)
     }

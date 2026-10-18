@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -214,7 +214,7 @@ private extension RemoteVideoFramePipelineTests {
         }
         await fulfillment(of: [closeStarted], timeout: 2)
 
-        // 新流可以先到达，但必须等待旧会话及其在途帧完整结束。
+        // The new stream may arrive early but must await the old session and all in-flight frames.
         await pipeline.enqueue(frame, outputToken: 3)
         let latestReset = Task { await pipeline.reset(outputToken: 3) }
         try await Task.sleep(nanoseconds: 50000000)

@@ -32,7 +32,7 @@ let package = Package(
             name: "XmaxSDKTests",
             dependencies: ["XmaxSDK"],
             path: "Tests/XmaxSDKTests",
-            // 命令行 XCTest bundle 从构建产物目录加载第三方动态框架。
+            // Command-line XCTest bundles load third-party dynamic frameworks from the build products directory.
             linkerSettings: [
                 .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@loader_path/../../.."])
             ]

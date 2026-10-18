@@ -3,16 +3,16 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 相对于处理后媒体尺寸的二维归一化交互点，左上角为原点，右下角为 `(1, 1)`。
+/// A normalized interaction point relative to processed media, from the top-left origin to `(1, 1)` at bottom right.
 struct RealtimePoint: Equatable, Sendable {
 
-    /// 归一化坐标，取值范围为 [0, 1]
+    /// Normalized coordinates in [0, 1]
     let x: Double
     let y: Double
 }

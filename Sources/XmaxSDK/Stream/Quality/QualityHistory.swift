@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,21 +11,21 @@
 
 import Foundation
 
-/// 按模型和传输方向保存一小时内成功提交的档位。
+/// Stores successfully committed tiers by model and direction for one hour.
 struct QualityHistory {
 
-    /// 模型隔离
+    /// Model isolation
     let model: String
 
-    /// 持久化存储
+    /// Persistent storage
     var defaults: UserDefaults = .standard
 
-    /// 读取当前模型指定方向最近一小时内的有效档位。
+    /// Reads a valid tier for the model and direction from the past hour.
     ///
     /// - Parameters:
-    ///   - downlink: 是否读取下行档位；`false` 表示上行。
-    ///   - now: 当前 Unix 时间，单位为秒。
-    /// - Returns: 有效历史档位；历史缺失、过期或时间无效时返回默认档位 2。
+    ///   - downlink: Whether to read downstream history; `false` reads upstream.
+    ///   - now: The current Unix time in seconds.
+    /// - Returns: The valid historical tier, or default tier 2 for missing, expired, or invalid history.
     func read(downlink: Bool, now: TimeInterval = Date().timeIntervalSince1970) -> Int {
         let key = key(downlink)
         let savedAt = defaults.double(forKey: key + ".time")
@@ -34,21 +34,21 @@ struct QualityHistory {
         return level
     }
 
-    /// 保存当前模型指定方向成功应用的档位。
+    /// Saves a successfully applied tier for the current model and direction.
     ///
     /// - Parameters:
-    ///   - level: 成功应用的档位，范围为 `1...5`。
-    ///   - downlink: 是否保存下行档位；`false` 表示上行。
-    ///   - now: 当前 Unix 时间，单位为秒。
+    ///   - level: The successfully applied tier in `1...5`.
+    ///   - downlink: Whether to save downstream history; `false` saves upstream.
+    ///   - now: The current Unix time in seconds.
     func write(level: Int, downlink: Bool, now: TimeInterval = Date().timeIntervalSince1970) {
         defaults.set(level, forKey: key(downlink))
         defaults.set(now, forKey: key(downlink) + ".time")
     }
 
-    /// 生成按模型和传输方向隔离的历史存储键。
+    /// Creates a history storage key scoped by model and direction.
     ///
-    /// - Parameter downlink: 是否为下行方向。
-    /// - Returns: 当前模型和方向对应的存储键。
+    /// - Parameter downlink: Whether this is the downstream direction.
+    /// - Returns: The storage key for the current model and direction.
     private func key(_ downlink: Bool) -> String {
         "xmax.quality.agora.\(model).\(downlink ? "downlink" : "uplink")"
     }

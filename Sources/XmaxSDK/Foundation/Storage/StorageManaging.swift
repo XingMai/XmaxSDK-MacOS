@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,19 +11,19 @@
 
 import Foundation
 
-/// 定义基础文件上传和下载能力。
+/// Defines basic file upload and download capabilities.
 protocol StorageManaging: Sendable {
 
-    /// 使用临时凭证上传数据或本地文件。
+    /// Uploads data or a local file with temporary credentials.
     ///
     /// - Parameters:
-    ///   - source: 待上传的二进制数据或本地文件。
-    ///   - objectKey: 存储桶内的目标对象路径。
-    ///   - contentType: 上传内容的 MIME 类型。
-    ///   - configuration: 存储地址、桶和临时访问凭证。
-    ///   - progress: 接收已传输字节数与总字节数的回调；`nil` 不接收进度。
-    /// - Returns: 包含访问 URL、对象路径与可用 ETag 的上传结果。
-    /// - Throws: 输入无效、凭证无效、上传失败或任务取消时抛出错误。
+    ///   - source: The binary data or local file to upload.
+    ///   - objectKey: The destination object path within the bucket.
+    ///   - contentType: The upload content MIME type.
+    ///   - configuration: The storage endpoint, bucket, and temporary credentials.
+    ///   - progress: The transferred and total byte count callback; `nil` disables progress reporting.
+    /// - Returns: The upload result with access URL, object path, and ETag when available.
+    /// - Throws: An error on invalid input or credentials, upload failure, or cancellation.
     func upload(
         source: StorageUploadSource,
         objectKey: String,
@@ -32,14 +32,14 @@ protocol StorageManaging: Sendable {
         progress: StorageProgressListener?
     ) async throws -> StoredFile
 
-    /// 下载远端文件并写入指定本地位置。
+    /// Downloads a remote file to the specified local destination.
     ///
     /// - Parameters:
-    ///   - remoteURL: 待下载文件的远端 URL。
-    ///   - destinationURL: 写入文件的本地目标 URL。
-    ///   - progress: 接收已传输字节数与总字节数的回调；`nil` 不接收进度。
-    /// - Returns: 写入完成的本地文件 URL 与字节数。
-    /// - Throws: 地址无效、下载或文件写入失败，以及任务取消时抛出错误。
+    ///   - remoteURL: The remote file URL to download.
+    ///   - destinationURL: The local destination file URL.
+    ///   - progress: The transferred and total byte count callback; `nil` disables progress reporting.
+    /// - Returns: The completed local file URL and byte count.
+    /// - Throws: An error on invalid URLs, download or file write failure, or cancellation.
     func download(
         remoteURL: URL,
         destinationURL: URL,
@@ -49,15 +49,15 @@ protocol StorageManaging: Sendable {
 
 extension StorageManaging {
 
-    /// 上传数据或本地文件，不接收进度通知。
+    /// Uploads data or a local file without progress reporting.
     ///
     /// - Parameters:
-    ///   - source: 待上传的二进制数据或本地文件。
-    ///   - objectKey: 存储桶内的目标对象路径。
-    ///   - contentType: 上传内容的 MIME 类型。
-    ///   - configuration: 存储地址、桶和临时访问凭证。
-    /// - Returns: 包含访问 URL、对象路径与可用 ETag 的上传结果。
-    /// - Throws: 输入无效、凭证无效、上传失败或任务取消时抛出错误。
+    ///   - source: The binary data or local file to upload.
+    ///   - objectKey: The destination object path within the bucket.
+    ///   - contentType: The upload content MIME type.
+    ///   - configuration: The storage endpoint, bucket, and temporary credentials.
+    /// - Returns: The upload result with access URL, object path, and ETag when available.
+    /// - Throws: An error on invalid input or credentials, upload failure, or cancellation.
     func upload(
         source: StorageUploadSource,
         objectKey: String,
@@ -73,13 +73,13 @@ extension StorageManaging {
         )
     }
 
-    /// 下载远端文件，不接收进度通知。
+    /// Downloads a remote file without progress reporting.
     ///
     /// - Parameters:
-    ///   - remoteURL: 待下载文件的远端 URL。
-    ///   - destinationURL: 写入文件的本地目标 URL。
-    /// - Returns: 写入完成的本地文件 URL 与字节数。
-    /// - Throws: 地址无效、下载或文件写入失败，以及任务取消时抛出错误。
+    ///   - remoteURL: The remote file URL to download.
+    ///   - destinationURL: The local destination file URL.
+    /// - Returns: The completed local file URL and byte count.
+    /// - Throws: An error on invalid URLs, download or file write failure, or cancellation.
     func download(
         remoteURL: URL,
         destinationURL: URL

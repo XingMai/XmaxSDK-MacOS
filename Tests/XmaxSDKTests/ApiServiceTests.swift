@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -93,7 +93,7 @@ final class ApiServiceTests: XCTestCase {
         if let body = request.httpBody {
             requestBody = body
         } else {
-            // macOS URLSession 可能将请求体转换为输入流后交给 URLProtocol。
+            // macOS URLSession may convert the request body to an input stream before delivering it to URLProtocol.
             let stream = try XCTUnwrap(request.httpBodyStream)
             stream.open()
             defer { stream.close() }
@@ -347,7 +347,7 @@ private struct ApiTestBody: Codable, Equatable, Sendable {
 
 private final class ApiURLProtocolStub: URLProtocol {
 
-    /// 共享状态
+    /// Shared state
     private static let state = ApiURLProtocolStubState()
 
     static var request: URLRequest? {
@@ -401,15 +401,15 @@ private final class ApiURLProtocolStub: URLProtocol {
 
 private final class ApiURLProtocolStubState: @unchecked Sendable {
 
-    /// 并发控制
+    /// Concurrency control
     private let lock = NSLock()
 
-    /// 响应配置
+    /// Response configuration
     private var statusCode = 200
     private var data = Data()
     private var error: (any Error)?
 
-    /// 运行状态
+    /// Runtime state
     private var capturedRequest: URLRequest?
 
     var request: URLRequest? {

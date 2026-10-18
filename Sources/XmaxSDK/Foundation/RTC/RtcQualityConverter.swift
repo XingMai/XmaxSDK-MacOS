@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,12 +11,12 @@
 
 @preconcurrency import AgoraRtcKit
 
-/// 在声网质量事件与中性质量模型之间转换。
+/// Converts Agora quality events to neutral quality models.
 enum RtcQualityConverter {
-    /// 将声网本地视频统计转换为 SDK 上行指标。
+    /// Converts Agora local video statistics to SDK upstream metrics.
     ///
-    /// - Parameter stats: 声网上行统计。
-    /// - Returns: 无效指标使用 `nil` 表示的上行统计。
+    /// - Parameter stats: The Agora upstream statistics.
+    /// - Returns: Upstream statistics with invalid metrics represented by `nil`.
     static func uplinkVideoStatistics(_ stats: AgoraRtcLocalVideoStats) -> UplinkVideoStatistics {
         UplinkVideoStatistics(
             width: stats.encodedFrameWidth > 0 ? stats.encodedFrameWidth : nil,
@@ -29,12 +29,12 @@ enum RtcQualityConverter {
         )
     }
 
-    /// 将声网远端视频统计转换为 SDK 下行指标。
+    /// Converts Agora remote video statistics to SDK downstream metrics.
     ///
     /// - Parameters:
-    ///   - userID: 远端用户账号。
-    ///   - stats: 声网下行统计。
-    /// - Returns: 关联远端账号且无效指标为 `nil` 的下行统计。
+    ///   - userID: The remote user account.
+    ///   - stats: The Agora downstream statistics.
+    /// - Returns: Downstream statistics associated with a remote account, with invalid metrics represented by `nil`.
     static func downlinkVideoStatistics(
         userID: String, _ stats: AgoraRtcRemoteVideoStats
     ) -> DownlinkVideoStatistics {
@@ -50,18 +50,18 @@ enum RtcQualityConverter {
         )
     }
 
-    /// 保留非负统计值并过滤无效负值。
+    /// Preserves nonnegative statistics and rejects negative values.
     ///
-    /// - Parameter value: 待校验的统计值。
-    /// - Returns: 非负原值；负值返回 `nil`。
+    /// - Parameter value: The statistic to validate.
+    /// - Returns: The original nonnegative value; `nil` for negative values.
     private static func nonnegative(_ value: Int) -> Int? {
         value >= 0 ? value : nil
     }
 
-    /// 将声网网络质量转换为 SDK 质量等级。
+    /// Converts Agora network quality to SDK quality levels.
     ///
-    /// - Parameter quality: 声网网络质量等级。
-    /// - Returns: 对应的 SDK 等级；未知值返回 `.unknown`。
+    /// - Parameter quality: The Agora network quality level.
+    /// - Returns: The corresponding SDK level; `.unknown` for unknown values.
     static func convertLevel(_ quality: AgoraNetworkQuality) -> RtcQualityLevel {
         RtcQualityLevel(rawValue: Int(quality.rawValue)) ?? .unknown
     }

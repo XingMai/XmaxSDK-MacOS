@@ -3,13 +3,13 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 相机采集使用的镜头方向。
+/// The lens position used for camera capture.
 public enum CameraPosition: String, CaseIterable, Sendable {
     case front
     case back

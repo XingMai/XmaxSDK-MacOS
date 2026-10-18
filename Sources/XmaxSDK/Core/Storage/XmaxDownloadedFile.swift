@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,20 +11,20 @@
 
 import Foundation
 
-/// 表示下载到本地的文件。
+/// A file downloaded to local storage.
 public struct XmaxDownloadedFile: Equatable, Sendable {
 
-    /// 下载后的本地文件地址。
+    /// The downloaded local file URL.
     public let fileURL: URL
 
-    /// 下载文件的字节数。
+    /// The downloaded file size in bytes.
     public let byteCount: Int64
 
-    /// 创建下载结果。
+    /// Creates a download result.
     ///
     /// - Parameters:
-    ///   - fileURL: 下载完成后的本地文件地址。
-    ///   - byteCount: 本地文件的字节数。
+    ///   - fileURL: The local file URL after download completes.
+    ///   - byteCount: The local file size in bytes.
     init(fileURL: URL, byteCount: Int64) {
         self.fileURL = fileURL
         self.byteCount = byteCount

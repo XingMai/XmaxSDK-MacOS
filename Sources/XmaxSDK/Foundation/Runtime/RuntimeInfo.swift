@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -12,16 +12,16 @@
 import Darwin
 import Foundation
 
-/// 描述 SDK 当前运行环境。
+/// Describes the current SDK runtime environment.
 struct RuntimeInfo: Encodable, Sendable {
 
-    /// 运行环境信息
+    /// Runtime environment information
     let platform: String
     let osVersion: String
     let sdkVersion: String
     let deviceModel: String
 
-    /// 当前环境快照
+    /// Current environment snapshot
     static let current = RuntimeInfo(
         platform: "macos",
         osVersion: currentOSVersion(),
@@ -29,7 +29,7 @@ struct RuntimeInfo: Encodable, Sendable {
         deviceModel: currentDeviceModel()
     )
 
-    /// 定义运行环境字段在请求中的编码名称。
+    /// Defines request encoding names for runtime environment fields.
     enum CodingKeys: String, CodingKey {
         case platform
         case osVersion = "os_version"
@@ -39,9 +39,9 @@ struct RuntimeInfo: Encodable, Sendable {
 }
 
 private extension RuntimeInfo {
-    /// 读取当前操作系统版本并省略零补丁号。
+    /// Reads the operating system version, omitting a zero patch version.
     ///
-    /// - Returns: 以点分隔的系统主版本、次版本和可选补丁版本。
+    /// - Returns: The dot-separated major, minor, and optional patch version.
     static func currentOSVersion() -> String {
         let version = ProcessInfo.processInfo.operatingSystemVersion
         var components = [
@@ -54,9 +54,9 @@ private extension RuntimeInfo {
         return components.joined(separator: ".")
     }
 
-    /// 读取 Mac 硬件机型标识，无法读取时回退到系统架构。
+    /// Reads the Mac hardware model identifier, falling back to system architecture.
     ///
-    /// - Returns: 设备硬件标识；无法读取时返回 `unknown`。
+    /// - Returns: The hardware identifier, or `unknown` if unavailable.
     static func currentDeviceModel() -> String {
         var modelLength = 0
         if sysctlbyname("hw.model", nil, &modelLength, nil, 0) == 0, modelLength > 0 {

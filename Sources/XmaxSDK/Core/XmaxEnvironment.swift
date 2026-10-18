@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,19 +11,19 @@
 
 import Foundation
 
-/// Xmax 服务环境。
+/// The Xmax service environment.
 public enum XmaxEnvironment: String, CaseIterable, Equatable, Sendable {
 
-    /// 国内环境。
+    /// The domestic environment.
     case china
 
-    /// 海外环境。
+    /// The overseas environment.
     case global
 }
 
 extension XmaxEnvironment {
 
-    /// 当前环境的通用 API 地址。
+    /// The general API URL for this environment.
     var apiBaseURL: URL {
         switch self {
         case .china:

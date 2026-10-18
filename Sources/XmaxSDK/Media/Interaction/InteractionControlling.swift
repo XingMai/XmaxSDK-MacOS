@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,23 +11,23 @@
 
 import Foundation
 
-/// 管理生成任务期间的轨迹交互输入。
+/// Manages trajectory interaction input during generation.
 protocol InteractionControlling: Sendable {
-    /// 开始接收当前生成任务的触控轨迹。
+    /// Starts receiving touch trajectories for the current generation task.
     ///
     /// - Parameters:
-    ///   - taskID: 当前生成任务标识。
-    ///   - videoFormat: 固定的本地媒体规格，作为发送轨迹的归一化坐标基准。
+    ///   - taskID: The current generation task identifier.
+    ///   - videoFormat: The fixed local media format used as the normalization reference.
     func startInteraction(
         taskID: String,
         videoFormat: RealtimeVideoFormat
     ) async
 
-    /// 停止接收轨迹并清理当前任务。
+    /// Stops receiving trajectories and clears the current task.
     func stopInteraction() async
 
-    /// 提交触控轨迹。
+    /// Submits a touch trajectory.
     ///
-    /// - Parameter frame: 当前视图中采集的轨迹及显示尺寸。
+    /// - Parameter frame: The trajectory and display dimensions captured from the current view.
     func submitInteraction(_ frame: InteractionFrame) async
 }

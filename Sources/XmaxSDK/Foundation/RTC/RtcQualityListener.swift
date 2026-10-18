@@ -3,13 +3,13 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 中性的 RTC 网络质量等级。
+/// Neutral RTC network quality levels.
 enum RtcQualityLevel: Int, CaseIterable, Sendable {
     case unknown
     case excellent
@@ -20,39 +20,39 @@ enum RtcQualityLevel: Int, CaseIterable, Sendable {
     case down
 }
 
-/// 接收 RTC 网络质量和性能回退事件。
+/// Receives RTC network quality and performance fallback events.
 protocol RtcQualityListener: AnyObject {
 
-    /// 接收本地视频上行统计。
+    /// Receives local upstream video statistics.
     ///
-    /// - Parameter statistics: 当前统计周期的上行指标。
+    /// - Parameter statistics: The upstream metrics for this reporting interval.
     @MainActor
     func onUplinkVideoStatistics(_ statistics: UplinkVideoStatistics)
 
-    /// 接收远端视频下行统计。
+    /// Receives remote downstream video statistics.
     ///
-    /// - Parameter statistics: 当前统计周期的下行指标。
+    /// - Parameter statistics: The downstream metrics for this reporting interval.
     @MainActor
     func onDownlinkVideoStatistics(_ statistics: DownlinkVideoStatistics)
 
-    /// 接收上下行实时网络质量。
+    /// Receives realtime upstream and downstream network quality.
     ///
     /// - Parameters:
-    ///   - uplink: 本地发送方向的网络质量。
-    ///   - downlink: 远端接收方向的网络质量。
+    ///   - uplink: The local sending network quality.
+    ///   - downlink: The remote receiving network quality.
     @MainActor
     func onNetworkQuality(
         uplink: RtcQualityLevel,
         downlink: RtcQualityLevel
     )
 
-    /// 接收性能受限或恢复事件。
+    /// Receives performance limitation or recovery events.
     ///
     /// - Parameters:
-    ///   - limited: 当前是否受性能限制。
-    ///   - suggestedWidth: 建议的视频宽度，单位为像素。
-    ///   - suggestedHeight: 建议的视频高度，单位为像素。
-    ///   - suggestedFrameRate: 建议的视频帧率，单位为 fps。
+    ///   - limited: Whether performance is currently limited.
+    ///   - suggestedWidth: The suggested video width in pixels.
+    ///   - suggestedHeight: The suggested video height in pixels.
+    ///   - suggestedFrameRate: The suggested video frame rate in fps.
     @MainActor
     func onPerformanceAlarm(
         limited: Bool,

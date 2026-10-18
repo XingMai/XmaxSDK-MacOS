@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,30 +11,30 @@
 
 import Foundation
 
-/// 在独立串行队列中向接入方分发远端最终视频帧。
+/// Dispatches final remote frames to callers on a separate serial queue.
 final class RealtimeVideoFrameDispatcher: @unchecked Sendable {
 
-    /// 保存当前帧监听器及待交付帧的有效版本。
+    /// Stores the frame listener and validity version for pending frames.
     private struct State {
 
-        /// 监听与有效期
+        /// Listener and validity
         var listener: RealtimeVideoFrameListener?
         var version = 0
     }
 
-    /// 监听状态
+    /// Listener state
     private let stateLock = NSLock()
     private var state = State()
 
-    /// 分发资源
+    /// Dispatch resources
     private let deliveryQueue = DispatchQueue(
         label: "ai.xmax.sdk.remote-video-frame",
         qos: .userInitiated
     )
 
-    /// 设置最终视频帧监听器，并使旧监听器排队帧失效。
+    /// Sets the final video frame listener and invalidates queued frames for the previous listener.
     ///
-    /// - Parameter listener: 接收最终视频帧的回调；传入 `nil` 停止回调。
+    /// - Parameter listener: The final frame callback; `nil` stops callbacks.
     func setListener(_ listener: RealtimeVideoFrameListener?) {
         stateLock.withLock {
             state.version += 1
@@ -42,16 +42,16 @@ final class RealtimeVideoFrameDispatcher: @unchecked Sendable {
         }
     }
 
-    /// 使当前已经排队、但尚未交付的远端帧失效。
+    /// Invalidates remote frames already queued but not yet delivered.
     func invalidatePendingFrames() {
         stateLock.withLock {
             state.version += 1
         }
     }
 
-    /// 按接收顺序在独立串行队列交付最终视频帧。
+    /// Delivers final video frames in arrival order on a separate serial queue.
     ///
-    /// - Parameter frame: 已完成插帧等处理的远端视频帧。
+    /// - Parameter frame: The remote video frame after interpolation and other processing.
     func dispatch(_ frame: RealtimeVideoFrame) {
         let version = stateLock.withLock { () -> Int? in
             guard state.listener != nil else { return nil }
@@ -67,10 +67,10 @@ final class RealtimeVideoFrameDispatcher: @unchecked Sendable {
         }
     }
 
-    /// 读取与交付版本匹配的当前监听器。
+    /// Reads the current listener matching the delivery version.
     ///
-    /// - Parameter version: 入队时记录的监听版本。
-    /// - Returns: 仍有效的监听器；版本过期或监听已清除时返回 `nil`。
+    /// - Parameter version: The listener version recorded when enqueueing.
+    /// - Returns: The valid listener, or `nil` if the version expired or the listener was cleared.
     private func listener(
         for version: Int
     ) -> RealtimeVideoFrameListener? {

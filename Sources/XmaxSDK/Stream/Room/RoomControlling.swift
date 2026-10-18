@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,33 +11,33 @@
 
 import CoreGraphics
 
-/// 定义 RTC 房间生命周期和业务信令发送能力。
+/// Defines RTC room lifecycle and business signaling capabilities.
 protocol RoomControlling: Actor {
 
-    /// 加入实时房间，并在异步边界确认连接操作仍有效。
+    /// Joins the realtime room and checks connection validity across asynchronous boundaries.
     ///
     /// - Parameters:
-    ///   - connection: 服务端分配的 RTC 连接信息。
-    ///   - ensureActive: 检查当前连接操作有效性的回调。
-    /// - Throws: 房间状态无效、RTC 进房失败、超时或操作取消时抛出错误。
+    ///   - connection: The server-assigned RTC connection information.
+    ///   - ensureActive: The callback checking current connection validity.
+    /// - Throws: An error on invalid room state, RTC join failure, timeout, or cancellation.
     func join(
         connection: RealtimeSessionConnection,
         ensureActive: @escaping @Sendable () throws -> Void
     ) async throws
 
-    /// 停止房间心跳并离开当前 RTC 房间。
+    /// Stops room heartbeats and leaves the current RTC room.
     func leave() async
 
-    /// 将生成开始信令提交到房间发送队列。
+    /// Enqueues a generation start signal for the room.
     ///
     /// - Parameters:
-    ///   - taskID: 当前生成任务标识。
-    ///   - videoFormat: 服务端生成使用的视频规格。
-    ///   - targetSize: 生成后回传的像素尺寸；`nil` 表示保持生成尺寸。
-    ///   - context: 当前生成条件。
-    ///   - faceRestoration: 是否回贴原始人脸。
-    ///   - paddingContain: 是否保留源比例并填充生成画布。
-    /// - Throws: 房间未就绪、信令编码或入队失败时抛出错误。
+    ///   - taskID: The current generation task identifier.
+    ///   - videoFormat: The server generation video format.
+    ///   - targetSize: The returned pixel dimensions; `nil` preserves generation dimensions.
+    ///   - context: The current generation conditions.
+    ///   - faceRestoration: Whether to restore the original face.
+    ///   - paddingContain: Whether to preserve source aspect ratio and pad the generation canvas.
+    /// - Throws: An error if the room is unready or signal encoding or enqueueing fails.
     func startGeneration(
         taskID: String,
         videoFormat: RealtimeVideoFormat,
@@ -47,16 +47,16 @@ protocol RoomControlling: Actor {
         paddingContain: Bool
     ) throws
 
-    /// 将生成条件变更信令提交到房间发送队列。
+    /// Enqueues a generation condition update signal for the room.
     ///
     /// - Parameters:
-    ///   - taskID: 当前生成任务标识。
-    ///   - videoFormat: 服务端生成使用的视频规格。
-    ///   - targetSize: 生成后回传的像素尺寸；`nil` 表示保持生成尺寸。
-    ///   - context: 当前生成条件。
-    ///   - faceRestoration: 是否回贴原始人脸。
-    ///   - paddingContain: 是否保留源比例并填充生成画布。
-    /// - Throws: 房间未就绪、调用取消、信令编码或入队失败时抛出错误。
+    ///   - taskID: The current generation task identifier.
+    ///   - videoFormat: The server generation video format.
+    ///   - targetSize: The returned pixel dimensions; `nil` preserves generation dimensions.
+    ///   - context: The current generation conditions.
+    ///   - faceRestoration: Whether to restore the original face.
+    ///   - paddingContain: Whether to preserve source aspect ratio and pad the generation canvas.
+    /// - Throws: An error on unready room, cancellation, signal encoding failure, or enqueueing failure.
     func changeGenerationCondition(
         taskID: String,
         videoFormat: RealtimeVideoFormat,
@@ -66,31 +66,31 @@ protocol RoomControlling: Actor {
         paddingContain: Bool
     ) throws
 
-    /// 调整当前生成任务的回传尺寸。
+    /// Adjusts return dimensions for the current generation task.
     ///
     /// - Parameters:
-    ///   - taskID: 当前生成任务标识。
-    ///   - targetSize: 生成后回传的整数像素尺寸。
-    ///   - ensureActive: 发送前确认当前配置操作仍有效。
-    /// - Throws: 操作已取消、房间未就绪或信令发送失败时抛出错误。
+    ///   - taskID: The current generation task identifier.
+    ///   - targetSize: The returned integer-pixel dimensions.
+    ///   - ensureActive: Checks current configuration operation validity before sending.
+    /// - Throws: An error on cancellation, unready room, or signal send failure.
     func changeTargetSize(
         taskID: String,
         targetSize: CGSize,
         ensureActive: @Sendable () throws -> Void
     ) async throws
 
-    /// 提交生成停止信令，未进房或任务为空时忽略。
+    /// Enqueues a stop signal; ignores an unjoined room or empty task.
     ///
-    /// - Parameter taskID: 需要停止的生成任务标识。
-    /// - Throws: 停止信令编码或入队失败时抛出错误。
+    /// - Parameter taskID: The generation task identifier to stop.
+    /// - Throws: An error if stop signal encoding or enqueueing fails.
     func stopGeneration(taskID: String) throws
 
-    /// 提交当前生成任务的交互轨迹。
+    /// Submits an interaction trajectory for the current generation task.
     ///
     /// - Parameters:
-    ///   - taskID: 接收轨迹的任务标识；空值时不发送。
-    ///   - points: 媒体归一化坐标点，取值范围为 `[0, 1]`；空数组时不发送。
-    /// - Throws: 房间未就绪、轨迹编码或信令入队失败时抛出错误。
+    ///   - taskID: The destination task identifier; empty values are not sent.
+    ///   - points: Media-normalized points in `[0, 1]`; empty arrays are not sent.
+    /// - Throws: An error on unready room, trajectory encoding failure, or signal enqueueing failure.
     func sendTracks(
         taskID: String,
         points: [RealtimePoint]

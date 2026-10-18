@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,15 +11,15 @@
 
 import CoreGraphics
 
-/// 将渲染视口坐标映射到固定媒体基准的归一化坐标。
+/// Maps render viewport coordinates to normalized coordinates in a fixed media reference.
 enum InteractionCoordinateMapper {
-    /// 计算视频按指定缩放方式显示在视口中的区域。
+    /// Calculates the video display rectangle for the specified viewport scaling mode.
     ///
     /// - Parameters:
-    ///   - viewportSize: 渲染视口尺寸，单位为点。
-    ///   - videoSize: 视频内容尺寸，单位为像素。
-    ///   - contentMode: 视频填充或适应视口的方式。
-    /// - Returns: 视频在视口坐标系中的显示区域；尺寸或缩放无效时返回 `nil`。
+    ///   - viewportSize: The render viewport dimensions in points.
+    ///   - videoSize: The video content dimensions in pixels.
+    ///   - contentMode: How video fills or fits the viewport.
+    /// - Returns: The video display rectangle in viewport coordinates; `nil` for invalid dimensions or scaling.
     static func displayedFrame(
         viewportSize: CGSize,
         videoSize: CGSize,
@@ -53,15 +53,15 @@ enum InteractionCoordinateMapper {
         )
     }
 
-    /// 根据实际画面显示区域，计算触控位置在媒体中的相对坐标。
+    /// Calculates relative media coordinates from a touch location and the actual video display rectangle.
     ///
     /// - Parameters:
-    ///   - point: 触控点在视口中的位置。
-    ///   - viewportSize: 渲染视口尺寸，单位为点。
-    ///   - displayedVideoSize: 当前显示帧的像素尺寸，用于确定画面显示区域。
-    ///   - mediaSize: 经尺寸上限与对齐处理的媒体尺寸，作为归一化坐标基准。
-    ///   - contentMode: 视频缩放与裁剪方式。
-    /// - Returns: 范围为 `[0, 1]` 的媒体归一化坐标；输入无效或点击 fit 留白区域时返回 `nil`。
+    ///   - point: The touch location in the viewport.
+    ///   - viewportSize: The render viewport dimensions in points.
+    ///   - displayedVideoSize: The displayed frame pixel dimensions used to determine the video display rectangle.
+    ///   - mediaSize: The size-limited, aligned media dimensions used as the normalization reference.
+    ///   - contentMode: The video scaling and cropping mode.
+    /// - Returns: Media-normalized coordinates in `[0, 1]`; `nil` for invalid input or taps in fit-mode margins.
     static func map(
         _ point: CGPoint,
         viewportSize: CGSize,

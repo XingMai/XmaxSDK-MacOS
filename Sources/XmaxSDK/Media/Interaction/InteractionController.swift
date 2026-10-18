@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,50 +11,50 @@
 
 import Foundation
 
-/// 异步接收生成任务标识及其媒体归一化轨迹坐标。
+/// Asynchronously receives a generation task identifier and media-normalized trajectory coordinates.
 typealias InteractionListener = @Sendable (
     _ taskID: String,
     _ points: [RealtimePoint]
 ) async throws -> Void
 
-/// 将渲染容器中的触控位置转换为固定媒体基准的归一化坐标并发送。
+/// Maps touch locations from the render container to normalized coordinates in a fixed media reference and sends them.
 actor InteractionController: InteractionControlling {
-    /// 保存当前生成任务的交互坐标映射配置。
+    /// Stores interaction coordinate mapping for the current generation task.
     private struct ActiveInteraction {
 
-        /// 生成任务
+        /// Generation task
         let taskID: String
 
-        /// 坐标映射规则
+        /// Coordinate mapping rules
         let videoFormat: RealtimeVideoFormat
     }
 
-    /// 交互事件监听
+    /// Interaction event listeners
     private let listener: InteractionListener
 
-    /// 交互资源
+    /// Interaction resources
     private var activeInteraction: ActiveInteraction?
     private var pendingPoints: [RealtimePoint]?
     private var drainTask: Task<Void, Never>?
     private var drainGeneration = 0
 
-    /// 创建将轨迹坐标交付给信令层的交互控制器。
+    /// Creates an interaction controller forwarding trajectory coordinates to signaling.
     ///
-    /// - Parameter listener: 接收任务标识及媒体归一化坐标的异步回调。
+    /// - Parameter listener: The asynchronous callback receiving task identifiers and media-normalized coordinates.
     init(listener: @escaping InteractionListener = { _, _ in }) {
         self.listener = listener
     }
 
-    /// 取消尚未完成的轨迹发送任务。
+    /// Cancels pending trajectory send tasks.
     deinit {
         drainTask?.cancel()
     }
 
-    /// 开始接收当前生成任务的触控轨迹。
+    /// Starts receiving touch trajectories for the current generation task.
     ///
     /// - Parameters:
-    ///   - taskID: 当前生成任务标识。
-    ///   - videoFormat: 固定的本地媒体规格，作为发送轨迹的归一化坐标基准。
+    ///   - taskID: The current generation task identifier.
+    ///   - videoFormat: The fixed local media format used as the normalization reference.
     func startInteraction(
         taskID: String,
         videoFormat: RealtimeVideoFormat
@@ -66,15 +66,15 @@ actor InteractionController: InteractionControlling {
         )
     }
 
-    /// 停止接收轨迹并清理当前任务。
+    /// Stops receiving trajectories and clears the current task.
     func stopInteraction() {
         activeInteraction = nil
         cancelPendingFrames()
     }
 
-    /// 提交触控轨迹。
+    /// Submits a touch trajectory.
     ///
-    /// - Parameter frame: 当前视图中采集的轨迹及显示尺寸。
+    /// - Parameter frame: The trajectory and display dimensions captured from the current view.
     func submitInteraction(_ frame: InteractionFrame) {
         guard let activeInteraction,
               !frame.points.isEmpty else {
@@ -104,7 +104,7 @@ actor InteractionController: InteractionControlling {
 }
 
 private extension InteractionController {
-    /// 使当前发送任务失效并清空待发送轨迹。
+    /// Invalidates the current send task and clears pending trajectories.
     func cancelPendingFrames() {
         drainGeneration += 1
         pendingPoints = nil
@@ -112,9 +112,9 @@ private extension InteractionController {
         drainTask = nil
     }
 
-    /// 持续发送最新轨迹采样，并过滤已失效的发送循环。
+    /// Continuously sends the latest trajectory samples and rejects obsolete send loops.
     ///
-    /// - Parameter generation: 当前发送循环的版本标识。
+    /// - Parameter generation: The current send loop version identifier.
     func drainPendingFrames(generation: Int) async {
         while !Task.isCancelled,
               generation == drainGeneration,

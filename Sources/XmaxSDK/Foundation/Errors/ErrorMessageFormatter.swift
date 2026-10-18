@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,13 +11,13 @@
 
 import Foundation
 
-/// 将 SDK、系统和第三方错误转换为适合日志及调试界面展示的文本。
+/// Converts SDK, system, and third-party errors into text for logs and debugging interfaces.
 enum ErrorMessageFormatter {
 
-    /// 格式化指定错误，并保留可用于定位问题的稳定错误码。
+    /// Formats an error while preserving a stable diagnostic error code.
     ///
-    /// - Parameter error: 待格式化的错误。
-    /// - Returns: 可读的错误说明。
+    /// - Parameter error: The error to format.
+    /// - Returns: A readable error description.
     static func format(_ error: any Error) -> String {
         if let xmaxError = error as? XmaxError {
             let apiCode = xmaxError.apiCode.map { "，业务码 \($0)" } ?? ""

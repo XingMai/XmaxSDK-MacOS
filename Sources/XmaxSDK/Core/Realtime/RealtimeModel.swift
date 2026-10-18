@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -12,16 +12,16 @@
 import Foundation
 import CoreGraphics
 
-/// SDK 当前支持的实时生成模型。
+/// Realtime generation models currently supported by the SDK.
 public enum RealtimeModel: String, CaseIterable, Sendable {
 
-    /// 国内声网实时生成模型。
+    /// The domestic Agora realtime generation model.
     case x2_1_1_preview_cn = "x2.1.1-preview-cn"
 
-    /// 海外声网实时生成模型。
+    /// The overseas Agora realtime generation model.
     case x2_1_1_preview_us = "x2.1.1-preview-us"
 
-    /// 模型展示名称。
+    /// The model display name.
     public var displayName: String {
         switch self {
         case .x2_1_1_preview_cn: "X2.1.1-preview-cn"
@@ -29,7 +29,7 @@ public enum RealtimeModel: String, CaseIterable, Sendable {
         }
     }
 
-    /// 模型专用的会话 API 地址。
+    /// The session API URL for this model.
     var apiBaseURL: URL {
         switch self {
         case .x2_1_1_preview_cn: URL(string: "https://cloud.xmax.22duck.cn/open/api/v1")!
@@ -37,26 +37,26 @@ public enum RealtimeModel: String, CaseIterable, Sendable {
         }
     }
 
-    /// 模型支持的生成分辨率桶；摄像头输入须精确匹配。
-    /// 图片和视频保留媒体比例，生成时选择比例最接近的画布。
-    /// 空数组表示不限制固定尺寸，生成画布按像素面积上下限和对齐规则计算。
+    /// Supported generation resolution buckets; camera input must match exactly.
+    /// Images and videos retain their aspect ratio and use the closest generation canvas.
+    /// An empty array permits calculated canvas dimensions based on pixel area limits and alignment rules.
     public var resolutionBuckets: [CGSize] {
         [CGSize(width: 1024, height: 1920), CGSize(width: 1920, height: 1024)]
     }
 
-    /// 生成画布的最小总像素面积；仅在分辨率桶为空时参与计算，不放大小尺寸媒体帧。
+    /// The minimum generation canvas pixel area; applies only without resolution buckets and does not upscale small media frames.
     public var minimumInputPixels: Int { 600000 }
 
-    /// 本地媒体帧的最大总像素面积；分辨率桶为空时也用于限制生成画布。
+    /// The maximum local media frame pixel area; also limits the generation canvas when no resolution buckets are defined.
     public var maximumInputPixels: Int { 2100000 }
 
-    /// 输入宽高需要对齐的像素倍数；仅在分辨率桶为空时参与尺寸计算。
+    /// The pixel alignment multiple for input dimensions; used only when no resolution buckets are defined.
     public var inputSizeAlignment: Int { 32 }
 
-    /// 图片和视频输出以及默认摄像头配置使用的帧率。
+    /// The frame rate for image and video output and default camera configuration.
     public var defaultFrameRate: Int { 30 }
 
-    /// 摄像头采集使用的默认视频规格。
+    /// The default video format for camera capture.
     public var defaultCameraVideoFormat: RealtimeVideoFormat {
         RealtimeVideoFormat(width: 1920, height: 1024, fps: defaultFrameRate)
     }

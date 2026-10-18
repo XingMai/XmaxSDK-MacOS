@@ -10,7 +10,7 @@ import Kingfisher
 import SwiftUI
 import XmaxSDK
 
-/// 与 Web X-Lab 对齐的浅色配色。
+/// Light colors matching Web X-Lab.
 enum RealtimePalette {
     static let text = Color(red: 0.067, green: 0.075, blue: 0.094)
     static let secondary = Color(red: 0.42, green: 0.45, blue: 0.50)
@@ -20,7 +20,7 @@ enum RealtimePalette {
     static let accentHover = Color(red: 36.0 / 255, green: 56.0 / 255, blue: 196.0 / 255)
 }
 
-/// 顶栏使用与 Web 相同的 DM Sans 字体，字体随示例应用分发。
+/// Uses the same DM Sans font as the Web toolbar, bundled with the example app.
 @MainActor
 enum RealtimeHeaderTypography {
     private static let fontName = "DMSans9pt-Regular"
@@ -35,7 +35,7 @@ enum RealtimeHeaderTypography {
     }
 }
 
-/// 对应 Web 顶栏的渐变、外边框、内侧高光与两层阴影。
+/// Matches the Web toolbar gradient, outer border, inner highlight, and two shadow layers.
 struct RealtimeHeaderPillSurface: View {
     var destructive = false
     var hovered = false
@@ -80,7 +80,7 @@ struct RealtimeHeaderPillSurface: View {
     }
 }
 
-/// 顶栏按钮独立于舞台与输入区，尺寸和悬停反馈沿用 Web 的规则。
+/// Toolbar buttons use the Web sizing and hover feedback independently of the stage and input area.
 struct RealtimeHeaderButtonStyle: ButtonStyle {
     var height: CGFloat = 35
     var horizontalPadding: CGFloat = 14
@@ -122,7 +122,7 @@ private struct RealtimeHeaderButtonBody: View {
     }
 }
 
-/// 会话模型与计时器使用 Web 中同样的 36pt 被动胶囊。
+/// The session model and timer use the same passive 36pt pills as the Web example.
 struct RealtimeHeaderPill<Content: View>: View {
     @ViewBuilder let content: Content
 
@@ -136,7 +136,7 @@ struct RealtimeHeaderPill<Content: View>: View {
     }
 }
 
-/// 按 Web Key 图标的路径绘制，保持相同的方向和线宽。
+/// Draws the Web Key icon path with the same orientation and stroke width.
 struct RealtimeKeyIcon: View {
     var body: some View {
         GeometryReader { geometry in
@@ -157,7 +157,7 @@ struct RealtimeKeyIcon: View {
     }
 }
 
-/// 与 Web 模型选择器一致的 12pt 下拉图标。
+/// The same 12pt dropdown icon as the Web model selector.
 struct RealtimeHeaderChevron: View {
     var body: some View {
         Path { path in
@@ -171,7 +171,7 @@ struct RealtimeHeaderChevron: View {
     }
 }
 
-/// 弹层中的选择行，避免系统菜单忽略自定义顶栏按钮的外观。
+/// Popover selection rows preserve the custom toolbar appearance that system menus may ignore.
 struct RealtimeMenuOption: View {
     let title: String
     let isSelected: Bool
@@ -194,7 +194,7 @@ struct RealtimeMenuOption: View {
     }
 }
 
-/// 启动页的棋盘格舞台，与 Web 示例保持一致。
+/// The landing page checkerboard stage matches the Web example.
 struct RealtimeCheckerboard: View {
     var body: some View {
         Canvas { context, size in
@@ -215,7 +215,7 @@ struct RealtimeCheckerboard: View {
     }
 }
 
-/// 独立显示一个视频轨道，统计固定在左上角，标签位于左下角。
+/// Displays one video track with statistics at the top left and a label at the bottom left.
 struct RealtimeVideoPanel: View {
     let title: String
     let track: RealtimeVideoTrack?
@@ -264,7 +264,7 @@ struct RealtimeVideoPanel: View {
     }
 }
 
-/// 参考图缩略图复用同一份本地预览、进度和失败重试状态。
+/// Reference thumbnails share local preview, upload progress, and retry state.
 struct RealtimeReferenceThumbnail: View {
     let reference: RealtimeReference
     var loadsThumbnail = true
@@ -291,7 +291,7 @@ struct RealtimeReferenceThumbnail: View {
     }
 }
 
-/// 参考图圆形描边、悬停和选中反馈沿用 Web 的尺寸与颜色。
+/// Reference image outlines, hover feedback, and selection use the Web sizing and colors.
 struct RealtimeReferenceButton: View {
     let reference: RealtimeReference
     let isSelected: Bool
@@ -322,7 +322,7 @@ struct RealtimeReferenceButton: View {
     }
 }
 
-/// Kingfisher 管理图片加载与缓存；仅本地上传预览需要降采样。
+/// Kingfisher handles image loading and caching; only local upload previews need downsampling.
 struct RealtimeThumbnail: View {
     let url: URL
     var data: Data? = nil
@@ -375,7 +375,7 @@ struct RealtimeThumbnail: View {
     }
 }
 
-/// Web 的 18pt 白色环形 loading，0.8 秒一周；减少动态效果时保持静止。
+/// The Web 18pt white loading ring completes a turn in 0.8 seconds and stays still with reduced motion.
 struct RealtimeSpinner: View {
     var size: CGFloat = 18
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -395,7 +395,7 @@ struct RealtimeSpinner: View {
     }
 }
 
-/// 启动按钮有独立的禁用语义：loading 保持原有蓝色、阴影与透明度。
+/// The start button preserves its blue color, shadow, and opacity while disabled during loading.
 struct RealtimeStartButton: View {
     let isLoading: Bool
     let viewportWidth: CGFloat
@@ -424,7 +424,7 @@ struct RealtimeStartButton: View {
     }
 }
 
-/// 会话工具按钮与 Web 的统计蓝色、插帧金色激活态一致。
+/// Session tools use the Web active colors: blue for statistics and gold for interpolation.
 struct RealtimeSessionToolStyle: ButtonStyle {
     enum Kind { case volume, statistics, interpolation }
     var active = false
@@ -502,7 +502,7 @@ private struct RealtimeModeTabBody: View {
     }
 }
 
-/// 自由输入的上传和提交按钮均为 44pt 圆形。
+/// Free Prompt upload and submit buttons are both 44pt circles.
 struct RealtimePromptButtonStyle: ButtonStyle {
     var primary = false
     func makeBody(configuration: Configuration) -> some View {
@@ -531,7 +531,7 @@ private struct RealtimePromptButtonBody: View {
     }
 }
 
-/// Web 统计面板只接收已格式化的值；未公开或尚未收到的指标统一显示 —。
+/// The Web statistics panel receives formatted values; unavailable metrics display an em dash.
 struct RealtimeStatisticsGroup: Identifiable {
     let id: String
     var rows: [RealtimeStatisticsRow]
@@ -627,7 +627,7 @@ extension RealtimeSessionController {
     }
 }
 
-/// 沿用 Web 图标的 24×24 坐标，避免 SF Symbols 产生不同轮廓。
+/// Uses the Web icon coordinates on a 24×24 canvas to preserve their shapes.
 struct RealtimeWebIcon: View {
     enum Kind { case camera, microphone, statistics, muted, volume, volumeLow, lightning, plus, arrow, globe, socialX, wechat }
     let kind: Kind
@@ -720,12 +720,12 @@ struct RealtimeWebIcon: View {
     }
 }
 
-/// 避免 macOS 的 plain 样式对 disabled 内容额外叠加半透明。
+/// Prevents the macOS plain button style from adding opacity to disabled content.
 struct RealtimeUnstyledButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View { configuration.label }
 }
 
-/// Web 每行参考图居中，包括不足一整行的最后一行。
+/// Centers each reference image row, including an incomplete final row, as in the Web example.
 struct RealtimeReferenceGrid: Layout {
     private let itemWidth: CGFloat = 76
     private let gap: CGFloat = 14
@@ -750,7 +750,7 @@ struct RealtimeReferenceGrid: Layout {
     }
 }
 
-/// 页面仅在进入时渐入上浮，旧页面立即移除，不叠加两页内容。
+/// Incoming pages fade in and move upward; outgoing pages are removed immediately without overlap.
 struct RealtimePageEntry: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var appeared = false

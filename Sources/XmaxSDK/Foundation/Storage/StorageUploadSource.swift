@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,7 +11,7 @@
 
 import Foundation
 
-/// 对象存储上传支持的二进制数据或本地文件。
+/// Binary data or a local file supported by object storage uploads.
 enum StorageUploadSource: Equatable, Sendable {
     case data(Data)
     case file(URL)

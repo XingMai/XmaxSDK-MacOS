@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -14,11 +14,11 @@ import Foundation
 
 final class PermissionManagingStub: PermissionManaging, @unchecked Sendable {
 
-    /// 测试配置
+    /// Test configuration
     private let cameraError: (any Error)?
     private let microphoneError: (any Error)?
 
-    /// 并发状态
+    /// Concurrent state
     private let lock = NSLock()
     private var storedCameraRequestCount = 0
     private var storedMicrophoneRequestCount = 0

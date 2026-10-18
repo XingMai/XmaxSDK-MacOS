@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -14,11 +14,11 @@ import AppKit
 import CoreMedia
 import CoreVideo
 
-/// 显示本地摄像头或远端生成视频轨道的 AppKit 容器。
+/// An AppKit container displaying local camera or remote generated video tracks.
 @MainActor
 public final class XmaxVideoView: NSView {
 
-    /// 当前显示的视频轨道；为空时清除绑定。
+    /// The displayed video track; nil clears the binding.
     public var track: RealtimeVideoTrack? {
         didSet {
             guard oldValue !== track else { return }
@@ -27,7 +27,7 @@ public final class XmaxVideoView: NSView {
         }
     }
 
-    /// 视频内容在容器中的显示模式。
+    /// The video content display mode in its container.
     public var videoContentMode: VideoContentMode = .fill {
         didSet {
             guard oldValue != videoContentMode else { return }
@@ -35,25 +35,25 @@ public final class XmaxVideoView: NSView {
         }
     }
 
-    /// 渲染状态
+    /// Render state
     private weak var attachedTrack: RealtimeVideoTrack?
     var frameDisplayHandler: (() -> Void)?
 
-    /// 视频预览
+    /// Video preview
     private var decodedVideoLayer: AVSampleBufferDisplayLayer?
     private var decodedVideoTimebase: CMTimebase?
     private var nextDecodedVideoPresentationTime = CMTime.invalid
 
-    /// 本地预览缓冲资源
+    /// Local preview buffer resources
     private var localPreviewPixelBufferPool: CVPixelBufferPool?
     private var localPreviewFormat: VideoFormat?
     private var localPreviewFormatDescription: CMVideoFormatDescription?
 
-    /// 创建指定轨道和显示模式的视频容器。
+    /// Creates a video container with the specified track and display mode.
     ///
     /// - Parameters:
-    ///   - track: 需要显示的视频轨道；可以稍后设置。
-    ///   - videoContentMode: 视频内容的缩放与裁剪方式。
+    ///   - track: The video track to display; may be assigned later.
+    ///   - videoContentMode: The video content scaling and cropping mode.
     public init(track: RealtimeVideoTrack? = nil, videoContentMode: VideoContentMode = .fill) {
         self.track = track
         self.videoContentMode = videoContentMode
@@ -61,28 +61,28 @@ public final class XmaxVideoView: NSView {
         configureView()
     }
 
-    /// 使用指定布局区域创建视频容器。
+    /// Creates a video container with the specified frame.
     ///
-    /// - Parameter frame: 视图初始布局区域。
+    /// - Parameter frame: The initial view frame.
     public override init(frame: CGRect) {
         super.init(frame: frame)
         configureView()
     }
 
-    /// 从 Interface Builder 归档恢复视频容器。
+    /// Restores a video container from an Interface Builder archive.
     ///
-    /// - Parameter coder: 视图归档解码器。
+    /// - Parameter coder: The view archive decoder.
     public required init?(coder: NSCoder) {
         super.init(coder: coder)
         configureView()
     }
 
-    /// 销毁视图时解除轨道绑定及预览资源。
+    /// Unbinds the track and releases preview resources when the view is destroyed.
     isolated deinit {
         detach(track: attachedTrack)
     }
 
-    /// 随窗口挂载状态同步轨道绑定。
+    /// Synchronizes track binding with window attachment state.
     public override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         if window == nil {
@@ -92,7 +92,7 @@ public final class XmaxVideoView: NSView {
         }
     }
 
-    /// 仅更新图层布局，不改变媒体规格或实时连接。
+    /// Updates layer layout without changing media format or realtime connection.
     public override func layout() {
         super.layout()
         CATransaction.begin()
@@ -101,10 +101,10 @@ public final class XmaxVideoView: NSView {
         CATransaction.commit()
     }
 
-    /// 使用由上向下的视图坐标。
+    /// Uses top-down view coordinates.
     public override var isFlipped: Bool { true }
 
-    /// 创建黑色背景的图层容器。
+    /// Creates a layer container with a black background.
     private func configureView() {
         wantsLayer = true
         layer?.backgroundColor = NSColor.black.cgColor
@@ -113,16 +113,16 @@ public final class XmaxVideoView: NSView {
 }
 
 extension XmaxVideoView {
-    /// 创建或更新解码视频图层及其显示时钟。
+    /// Creates or updates the decoded video layer and its display clock.
     ///
-    /// - Parameter contentMode: 视频画面的缩放与裁剪方式。
+    /// - Parameter contentMode: The video scaling and cropping mode.
     func prepareDecodedVideoPreview(contentMode: VideoContentMode) {
         let decodedVideoLayer: AVSampleBufferDisplayLayer
         if let currentLayer = self.decodedVideoLayer {
             decodedVideoLayer = currentLayer
         } else {
             decodedVideoLayer = AVSampleBufferDisplayLayer()
-            // 视频内容跟随旋转布局立即更新，不叠加子图层的隐式缩放和翻转动画。
+            // Updates video with rotation layout immediately, avoiding implicit sublayer scaling or flip animations.
             decodedVideoLayer.actions = [
                 "bounds": NSNull(),
                 "position": NSNull(),
@@ -150,18 +150,18 @@ extension XmaxVideoView {
             .resizeAspect : .resizeAspectFill
     }
 
-    /// 设置解码视频预览的水平镜像。
+    /// Sets horizontal mirroring for decoded video preview.
     ///
-    /// - Parameter mirrored: 是否水平镜像画面。
+    /// - Parameter mirrored: Whether to mirror video horizontally.
     func setDecodedVideoPreviewMirrored(_ mirrored: Bool) {
         decodedVideoLayer?.setAffineTransform(CGAffineTransform(scaleX: mirrored ? -1 : 1, y: 1))
     }
 
-    /// 将本地 NV12 帧转换为样本并立即提交预览。
+    /// Converts local NV12 frames to samples and submits them for immediate preview.
     ///
     /// - Parameters:
-    ///   - frame: 待显示的本地视频帧。
-    ///   - contentMode: 视频画面的缩放与裁剪方式。
+    ///   - frame: The local video frame to display.
+    ///   - contentMode: The video scaling and cropping mode.
     func displayDecodedVideoFrame(
         _ frame: VideoFrame,
         contentMode: VideoContentMode
@@ -215,11 +215,11 @@ extension XmaxVideoView {
         }
     }
 
-    /// 按帧时长提交远端画面，并同步交互映射尺寸。
+    /// Submits remote frames with their durations and updates interaction mapping dimensions.
     ///
     /// - Parameters:
-    ///   - frame: 已完成插帧等处理的远端视频帧。
-    ///   - contentMode: 视频画面的缩放与裁剪方式。
+    ///   - frame: The remote video frame after interpolation and other processing.
+    ///   - contentMode: The video scaling and cropping mode.
     func displayRemoteVideoFrame(
         _ frame: RealtimeVideoFrame,
         contentMode: VideoContentMode
@@ -279,7 +279,7 @@ extension XmaxVideoView {
         frameDisplayHandler?()
     }
 
-    /// 移除视频图层并释放显示时钟和预览缓冲资源。
+    /// Removes video layers and releases display clock and preview buffers.
     func clearDecodedVideoPreview() {
         decodedVideoLayer?.flushAndRemoveImage()
         decodedVideoLayer?.controlTimebase = nil
@@ -292,11 +292,11 @@ extension XmaxVideoView {
         localPreviewFormatDescription = nil
     }
 
-    /// 输出带统一错误描述的渲染日志。
+    /// Logs rendering errors using the unified error description.
     ///
     /// - Parameters:
-    ///   - title: 中英文日志标题。
-    ///   - error: 需要记录的渲染错误。
+    ///   - title: The Chinese and English log titles.
+    ///   - error: The rendering error to log.
     static func logRenderingFailure(
         title: String,
         error: any Error
@@ -307,7 +307,7 @@ extension XmaxVideoView {
         )
     }
 
-    /// 在视图挂载窗口后，将当前轨道绑定到预览视图。
+    /// Binds the current track to preview after the view joins a window.
     func attachCurrentTrackIfNeeded() {
         guard window != nil, let track,
               let binding = VideoRenderRegistry.binding(for: track) else { return }
@@ -320,9 +320,9 @@ extension XmaxVideoView {
         }
     }
 
-    /// 解除当前视图持有的轨道，保留媒体采集与传输。
+    /// Unbinds the current view's track while retaining capture and transport.
     ///
-    /// - Parameter track: 待解除的轨道；为空时忽略。
+    /// - Parameter track: The track to unbind; nil does nothing.
     func detach(track: RealtimeVideoTrack?) {
         guard let track, attachedTrack === track else { return }
         do {
@@ -333,11 +333,11 @@ extension XmaxVideoView {
         attachedTrack = nil
     }
 
-    /// 复用符合当前帧规格的缓冲池创建预览缓冲区。
+    /// Reuses a matching buffer pool to create a preview buffer.
     ///
-    /// - Parameter frame: 待复制的本地 NV12 视频帧。
-    /// - Returns: 已填充当前帧数据的像素缓冲区。
-    /// - Throws: 缓冲池创建或帧数据复制失败时抛出错误。
+    /// - Parameter frame: The local NV12 frame to copy.
+    /// - Returns: The pixel buffer filled with current frame data.
+    /// - Throws: An error on buffer pool creation or frame data copy failure.
     func makeLocalPreviewPixelBuffer(_ frame: VideoFrame) throws -> CVPixelBuffer {
         if localPreviewFormat != frame.format || localPreviewPixelBufferPool == nil {
             let attributes: [String: Any] = [
@@ -359,11 +359,11 @@ extension XmaxVideoView {
         return try Self.makeNV12PixelBuffer(frame, pool: localPreviewPixelBufferPool)
     }
 
-    /// 复用或创建与像素缓冲区匹配的视频格式描述。
+    /// Reuses or creates a video format description matching the pixel buffer.
     ///
-    /// - Parameter pixelBuffer: 当前预览像素缓冲区。
-    /// - Returns: 与缓冲区尺寸和格式匹配的描述。
-    /// - Throws: 视频格式描述创建失败时抛出错误。
+    /// - Parameter pixelBuffer: The current preview pixel buffer.
+    /// - Returns: The description matching buffer dimensions and format.
+    /// - Throws: An error if video format description creation fails.
     func localPreviewDescription(for pixelBuffer: CVPixelBuffer) throws -> CMVideoFormatDescription {
         if let description = localPreviewFormatDescription,
            CMVideoFormatDescriptionMatchesImageBuffer(description, imageBuffer: pixelBuffer) {
@@ -382,13 +382,13 @@ extension XmaxVideoView {
         return description
     }
 
-    /// 校验并复制 NV12 帧到 IOSurface 像素缓冲区。
+    /// Validates and copies an NV12 frame into an IOSurface pixel buffer.
     ///
     /// - Parameters:
-    ///   - frame: 待复制的 NV12 视频帧。
-    ///   - pool: 可复用的像素缓冲池；`nil` 时单独分配。
-    /// - Returns: 包含亮度及色度平面的像素缓冲区。
-    /// - Throws: 帧布局无效、缓冲区分配、锁定或复制失败时抛出错误。
+    ///   - frame: The NV12 frame to copy.
+    ///   - pool: The reusable pixel buffer pool; `nil` allocates independently.
+    /// - Returns: The pixel buffer containing luma and chroma planes.
+    /// - Throws: An error on invalid frame layout or buffer allocation, locking, or copy failure.
     static func makeNV12PixelBuffer(
         _ frame: VideoFrame,
         pool: CVPixelBufferPool? = nil
@@ -459,15 +459,15 @@ extension XmaxVideoView {
         return pixelBuffer
     }
 
-    /// 按行复制一个像素平面的有效数据。
+    /// Copies the valid data of a pixel plane row by row.
     ///
     /// - Parameters:
-    ///   - plane: 提供源数据和行步长的平面。
-    ///   - rowByteCount: 每行需要复制的字节数。
-    ///   - rowCount: 需要复制的行数。
-    ///   - destination: 目标平面起始地址。
-    ///   - destinationStride: 目标平面每行字节数。
-    /// - Throws: 源数据或目标布局不能容纳指定区域时抛出错误。
+    ///   - plane: The plane supplying source data and row stride.
+    ///   - rowByteCount: The byte count to copy per row.
+    ///   - rowCount: The number of rows to copy.
+    ///   - destination: The destination plane base address.
+    ///   - destinationStride: The destination plane byte count per row.
+    /// - Throws: An error if source data or destination layout cannot accommodate the specified region.
     static func copyPlane(
         _ plane: VideoFramePlane,
         rowByteCount: Int,
@@ -505,7 +505,7 @@ extension XmaxVideoView {
         }
     }
 
-    /// 帧校验错误
+    /// Frame validation errors
     static var invalidImageFrameError: XmaxError {
         XmaxError(code: .mediaError, message: "Video preview frame is invalid")
     }

@@ -3,21 +3,21 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 实时生成模型支持的本地媒体来源。
+/// Local media sources supported by a realtime generation model.
 public enum RealtimeMediaSource: String, CaseIterable, Sendable {
 
-    /// 摄像头
+    /// Camera
     case camera
 
-    /// 视频
+    /// Video
     case video
 
-    /// 图片
+    /// Image
     case image
 }

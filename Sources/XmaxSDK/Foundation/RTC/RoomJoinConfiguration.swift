@@ -3,16 +3,16 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// RTC 房间加入参数。
+/// RTC room join parameters.
 struct RoomJoinConfiguration: Equatable, Sendable {
 
-    /// 房间连接参数
+    /// Room connection parameters
     let roomID: String
     let userID: String
     let token: String

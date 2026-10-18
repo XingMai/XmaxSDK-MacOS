@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -12,29 +12,29 @@
 import CoreMedia
 import CoreVideo
 
-/// 实时视频链路经过 SDK 处理后使用的视频帧。
+/// A video frame after SDK processing in the realtime video pipeline.
 public struct RealtimeVideoFrame: @unchecked Sendable {
 
-    /// 当前帧的像素缓冲区。
+    /// The current frame pixel buffer.
     ///
-    /// 像素格式由实际远端视频链路决定。调用方可以持有该缓冲区，并在异步
-    /// 编码完成后释放。
+    /// The pixel format follows the remote video pipeline. Callers may retain the buffer until asynchronous
+    /// encoding completes.
     public let pixelBuffer: CVPixelBuffer
 
-    /// 当前帧在实时视频时间轴中的显示时间。
+    /// The current frame presentation time on the realtime video timeline.
     ///
-    /// 时间戳不保证从零开始；录制时应以收到的第一帧作为输出时间轴起点。
+    /// Timestamps may not begin at zero; use the first received frame as the recording timeline origin.
     public let presentationTimeStamp: CMTime
 
-    /// 当前帧的建议显示时长。
+    /// The suggested display duration of the current frame.
     public let duration: CMTime
 
-    /// 创建可供显示或录制的实时视频帧。
+    /// Creates a realtime video frame for display or recording.
     ///
     /// - Parameters:
-    ///   - pixelBuffer: 持有当前帧像素的缓冲区。
-    ///   - presentationTimeStamp: 帧在实时视频时间轴中的显示时间。
-    ///   - duration: 建议显示时长；未知时使用 `.invalid`。
+    ///   - pixelBuffer: The buffer retaining the current frame pixels.
+    ///   - presentationTimeStamp: The frame presentation time on the realtime video timeline.
+    ///   - duration: The suggested display duration; `.invalid` when unknown.
     init(
         pixelBuffer: CVPixelBuffer,
         presentationTimeStamp: CMTime,
@@ -46,7 +46,7 @@ public struct RealtimeVideoFrame: @unchecked Sendable {
     }
 }
 
-/// 接收远端最终视频帧的监听器。
+/// A listener receiving final remote video frames.
 public typealias RealtimeVideoFrameListener = @Sendable (
     _ frame: RealtimeVideoFrame
 ) -> Void

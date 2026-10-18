@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,27 +11,27 @@
 
 import CoreMedia
 
-/// 定义单帧插值处理器的内部能力。
+/// Defines internal single-frame interpolation processor capabilities.
 protocol FrameInterpolationManaging: AnyObject, Sendable {
 
-    /// 判断处理器是否仍匹配输入帧的视频规格。
+    /// Checks whether the processor still matches the input frame format.
     ///
-    /// - Parameter frame: 待比较的视频帧。
-    /// - Returns: 分辨率与像素格式均匹配时返回 `true`。
+    /// - Parameter frame: The video frame to compare.
+    /// - Returns: `true` if dimensions and pixel format both match.
     func matches(_ frame: RealtimeVideoFrame) -> Bool
 
-    /// 在前一帧和当前帧之间生成一个中间帧。
+    /// Generates an intermediate frame between the previous and current frames.
     ///
     /// - Parameters:
-    ///   - frame: 当前解码视频帧。
-    ///   - sourceDuration: 当前源帧使用的显示时长。
-    /// - Returns: 首帧返回原帧，后续返回中间帧与当前原帧。
-    /// - Throws: 像素缓冲区准备或 VideoToolbox 处理失败时抛出错误。
+    ///   - frame: The current decoded video frame.
+    ///   - sourceDuration: The display duration of the current source frame.
+    /// - Returns: the original first frame; subsequent calls return an intermediate frame and the current original frame.
+    /// - Throws: An error on pixel buffer preparation or VideoToolbox processing failure.
     func process(
         _ frame: RealtimeVideoFrame,
         sourceDuration: CMTime
     ) async throws -> [RealtimeVideoFrame]
 
-    /// 结束插帧会话并释放历史帧，不再接受新的处理请求。
+    /// Ends interpolation, releases frame history, and rejects further processing requests.
     func close() async
 }

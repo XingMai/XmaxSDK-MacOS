@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -13,18 +13,18 @@ import Accelerate
 import CoreVideo
 import Foundation
 
-/// 将系统 NV12 像素缓冲区裁剪、缩放并旋转为目标显示尺寸的连续帧数据。
+/// Crops, scales, and rotates system NV12 pixel buffers into contiguous frame data at target display dimensions.
 enum NV12VideoFrameConverter {
-    /// 将 NV12 缓冲区居中裁剪、缩放并旋转为指定显示尺寸。
+    /// Center-crops, scales, and rotates an NV12 buffer to the specified display dimensions.
     ///
     /// - Parameters:
-    ///   - pixelBuffer: 源 NV12 像素缓冲区。
-    ///   - outputWidth: 输出宽度，单位为像素且须为正偶数。
-    ///   - outputHeight: 输出高度，单位为像素且须为正偶数。
-    ///   - rotation: 缩放后应用的显示旋转。
-    ///   - timestampUs: 输出帧时间戳，单位为微秒。
-    /// - Returns: 旋转已应用到像素数据、旋转标记为零的 NV12 视频帧。
-    /// - Throws: 像素格式、平面布局或尺寸无效，以及缓冲区转换失败时抛出错误。
+    ///   - pixelBuffer: The source NV12 pixel buffer.
+    ///   - outputWidth: The output width in pixels; must be positive and even.
+    ///   - outputHeight: The output height in pixels; must be positive and even.
+    ///   - rotation: The display rotation applied after scaling.
+    ///   - timestampUs: The output frame timestamp in microseconds.
+    /// - Returns: An NV12 frame with rotation applied to pixels and a zero rotation flag.
+    /// - Throws: An error on invalid pixel format, plane layout, or dimensions, or buffer conversion failure.
     static func convert(
         pixelBuffer: CVPixelBuffer,
         outputWidth: Int,
@@ -134,18 +134,18 @@ enum NV12VideoFrameConverter {
         )
     }
 
-    /// 裁剪并缩放 NV12 的亮度和色度平面。
+    /// Crops and scales NV12 luma and chroma planes.
     ///
     /// - Parameters:
-    ///   - lumaBaseAddress: 源亮度平面起始地址。
-    ///   - lumaStride: 源亮度平面每行字节数。
-    ///   - chromaBaseAddress: 源色度平面起始地址。
-    ///   - chromaStride: 源色度平面每行字节数。
-    ///   - crop: 源图像中的偶数对齐裁剪区域。
-    ///   - outputWidth: 缩放后的宽度，单位为像素。
-    ///   - outputHeight: 缩放后的高度，单位为像素。
-    /// - Returns: 连续存储亮度和色度平面的 NV12 数据。
-    /// - Throws: 内存分配或平面缩放失败时抛出错误。
+    ///   - lumaBaseAddress: The source luma plane base address.
+    ///   - lumaStride: The source luma plane byte count per row.
+    ///   - chromaBaseAddress: The source chroma plane base address.
+    ///   - chromaStride: The source chroma plane byte count per row.
+    ///   - crop: The even-aligned crop rectangle in the source image.
+    ///   - outputWidth: The scaled width in pixels.
+    ///   - outputHeight: The scaled height in pixels.
+    /// - Returns: NV12 data with contiguous luma and chroma planes.
+    /// - Throws: An error on memory allocation or plane scaling failure.
     private static func scale(
         lumaBaseAddress: UnsafeMutableRawPointer,
         lumaStride: Int,
@@ -224,15 +224,15 @@ enum NV12VideoFrameConverter {
         return data
     }
 
-    /// 旋转连续存储的 NV12 像素数据。
+    /// Rotates contiguous NV12 pixel data.
     ///
     /// - Parameters:
-    ///   - data: 源 NV12 数据。
-    ///   - sourceWidth: 源图像宽度，单位为像素。
-    ///   - sourceHeight: 源图像高度，单位为像素。
-    ///   - rotation: 需要应用的旋转角度。
-    /// - Returns: 按指定角度旋转后的 NV12 数据；零度旋转时返回原数据。
-    /// - Throws: 输出缓冲区分配或平面旋转失败时抛出错误。
+    ///   - data: The source NV12 data.
+    ///   - sourceWidth: The source image width in pixels.
+    ///   - sourceHeight: The source image height in pixels.
+    ///   - rotation: The rotation angle to apply.
+    /// - Returns: NV12 data rotated by the specified angle; returns the original data for zero rotation.
+    /// - Throws: An error on output buffer allocation or plane rotation failure.
     private static func rotate(
         _ data: Data,
         sourceWidth: Int,
@@ -313,13 +313,13 @@ enum NV12VideoFrameConverter {
         return output
     }
 
-    /// 计算应用旋转前的缩放尺寸。
+    /// Calculates scaling dimensions before rotation.
     ///
     /// - Parameters:
-    ///   - outputWidth: 最终显示宽度。
-    ///   - outputHeight: 最终显示高度。
-    ///   - rotation: 缩放后应用的旋转角度。
-    /// - Returns: 旋转前所需的宽度和高度。
+    ///   - outputWidth: The final display width.
+    ///   - outputHeight: The final display height.
+    ///   - rotation: The rotation angle applied after scaling.
+    /// - Returns: The required width and height before rotation.
     private static func scaledDimensions(
         outputWidth: Int,
         outputHeight: Int,
@@ -333,10 +333,10 @@ enum NV12VideoFrameConverter {
         }
     }
 
-    /// 将显示旋转转换为 vImage 的四分之一圈旋转次数。
+    /// Converts display rotation to the vImage quarter-turn count.
     ///
-    /// - Parameter rotation: 视频显示旋转。
-    /// - Returns: vImage 使用的旋转常量。
+    /// - Parameter rotation: The video display rotation.
+    /// - Returns: The vImage rotation constant.
     private static func rotationConstant(
         for rotation: VideoRotation
     ) -> UInt8 {
@@ -352,14 +352,14 @@ enum NV12VideoFrameConverter {
         }
     }
 
-    /// 计算符合目标宽高比的居中裁剪区域。
+    /// Calculates a centered crop matching the target aspect ratio.
     ///
     /// - Parameters:
-    ///   - sourceWidth: 源图像宽度。
-    ///   - sourceHeight: 源图像高度。
-    ///   - targetWidth: 目标图像宽度。
-    ///   - targetHeight: 目标图像高度。
-    /// - Returns: 位置及尺寸均按 NV12 要求进行偶数对齐的裁剪区域。
+    ///   - sourceWidth: The source image width.
+    ///   - sourceHeight: The source image height.
+    ///   - targetWidth: The target image width.
+    ///   - targetHeight: The target image height.
+    /// - Returns: A crop rectangle with even-aligned position and dimensions for NV12.
     private static func centerCrop(
         sourceWidth: Int,
         sourceHeight: Int,
@@ -389,26 +389,26 @@ enum NV12VideoFrameConverter {
         )
     }
 
-    /// 向下取偶数尺寸，并保证至少为两个像素。
+    /// Rounds a dimension down to an even value of at least two pixels.
     ///
-    /// - Parameter value: 待对齐的尺寸。
-    /// - Returns: 不小于 2 的偶数尺寸。
+    /// - Parameter value: The dimension to align.
+    /// - Returns: An even dimension of at least 2.
     private static func evenFloor(_ value: Double) -> Int {
         max(Int(floor(value)) / 2 * 2, 2)
     }
 
-    /// 向下取偶数偏移，并保证偏移非负。
+    /// Rounds an offset down to a nonnegative even value.
     ///
-    /// - Parameter value: 待对齐的偏移。
-    /// - Returns: 非负偶数偏移。
+    /// - Parameter value: The offset to align.
+    /// - Returns: A nonnegative even offset.
     private static func evenOffset(_ value: Double) -> Int {
         max(Int(floor(value)) / 2 * 2, 0)
     }
 
-    /// 构造视频帧转换错误。
+    /// Creates a video frame conversion error.
     ///
-    /// - Parameter message: 错误描述。
-    /// - Returns: 包含指定描述的媒体错误。
+    /// - Parameter message: The error description.
+    /// - Returns: A media error with the specified description.
     private static func mediaError(_ message: String) -> XmaxError {
         XmaxError(code: .mediaError, message: message)
     }

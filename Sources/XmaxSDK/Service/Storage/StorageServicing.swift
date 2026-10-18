@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,18 +11,18 @@
 
 import Foundation
 
-/// 定义图片和视频的上传、下载及图片安全检查能力。
+/// Defines image and video upload and download, and image safety checking.
 protocol StorageServicing: Sendable {
 
-    /// 上传图片数据。
+    /// Uploads image data.
     ///
     /// - Parameters:
-    ///   - data: 编码后的图片文件数据。
-    ///   - fileName: 包含扩展名的文件名，用于构造对象路径。
-    ///   - contentType: 文件的 MIME 类型。
-    ///   - progress: 接收已传输字节数与总字节数的回调；`nil` 不接收进度。
-    /// - Returns: 包含访问 URL、对象路径与可用 ETag 的上传结果。
-    /// - Throws: 输入无效、凭证获取或上传失败时抛出错误。
+    ///   - data: The encoded image file data.
+    ///   - fileName: The filename including extension, used to construct object paths.
+    ///   - contentType: The file MIME type.
+    ///   - progress: The transferred and total byte count callback; `nil` disables progress reporting.
+    /// - Returns: The upload result with access URL, object path, and ETag when available.
+    /// - Throws: An error on invalid input, credential retrieval failure, or upload failure.
     func uploadImage(
         data: Data,
         fileName: String,
@@ -30,29 +30,29 @@ protocol StorageServicing: Sendable {
         progress: StorageProgressListener?
     ) async throws -> StoredFile
 
-    /// 上传本地图片文件。
+    /// Uploads a local image file.
     ///
     /// - Parameters:
-    ///   - fileURL: 可读取的本地图片文件 URL。
-    ///   - contentType: 文件 MIME 类型；`nil` 时根据文件名推断。
-    ///   - progress: 接收已传输字节数与总字节数的回调；`nil` 不接收进度。
-    /// - Returns: 包含访问 URL、对象路径与可用 ETag 的上传结果。
-    /// - Throws: 文件无效、凭证获取或上传失败时抛出错误。
+    ///   - fileURL: The readable local image file URL.
+    ///   - contentType: The file MIME type; inferred from the filename when `nil`.
+    ///   - progress: The transferred and total byte count callback; `nil` disables progress reporting.
+    /// - Returns: The upload result with access URL, object path, and ETag when available.
+    /// - Throws: An error on invalid files, credential retrieval failure, or upload failure.
     func uploadImageFile(
         fileURL: URL,
         contentType: String?,
         progress: StorageProgressListener?
     ) async throws -> StoredFile
 
-    /// 上传图片数据并通过内容安全检查。
+    /// Uploads image data and passes content safety checks.
     ///
     /// - Parameters:
-    ///   - data: 编码后的图片文件数据。
-    ///   - fileName: 包含扩展名的文件名，用于构造对象路径。
-    ///   - contentType: 文件的 MIME 类型。
-    ///   - progress: 接收已传输字节数与总字节数的回调；`nil` 不接收进度。
-    /// - Returns: 包含访问 URL、对象路径与可用 ETag 的上传结果。
-    /// - Throws: 输入无效、凭证获取或上传失败、安全检查失败时抛出错误。
+    ///   - data: The encoded image file data.
+    ///   - fileName: The filename including extension, used to construct object paths.
+    ///   - contentType: The file MIME type.
+    ///   - progress: The transferred and total byte count callback; `nil` disables progress reporting.
+    /// - Returns: The upload result with access URL, object path, and ETag when available.
+    /// - Throws: An error on invalid input, credential retrieval or upload failure, or safety check failure.
     func uploadImageWithSafetyCheck(
         data: Data,
         fileName: String,
@@ -60,29 +60,29 @@ protocol StorageServicing: Sendable {
         progress: StorageProgressListener?
     ) async throws -> StoredFile
 
-    /// 上传本地图片文件并通过内容安全检查。
+    /// Uploads a local image file and passes content safety checks.
     ///
     /// - Parameters:
-    ///   - fileURL: 可读取的本地图片文件 URL。
-    ///   - contentType: 文件 MIME 类型；`nil` 时根据文件名推断。
-    ///   - progress: 接收已传输字节数与总字节数的回调；`nil` 不接收进度。
-    /// - Returns: 包含访问 URL、对象路径与可用 ETag 的上传结果。
-    /// - Throws: 文件无效、凭证获取或上传失败、安全检查失败时抛出错误。
+    ///   - fileURL: The readable local image file URL.
+    ///   - contentType: The file MIME type; inferred from the filename when `nil`.
+    ///   - progress: The transferred and total byte count callback; `nil` disables progress reporting.
+    /// - Returns: The upload result with access URL, object path, and ETag when available.
+    /// - Throws: An error on invalid files, credential retrieval or upload failure, or safety check failure.
     func uploadImageFileWithSafetyCheck(
         fileURL: URL,
         contentType: String?,
         progress: StorageProgressListener?
     ) async throws -> StoredFile
 
-    /// 上传视频数据。
+    /// Uploads video data.
     ///
     /// - Parameters:
-    ///   - data: 编码后的视频文件数据。
-    ///   - fileName: 包含扩展名的文件名，用于构造对象路径。
-    ///   - contentType: 文件的 MIME 类型。
-    ///   - progress: 接收已传输字节数与总字节数的回调；`nil` 不接收进度。
-    /// - Returns: 包含访问 URL、对象路径与可用 ETag 的上传结果。
-    /// - Throws: 输入无效、凭证获取或上传失败时抛出错误。
+    ///   - data: The encoded video file data.
+    ///   - fileName: The filename including extension, used to construct object paths.
+    ///   - contentType: The file MIME type.
+    ///   - progress: The transferred and total byte count callback; `nil` disables progress reporting.
+    /// - Returns: The upload result with access URL, object path, and ETag when available.
+    /// - Throws: An error on invalid input, credential retrieval failure, or upload failure.
     func uploadVideo(
         data: Data,
         fileName: String,
@@ -90,42 +90,42 @@ protocol StorageServicing: Sendable {
         progress: StorageProgressListener?
     ) async throws -> StoredFile
 
-    /// 上传本地视频文件。
+    /// Uploads a local video file.
     ///
     /// - Parameters:
-    ///   - fileURL: 可读取的本地视频文件 URL。
-    ///   - contentType: 文件 MIME 类型；`nil` 时根据文件名推断。
-    ///   - progress: 接收已传输字节数与总字节数的回调；`nil` 不接收进度。
-    /// - Returns: 包含访问 URL、对象路径与可用 ETag 的上传结果。
-    /// - Throws: 文件无效、凭证获取或上传失败时抛出错误。
+    ///   - fileURL: The readable local video file URL.
+    ///   - contentType: The file MIME type; inferred from the filename when `nil`.
+    ///   - progress: The transferred and total byte count callback; `nil` disables progress reporting.
+    /// - Returns: The upload result with access URL, object path, and ETag when available.
+    /// - Throws: An error on invalid files, credential retrieval failure, or upload failure.
     func uploadVideoFile(
         fileURL: URL,
         contentType: String?,
         progress: StorageProgressListener?
     ) async throws -> StoredFile
 
-    /// 将远端图片下载到本地文件。
+    /// Downloads a remote image to a local file.
     ///
     /// - Parameters:
-    ///   - remoteURL: 待下载文件的远端 URL。
-    ///   - destinationURL: 写入文件的本地目标 URL。
-    ///   - progress: 接收已传输字节数与总字节数的回调；`nil` 不接收进度。
-    /// - Returns: 写入完成的本地文件 URL 与字节数。
-    /// - Throws: 地址无效、下载或文件写入失败，以及任务取消时抛出错误。
+    ///   - remoteURL: The remote file URL to download.
+    ///   - destinationURL: The local destination file URL.
+    ///   - progress: The transferred and total byte count callback; `nil` disables progress reporting.
+    /// - Returns: The completed local file URL and byte count.
+    /// - Throws: An error on invalid URLs, download or file write failure, or cancellation.
     func downloadImage(
         remoteURL: URL,
         destinationURL: URL,
         progress: StorageProgressListener?
     ) async throws -> DownloadedFile
 
-    /// 将远端视频下载到本地文件。
+    /// Downloads a remote video to a local file.
     ///
     /// - Parameters:
-    ///   - remoteURL: 待下载文件的远端 URL。
-    ///   - destinationURL: 写入文件的本地目标 URL。
-    ///   - progress: 接收已传输字节数与总字节数的回调；`nil` 不接收进度。
-    /// - Returns: 写入完成的本地文件 URL 与字节数。
-    /// - Throws: 地址无效、下载或文件写入失败，以及任务取消时抛出错误。
+    ///   - remoteURL: The remote file URL to download.
+    ///   - destinationURL: The local destination file URL.
+    ///   - progress: The transferred and total byte count callback; `nil` disables progress reporting.
+    /// - Returns: The completed local file URL and byte count.
+    /// - Throws: An error on invalid URLs, download or file write failure, or cancellation.
     func downloadVideo(
         remoteURL: URL,
         destinationURL: URL,

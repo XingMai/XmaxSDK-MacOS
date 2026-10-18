@@ -3,55 +3,55 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 实时视频的编码策略偏好。
+/// Realtime video encoding strategy preferences.
 public enum RealtimeVideoEncoderPreference: Equatable, Sendable {
 
-    /// 平衡帧率和分辨率。
+    /// Balances frame rate and resolution.
     case auto
 
-    /// 优先保障帧率。
+    /// Prioritizes frame rate.
     case maintainFramerate
 
-    /// 优先保障分辨率。
+    /// Prioritizes resolution.
     case maintainQuality
 }
 
-/// 实时视频的尺寸、帧率和上传编码配置。
+/// Realtime video dimensions, frame rate, and upstream encoding configuration.
 public struct RealtimeVideoFormat: Equatable, Sendable {
 
-    /// 视频宽度，单位为像素。
+    /// The video width in pixels.
     public let width: Int
 
-    /// 视频高度，单位为像素。
+    /// The video height in pixels.
     public let height: Int
 
-    /// 视频帧率。
+    /// The video frame rate.
     public let fps: Int
 
-    /// 最低上传码率，单位为 kbps；nil 使用默认值 100，0 表示不设最低码率。
+    /// The minimum upstream bitrate in kbps; nil defaults to 100, while 0 removes the minimum.
     public let minimumBitrate: Int?
 
-    /// 最高上传码率，单位为 kbps；nil 使用 SDK 默认值，指定时必须大于 0。
+    /// The maximum upstream bitrate in kbps; nil uses the SDK default, explicit values must be positive.
     public let maximumBitrate: Int?
 
-    /// 上传编码策略偏好，默认优先保障帧率。
+    /// The upstream encoding preference; prioritizes frame rate by default.
     public let encoderPreference: RealtimeVideoEncoderPreference
 
-    /// 创建实时视频格式。
+    /// Creates a realtime video format.
     ///
     /// - Parameters:
-    ///   - width: 视频宽度，单位为像素。
-    ///   - height: 视频高度，单位为像素。
-    ///   - fps: 视频帧率，必须大于 0。
-    ///   - minimumBitrate: 最低上传码率，单位为 kbps；nil 使用默认值 100，0 表示不设最低码率。
-    ///   - maximumBitrate: 最高上传码率，单位为 kbps；nil 按最终上传尺寸和帧率计算。
-    ///   - encoderPreference: 上传编码策略偏好，默认值为 maintainFramerate。
+    ///   - width: The video width in pixels.
+    ///   - height: The video height in pixels.
+    ///   - fps: The video frame rate; must be positive.
+    ///   - minimumBitrate: The minimum upstream bitrate in kbps; nil defaults to 100, while 0 removes the minimum.
+    ///   - maximumBitrate: The maximum upstream bitrate in kbps; nil calculates from final upload dimensions and frame rate.
+    ///   - encoderPreference: The upstream encoding preference; defaults to maintainFramerate.
     public init(
         width: Int,
         height: Int,
@@ -68,9 +68,9 @@ public struct RealtimeVideoFormat: Equatable, Sendable {
         self.encoderPreference = encoderPreference
     }
 
-    /// 校验尺寸、帧率和显式指定的码率范围。
+    /// Validates dimensions, frame rate, and explicit bitrate bounds.
     ///
-    /// - Throws: 尺寸、帧率或码率配置无效时抛出错误。
+    /// - Throws: An error if dimensions, frame rate, or bitrate configuration is invalid.
     public func validate() throws {
         guard width > 0,
               height > 0,
@@ -96,12 +96,12 @@ public struct RealtimeVideoFormat: Equatable, Sendable {
 }
 
 extension RealtimeVideoFormat {
-    /// 生成调整宽高后的视频规格，保留帧率和编码配置。
+    /// Creates a resized video format retaining frame rate and encoding configuration.
     ///
     /// - Parameters:
-    ///   - width: 目标宽度，单位为像素。
-    ///   - height: 目标高度，单位为像素。
-    /// - Returns: 使用目标宽高的新视频规格。
+    ///   - width: The target width in pixels.
+    ///   - height: The target height in pixels.
+    /// - Returns: The new video format with target dimensions.
     func resized(width: Int, height: Int) -> RealtimeVideoFormat {
         RealtimeVideoFormat(
             width: width,

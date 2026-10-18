@@ -3,25 +3,25 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// SDK 的统一入口，负责创建实时、存储和媒体服务组件。
+/// Unified SDK entry point creating realtime, storage, and media service components.
 public final class XmaxClient: Sendable {
 
-    /// 客户端使用的全局配置。
+    /// The client's global configuration.
     public let configuration: XmaxConfiguration
 
-    /// 服务层组件
+    /// Service components
     private let apiService: any ApiServicing
     private let realtimeApiOverride: (any ApiServicing)?
 
-    /// 创建 SDK 客户端。
+    /// Creates an SDK client.
     ///
-    /// - Parameter configuration: SDK 全局配置。
+    /// - Parameter configuration: Global SDK configuration.
     public init(configuration: XmaxConfiguration) {
         self.configuration = configuration
         realtimeApiOverride = nil
@@ -32,11 +32,11 @@ public final class XmaxClient: Sendable {
         )
     }
 
-    /// 使用指定 API 服务创建 SDK 客户端。
+    /// Creates an SDK client with the specified API service.
     ///
     /// - Parameters:
-    ///   - configuration: 客户端配置，同时决定全局日志选项和语言。
-    ///   - apiService: 存储与实时会话共用的 API 服务。
+    ///   - configuration: The client configuration, which also sets global log options and language.
+    ///   - apiService: The API service shared by storage and realtime sessions.
     init(
         configuration: XmaxConfiguration,
         apiService: any ApiServicing
@@ -47,12 +47,12 @@ public final class XmaxClient: Sendable {
         realtimeApiOverride = apiService
     }
 
-    /// 创建管理本地媒体、实时连接和生成任务的组件。
+    /// Creates a component managing local media, realtime connections, and generation tasks.
     ///
-    /// 创建组件和本地预览不校验 API Key；访问服务端时校验凭证。
+    /// Component creation and local preview do not validate the API key; server access validates credentials.
     ///
-    /// - Parameter options: 实时生成模型等业务配置。
-    /// - Returns: 可用于管理摄像头、图片和视频输入及实时生成的组件。
+    /// - Parameter options: Business configuration including the realtime generation model.
+    /// - Returns: The component managing camera, image, and video input and realtime generation.
     @MainActor
     public func createRealtimeManager(
         options: RealtimeConfiguration
@@ -66,19 +66,19 @@ public final class XmaxClient: Sendable {
         )
     }
 
-    /// 创建文件存储 Manager。
+    /// Creates a file storage manager.
     ///
-    /// - Returns: 可用于上传和下载媒体文件的存储 Manager。
-    /// - Throws: SDK 全局配置无效时抛出 `XmaxError`。
+    /// - Returns: The storage manager for uploading and downloading media files.
+    /// - Throws: `XmaxError` if the global SDK configuration is invalid.
     public func createStorageManager() throws -> any XmaxStorageManaging {
         try configuration.validate()
         return XmaxStorageManager(apiService: apiService)
     }
 
-    /// 创建媒体处理与能力查询 Service。
+    /// Creates a media processing and capability query service.
     ///
-    /// - Parameter model: 媒体输入规则使用的模型，默认为 `x2.1.1-preview-cn`。
-    /// - Returns: 可用于计算模型输入尺寸和查询平台媒体能力的 Service。
+    /// - Parameter model: The model defining media input rules; defaults to `x2.1.1-preview-cn`.
+    /// - Returns: The service calculating model input dimensions and querying platform media capabilities.
     public func createMediaService(model: RealtimeModel = .x2_1_1_preview_cn) -> any MediaServicing {
         MediaService(model: model)
     }

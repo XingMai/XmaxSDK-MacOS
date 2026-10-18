@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,20 +11,20 @@
 
 import Foundation
 
-/// 生成 SDK 与 RTC 房间之间传输的结构化事件消息。
+/// Creates structured event messages exchanged between the SDK and RTC room.
 enum RoomEvent {
-    /// 编码开始生成信令并附加运行环境。
+    /// Encodes a generation start signal with runtime environment information.
     ///
     /// - Parameters:
-    ///   - userID: 本地 RTC 用户账号。
-    ///   - taskID: 当前生成任务标识。
-    ///   - videoFormat: 服务端生成使用的视频规格。
-    ///   - targetSize: 生成后回传的像素尺寸；`nil` 表示保持生成尺寸。
-    ///   - context: 当前生成条件。
-    ///   - faceRestoration: 是否回贴原始人脸。
-    ///   - paddingContain: 是否保留源比例并填充生成画布。
-    /// - Returns: 可发送的 JSON 开始信令。
-    /// - Throws: 生成参数、码率计算或 JSON 编码失败时抛出错误。
+    ///   - userID: The local RTC user account.
+    ///   - taskID: The current generation task identifier.
+    ///   - videoFormat: The server generation video format.
+    ///   - targetSize: The returned pixel dimensions; `nil` preserves generation dimensions.
+    ///   - context: The current generation conditions.
+    ///   - faceRestoration: Whether to restore the original face.
+    ///   - paddingContain: Whether to preserve source aspect ratio and pad the generation canvas.
+    /// - Returns: The sendable JSON start signal.
+    /// - Throws: An error on invalid generation parameters, bitrate calculation failure, or JSON encoding failure.
     static func start(
         userID: String,
         taskID: String,
@@ -50,18 +50,18 @@ enum RoomEvent {
         )
     }
 
-    /// 编码生成条件更新信令并附加运行环境。
+    /// Encodes generation condition updates with runtime environment information.
     ///
     /// - Parameters:
-    ///   - userID: 本地 RTC 用户账号。
-    ///   - taskID: 当前生成任务标识。
-    ///   - videoFormat: 服务端生成使用的视频规格。
-    ///   - targetSize: 生成后回传的像素尺寸；`nil` 表示保持生成尺寸。
-    ///   - context: 当前生成条件。
-    ///   - faceRestoration: 是否回贴原始人脸。
-    ///   - paddingContain: 是否保留源比例并填充生成画布。
-    /// - Returns: 可发送的 JSON 条件变更信令。
-    /// - Throws: 生成参数或 JSON 编码失败时抛出错误。
+    ///   - userID: The local RTC user account.
+    ///   - taskID: The current generation task identifier.
+    ///   - videoFormat: The server generation video format.
+    ///   - targetSize: The returned pixel dimensions; `nil` preserves generation dimensions.
+    ///   - context: The current generation conditions.
+    ///   - faceRestoration: Whether to restore the original face.
+    ///   - paddingContain: Whether to preserve source aspect ratio and pad the generation canvas.
+    /// - Returns: The sendable JSON condition update signal.
+    /// - Throws: An error on invalid generation parameters or JSON encoding failure.
     static func changeCondition(
         userID: String,
         taskID: String,
@@ -86,14 +86,14 @@ enum RoomEvent {
         )
     }
 
-    /// 编码回传尺寸和下行码率更新信令。
+    /// Encodes return dimension and downstream bitrate updates.
     ///
     /// - Parameters:
-    ///   - userID: 本地 RTC 用户账号。
-    ///   - taskID: 需要更新的生成任务标识。
-    ///   - targetSize: 生成后返回的整数像素尺寸。
-    /// - Returns: 可发送的 JSON 回传尺寸变更信令。
-    /// - Throws: 目标尺寸无效、码率计算或 JSON 编码失败时抛出错误。
+    ///   - userID: The local RTC user account.
+    ///   - taskID: The generation task identifier to update.
+    ///   - targetSize: The returned integer-pixel dimensions.
+    /// - Returns: The sendable JSON return dimension update signal.
+    /// - Throws: An error on invalid target dimensions, bitrate calculation failure, or JSON encoding failure.
     static func changeTargetSize(
         userID: String,
         taskID: String,
@@ -108,13 +108,13 @@ enum RoomEvent {
         )
     }
 
-    /// 编码停止生成信令。
+    /// Encodes a generation stop signal.
     ///
     /// - Parameters:
-    ///   - userID: 本地 RTC 用户账号。
-    ///   - taskID: 需要停止的生成任务标识。
-    /// - Returns: 可发送的 JSON 停止信令。
-    /// - Throws: JSON 编码失败时抛出错误。
+    ///   - userID: The local RTC user account.
+    ///   - taskID: The generation task identifier to stop.
+    /// - Returns: The sendable JSON stop signal.
+    /// - Throws: An error if JSON encoding fails.
     static func stop(
         userID: String,
         taskID: String
@@ -127,14 +127,14 @@ enum RoomEvent {
         )
     }
 
-    /// 编码生成任务的媒体归一化坐标轨迹。
+    /// Encodes a generation task's media-normalized trajectory.
     ///
     /// - Parameters:
-    ///   - userID: 本地 RTC 用户账号。
-    ///   - taskID: 接收轨迹的生成任务标识。
-    ///   - points: 按采样顺序排列、相对于处理后媒体尺寸的 `[0, 1]` 坐标点。
-    /// - Returns: 可发送的 JSON 轨迹信令。
-    /// - Throws: 坐标或 JSON 编码失败时抛出错误。
+    ///   - userID: The local RTC user account.
+    ///   - taskID: The generation task receiving the trajectory.
+    ///   - points: Points in sample order, normalized to `[0, 1]` relative to processed media dimensions.
+    /// - Returns: The sendable JSON trajectory signal.
+    /// - Throws: An error on invalid coordinates or JSON encoding failure.
     static func tracks(
         userID: String,
         taskID: String,
@@ -149,22 +149,22 @@ enum RoomEvent {
         )
     }
 
-    /// 编码房间心跳信令。
+    /// Encodes a room heartbeat signal.
     ///
-    /// - Parameter userID: 本地 RTC 用户账号。
-    /// - Returns: 可发送的 JSON 心跳信令。
-    /// - Throws: JSON 编码失败时抛出错误。
+    /// - Parameter userID: The local RTC user account.
+    /// - Returns: The sendable JSON heartbeat signal.
+    /// - Throws: An error if JSON encoding fails.
     static func heartbeat(userID: String) throws -> String {
         try encode(HeartbeatPayload(userID: userID))
     }
 }
 
 private extension RoomEvent {
-    /// 校验回传尺寸并计算下行码率预算。
+    /// Validates return dimensions and calculates downstream bitrate budget.
     ///
-    /// - Parameter size: 回传视频的整数像素尺寸。
-    /// - Returns: 以 kbps 表示的下行最小和最大码率。
-    /// - Throws: 尺寸无效或码率计算失败时抛出错误。
+    /// - Parameter size: The return video integer-pixel dimensions.
+    /// - Returns: The downstream minimum and maximum bitrate in kbps.
+    /// - Throws: An error on invalid dimensions or bitrate calculation failure.
     static func downlinkBitrates(_ size: CGSize) throws -> (minimum: Int, maximum: Int) {
         guard size.width.isFinite, size.height.isFinite,
               size.width >= 2, size.height >= 2,
@@ -179,11 +179,11 @@ private extension RoomEvent {
         return (100, min(10000, budget.maximum))
     }
 
-    /// 统一附加运行环境和会话任务字段后编码信令。
+    /// Adds runtime environment and session task fields, then encodes the signal.
     ///
-    /// - Parameter payload: 具体业务事件的可编码载荷。
-    /// - Returns: 键顺序稳定的 UTF-8 JSON 文本。
-    /// - Throws: 载荷编码、JSON 转换或文本转换失败时抛出错误。
+    /// - Parameter payload: The encodable business event payload.
+    /// - Returns: The UTF-8 JSON text with stable key ordering.
+    /// - Throws: An error on payload encoding, JSON conversion, or text conversion failure.
     static func encode(_ payload: some Encodable) throws -> String {
         let payloadData = try JSONEncoder().encode(
             Envelope(payload: payload, runtime: .current)
@@ -204,62 +204,62 @@ private extension RoomEvent {
         return message
     }
 
-    /// 在业务信令中附加运行环境信息。
+    /// Adds runtime environment information to business signals.
     struct Envelope<Payload: Encodable>: Encodable {
 
-        /// 信令内容
+        /// Signal content
         let payload: Payload
 
-        /// 运行环境
+        /// Runtime environment
         let runtime: RuntimeInfo
 
-        /// 将业务载荷及运行环境写入同一个编码容器。
+        /// Writes the business payload and runtime environment into one encoding container.
         ///
-        /// - Parameter encoder: 输出信令使用的编码器。
-        /// - Throws: 业务载荷或运行环境编码失败时抛出错误。
+        /// - Parameter encoder: The encoder emitting the signal.
+        /// - Throws: An error if payload or runtime environment encoding fails.
         func encode(to encoder: Encoder) throws {
             try payload.encode(to: encoder)
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(runtime, forKey: .runtime)
         }
 
-        /// 映射服务端约定的信令字段名。
+        /// Maps field names defined by the server signaling protocol.
         enum CodingKeys: String, CodingKey {
             case runtime
         }
     }
 
-    /// 编码生成尺寸、参考条件和输出选项。
+    /// Encodes generation dimensions, reference conditions, and output options.
     struct GenerationParameters: Encodable {
 
-        /// 生成模型与尺寸
+        /// Generation model and dimensions
         let model = "default"
         let size: [Int]
         let targetSize: [Int]?
 
-        /// 生成条件
+        /// Generation conditions
         let prompt: String
         let referencePath: String?
 
-        /// 画面处理
+        /// Video processing
         let mirror: Bool?
         let faceRestoration: Bool
         let padding: String?
 
-        /// 下行码率
+        /// Downstream bitrate
         let minimumBitrate: Int?
         let maximumBitrate: Int?
 
-        /// 创建生成参数，并按需要附加下行码率配置。
+        /// Creates generation parameters, optionally including downstream bitrate configuration.
         ///
         /// - Parameters:
-        ///   - videoFormat: 服务端生成使用的视频规格。
-        ///   - targetSize: 生成后回传尺寸；`nil` 表示保持生成尺寸。
-        ///   - context: 参考图和提示词等生成条件。
-        ///   - faceRestoration: 是否回贴原始人脸。
-        ///   - paddingContain: 是否按包含模式填充画布。
-        ///   - mirror: 可选镜像设置；非空时同时生成下行码率字段。
-        /// - Throws: 需要计算下行码率时，尺寸或码率无效会抛出错误。
+        ///   - videoFormat: The server generation video format.
+        ///   - targetSize: The return dimensions; `nil` preserves generation dimensions.
+        ///   - context: The generation conditions, including reference images and prompt.
+        ///   - faceRestoration: Whether to restore the original face.
+        ///   - paddingContain: Whether to fit content within the canvas using padding.
+        ///   - mirror: The optional mirror setting; a non-nil value also adds downstream bitrate fields.
+        /// - Throws: An error on invalid dimensions or bitrate when downstream bitrate calculation is required.
         init(
             videoFormat: RealtimeVideoFormat,
             targetSize: CGSize?,
@@ -285,7 +285,7 @@ private extension RoomEvent {
             }
         }
 
-        /// 映射服务端约定的信令字段名。
+        /// Maps field names defined by the server signaling protocol.
         enum CodingKeys: String, CodingKey {
             case model
             case size
@@ -300,20 +300,20 @@ private extension RoomEvent {
         }
     }
 
-    /// 表示开始生成的房间信令。
+    /// A room signal starting generation.
     struct StartPayload: Encodable {
 
-        /// 事件类型
+        /// Event type
         let event = "start"
 
-        /// 事件参数
+        /// Event parameters
         let params: GenerationParameters
 
-        /// 用户与任务标识
+        /// User and task identifiers
         let userID: String
         let taskID: String
 
-        /// 映射服务端约定的信令字段名。
+        /// Maps field names defined by the server signaling protocol.
         enum CodingKeys: String, CodingKey {
             case event
             case params
@@ -322,20 +322,20 @@ private extension RoomEvent {
         }
     }
 
-    /// 表示更新生成条件的房间信令。
+    /// A room signal updating generation conditions.
     struct ChangeConditionPayload: Encodable {
 
-        /// 事件类型
+        /// Event type
         let event = "change_condition"
 
-        /// 事件参数
+        /// Event parameters
         let params: GenerationParameters
 
-        /// 用户与任务标识
+        /// User and task identifiers
         let userID: String
         let taskID: String
 
-        /// 映射服务端约定的信令字段名。
+        /// Maps field names defined by the server signaling protocol.
         enum CodingKeys: String, CodingKey {
             case event
             case params
@@ -344,20 +344,20 @@ private extension RoomEvent {
         }
     }
 
-    /// 编码回传尺寸及对应的下行码率预算。
+    /// Encodes return dimensions and the associated downstream bitrate budget.
     struct TargetSizeParameters: Encodable {
 
-        /// 回传尺寸
+        /// Return dimensions
         let targetSize: [Int]
 
-        /// 下行码率
+        /// Downstream bitrate
         let minimumBitrate: Int
         let maximumBitrate: Int
 
-        /// 校验并创建回传尺寸及码率参数。
+        /// Validates and creates return dimension and bitrate parameters.
         ///
-        /// - Parameter size: 目标回传整数像素尺寸。
-        /// - Throws: 尺寸校验或下行码率计算失败时抛出错误。
+        /// - Parameter size: The target return dimensions in integer pixels.
+        /// - Throws: An error on dimension validation or downstream bitrate calculation failure.
         init(size: CGSize) throws {
             let budget = try RoomEvent.downlinkBitrates(size)
             targetSize = [Int(size.width), Int(size.height)]
@@ -365,7 +365,7 @@ private extension RoomEvent {
             maximumBitrate = budget.maximum
         }
 
-        /// 映射服务端约定的信令字段名。
+        /// Maps field names defined by the server signaling protocol.
         enum CodingKeys: String, CodingKey {
             case targetSize = "target_size"
             case minimumBitrate = "min_bitrate"
@@ -373,20 +373,20 @@ private extension RoomEvent {
         }
     }
 
-    /// 表示动态调整回传尺寸的房间信令。
+    /// A room signal dynamically adjusting return dimensions.
     struct ChangeTargetSizePayload: Encodable {
 
-        /// 事件类型
+        /// Event type
         let event = "change_target_size"
 
-        /// 事件参数
+        /// Event parameters
         let params: TargetSizeParameters
 
-        /// 用户与任务标识
+        /// User and task identifiers
         let userID: String
         let taskID: String
 
-        /// 映射服务端约定的信令字段名。
+        /// Maps field names defined by the server signaling protocol.
         enum CodingKeys: String, CodingKey {
             case event
             case params
@@ -395,17 +395,17 @@ private extension RoomEvent {
         }
     }
 
-    /// 表示停止生成任务的房间信令。
+    /// A room signal stopping generation.
     struct StopPayload: Encodable {
 
-        /// 事件类型
+        /// Event type
         let event = "stop"
 
-        /// 用户与任务标识
+        /// User and task identifiers
         let userID: String
         let taskID: String
 
-        /// 映射服务端约定的信令字段名。
+        /// Maps field names defined by the server signaling protocol.
         enum CodingKeys: String, CodingKey {
             case event
             case userID = "user_id"
@@ -413,20 +413,20 @@ private extension RoomEvent {
         }
     }
 
-    /// 表示生成任务的媒体归一化坐标轨迹信令。
+    /// A room signal carrying a generation task's media-normalized trajectory.
     struct TracksPayload: Encodable {
 
-        /// 事件类型
+        /// Event type
         let event = "tracks"
 
-        /// 轨迹数据
+        /// Trajectory data
         let tracks: [[Double]]
 
-        /// 用户与任务标识
+        /// User and task identifiers
         let userID: String
         let taskID: String
 
-        /// 映射服务端约定的信令字段名。
+        /// Maps field names defined by the server signaling protocol.
         enum CodingKeys: String, CodingKey {
             case event
             case tracks
@@ -435,16 +435,16 @@ private extension RoomEvent {
         }
     }
 
-    /// 表示保持房间活动的心跳信令。
+    /// A heartbeat signal keeping the room active.
     struct HeartbeatPayload: Encodable {
 
-        /// 事件类型
+        /// Event type
         let event = "heartbeat"
 
-        /// 用户与任务标识
+        /// User and task identifiers
         let userID: String
 
-        /// 映射服务端约定的信令字段名。
+        /// Maps field names defined by the server signaling protocol.
         enum CodingKeys: String, CodingKey {
             case event
             case userID = "user_id"

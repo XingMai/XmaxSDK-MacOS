@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -12,11 +12,11 @@
 import Foundation
 
 public extension MediaServicing {
-    /// 选择最接近媒体比例的生成画布，不改变本地媒体规格。
+    /// Selects the closest generation canvas aspect ratio without changing local media format.
     ///
-    /// - Parameter size: 媒体显示尺寸。
-    /// - Returns: 比例最接近的模型分辨率桶，或满足模型面积与对齐约束的尺寸。
-    /// - Throws: 媒体尺寸无效时抛出错误。
+    /// - Parameter size: The media display dimensions.
+    /// - Returns: The closest model resolution bucket or dimensions meeting model area and alignment constraints.
+    /// - Throws: An error if media dimensions are invalid.
     func resolveGenerationSize(_ size: CGSize) throws -> CGSize {
         guard size.width.isFinite, size.height.isFinite,
               size.width > 0, size.height > 0 else {
@@ -62,7 +62,7 @@ public extension MediaServicing {
             return CGSize(width: width, height: height)
         }
 
-        // 对齐可能使边界附近的尺寸越界，选择满足面积限制且最接近目标的尺寸。
+        // Alignment can cross size boundaries; selects the closest dimensions satisfying area limits.
         return boundedAlignedSize(
             width: Double(size.width) * scale,
             height: Double(size.height) * scale
@@ -71,12 +71,12 @@ public extension MediaServicing {
 }
 
 private extension MediaServicing {
-    /// 选择满足模型面积与对齐约束、最接近目标宽高的尺寸。
+    /// Selects dimensions closest to the target while satisfying model area and alignment constraints.
     ///
     /// - Parameters:
-    ///   - width: 缩放后的目标宽度，单位为像素。
-    ///   - height: 缩放后的目标高度，单位为像素。
-    /// - Returns: 在合法尺寸中相对宽高偏差最小的候选尺寸。
+    ///   - width: The scaled target width in pixels.
+    ///   - height: The scaled target height in pixels.
+    /// - Returns: The valid candidate minimizing relative width and height deviation.
     func boundedAlignedSize(width: Double, height: Double) -> CGSize {
         let alignment = model.inputSizeAlignment
         let unitPixels = alignment * alignment
@@ -105,11 +105,11 @@ private extension MediaServicing {
         return bestSize
     }
 
-    /// 校验媒体宽高并将其取整为至少一个像素。
+    /// Validates media dimensions and rounds them to at least one pixel.
     ///
-    /// - Parameter size: 待校验的媒体尺寸。
-    /// - Returns: 宽高均为正整数的媒体尺寸。
-    /// - Throws: 宽高非有限、非正数或超出整数范围时抛出配置错误。
+    /// - Parameter size: The media dimensions to validate.
+    /// - Returns: Media dimensions with positive integer width and height.
+    /// - Throws: A configuration error for nonfinite, nonpositive, or out-of-integer-range dimensions.
     func validatedSize(_ size: CGSize) throws -> CGSize {
         guard size.width.isFinite,
               size.height.isFinite,

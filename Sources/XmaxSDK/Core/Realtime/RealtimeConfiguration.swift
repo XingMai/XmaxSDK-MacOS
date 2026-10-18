@@ -3,26 +3,26 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 创建实时 Manager 所需的业务配置。
+/// Business configuration for creating a realtime manager.
 public struct RealtimeConfiguration: Equatable, Sendable {
 
-    /// 实时生成业务使用的模型。
+    /// The model used for realtime generation.
     public let model: RealtimeModel
 
-    /// 是否默认开启远端生成画面的插帧。
+    /// Whether interpolation of generated remote video is enabled by default.
     public let isFrameInterpolationEnabled: Bool
 
-    /// 创建实时业务配置。
+    /// Creates realtime business configuration.
     ///
     /// - Parameters:
-    ///   - model: 实时生成业务使用的模型。
-    ///   - isFrameInterpolationEnabled: 是否默认开启远端生成画面的插帧。
+    ///   - model: The model used for realtime generation.
+    ///   - isFrameInterpolationEnabled: Whether interpolation of generated remote video is enabled by default.
     public init(
         model: RealtimeModel,
         isFrameInterpolationEnabled: Bool = false

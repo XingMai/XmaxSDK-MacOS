@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,23 +11,23 @@
 
 import Foundation
 
-/// 管理实时生成会话的创建、心跳维持和关闭。
+/// Manages realtime session creation, heartbeat maintenance, and closure.
 final class RealtimeSessionService: RealtimeSessionServicing, @unchecked Sendable {
 
-    /// 服务层组件
+    /// Service components
     private let apiService: any ApiServicing
     private let heartbeatSleeper: RealtimeHeartbeatSleeper
 
-    /// 运行状态
+    /// Runtime state
     private let heartbeatLock = NSLock()
     private let heartbeatVersion = RealtimeHeartbeatVersion()
     private var heartbeatTask: Task<Void, Never>?
 
-    /// 创建实时会话服务并配置周期心跳的等待策略。
+    /// Creates a realtime session service with a periodic heartbeat wait strategy.
     ///
     /// - Parameters:
-    ///   - apiService: 发送会话请求的 API 服务。
-    ///   - heartbeatSleeper: 控制心跳间隔的异步等待策略。
+    ///   - apiService: The API service sending session requests.
+    ///   - heartbeatSleeper: The asynchronous wait strategy controlling heartbeat intervals.
     init(
         apiService: any ApiServicing,
         heartbeatSleeper: RealtimeHeartbeatSleeper = .live
@@ -36,17 +36,17 @@ final class RealtimeSessionService: RealtimeSessionServicing, @unchecked Sendabl
         self.heartbeatSleeper = heartbeatSleeper
     }
 
-    /// 使当前心跳失效并取消尚未结束的周期任务。
+    /// Invalidates the current heartbeat and cancels unfinished periodic work.
     deinit {
         heartbeatVersion.advance()
         heartbeatTask?.cancel()
     }
 
-    /// 创建指定模型的实时会话，解析用于 RTC 进房的连接信息。
+    /// Creates a model session and parses RTC join information.
     ///
-    /// - Parameter model: 本次实时生成使用的模型。
-    /// - Returns: 服务端创建的会话及其 RTC 连接信息。
-    /// - Throws: 会话请求失败、响应缺失必要字段或任务取消时抛出错误。
+    /// - Parameter model: The realtime generation model for this session.
+    /// - Returns: The server-created session and RTC connection information.
+    /// - Throws: An error on request failure, missing response fields, or cancellation.
     func createSession(model: RealtimeModel) async throws -> RealtimeSession {
         let payload = try await apiService.post(
             "/session",
@@ -67,11 +67,11 @@ final class RealtimeSessionService: RealtimeSessionServicing, @unchecked Sendabl
         }
     }
 
-    /// 启动指定会话的周期心跳，并替换之前的心跳任务。
+    /// Starts periodic heartbeats for the specified session, replacing the previous heartbeat task.
     ///
     /// - Parameters:
-    ///   - sessionID: 需要保活的会话标识。
-    ///   - onFailure: 心跳失败时接收会话标识和错误的回调。
+    ///   - sessionID: The session identifier to keep alive.
+    ///   - onFailure: The callback receiving session identity and error on heartbeat failure.
     func startHeartbeat(
         sessionID: String,
         onFailure: @escaping RealtimeSessionHeartbeatFailureHandler
@@ -94,7 +94,7 @@ final class RealtimeSessionService: RealtimeSessionServicing, @unchecked Sendabl
         }
     }
 
-    /// 停止当前心跳，并使其尚未处理的失败通知失效。
+    /// Stops the heartbeat and invalidates pending failure notifications.
     func stopHeartbeat() {
         heartbeatLock.withLock {
             heartbeatVersion.advance()
@@ -103,10 +103,10 @@ final class RealtimeSessionService: RealtimeSessionServicing, @unchecked Sendabl
         }
     }
 
-    /// 关闭指定服务端会话。
+    /// Closes the specified server session.
     ///
-    /// - Parameter sessionID: 需要关闭的会话标识。
-    /// - Throws: 关闭请求失败或任务取消时抛出错误。
+    /// - Parameter sessionID: The session identifier to close.
+    /// - Throws: An error on close request failure or cancellation.
     func closeSession(sessionID: String) async throws {
         do {
             _ = try await apiService.delete(
@@ -120,43 +120,43 @@ final class RealtimeSessionService: RealtimeSessionServicing, @unchecked Sendabl
 }
 
 private extension RealtimeSessionService {
-    /// 创建实时会话时提交的模型信息。
+    /// The model information submitted during session creation.
     struct CreateSessionRequest: Encodable, Sendable {
 
-        /// 会话创建参数
+        /// Session creation parameters
         let model: String
     }
 
-    /// 接收不包含业务字段的成功响应。
+    /// Receives successful responses without business fields.
     struct EmptyResponse: Decodable, Sendable {}
 
-    /// 保存单次心跳循环的服务、会话和有效性信息。
+    /// Stores the service, session, and validity information for one heartbeat loop.
     struct HeartbeatContext: Sendable {
 
-        /// 心跳执行组件
+        /// Heartbeat execution components
         let apiService: any ApiServicing
         let sleeper: RealtimeHeartbeatSleeper
 
-        /// 生命周期校验
+        /// Lifecycle validation
         let versionState: RealtimeHeartbeatVersion
         let version: UInt64
 
-        /// 会话与回调
+        /// Session and callback
         let sessionID: String
         let onFailure: RealtimeSessionHeartbeatFailureHandler
     }
 
-    /// 接收服务端会话字段，由业务层校验必要内容。
+    /// Receives server session fields for business-layer validation.
     struct SessionPayload: Decodable, Sendable {
 
-        /// 会话响应字段
+        /// Session response fields
         let sessionUID: String?
         let userUID: String?
         let status: String?
         let modelExtra: ModelExtra?
         let closeReason: String?
 
-        /// 定义服务端字段与本地属性的解码映射。
+        /// Defines decoding mappings between server fields and local properties.
         enum CodingKeys: String, CodingKey {
             case sessionUID = "sessionUid"
             case userUID = "userUid"
@@ -165,10 +165,10 @@ private extension RealtimeSessionService {
             case closeReason
         }
 
-        /// 解码会话响应，无法解析的可选字段置为空。
+        /// Decodes a session response, setting unparseable optional fields to nil.
         ///
-        /// - Parameter decoder: 提供会话响应数据的解码器。
-        /// - Throws: 无法创建字段解码容器时抛出解码错误。
+        /// - Parameter decoder: The decoder supplying session response data.
+        /// - Throws: A decoding error if a keyed container cannot be created.
         init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             sessionUID = try? container.decode(
@@ -188,16 +188,16 @@ private extension RealtimeSessionService {
         }
     }
 
-    /// 接收对象或 JSON 字符串形式的 RTC 附加参数。
+    /// Receives extra RTC parameters as an object or JSON string.
     enum ModelExtra: Decodable, Sendable {
         case object(ConnectionPayload)
         case json(String)
         case invalid
 
-        /// 解码对象或 JSON 字符串形式的 RTC 连接附加信息。
+        /// Decodes extra RTC connection information as an object or JSON string.
         ///
-        /// - Parameter decoder: 提供附加信息的解码器。
-        /// - Throws: 无法创建单值解码容器时抛出解码错误。
+        /// - Parameter decoder: The decoder supplying extra information.
+        /// - Throws: A decoding error if a single-value container cannot be created.
         init(from decoder: any Decoder) throws {
             let container = try decoder.singleValueContainer()
             if let json = try? container.decode(String.self) {
@@ -210,17 +210,17 @@ private extension RealtimeSessionService {
         }
     }
 
-    /// 接收 RTC 进房字段及应用标识。
+    /// Receives RTC join fields and application identity.
     struct ConnectionPayload: Decodable, Sendable {
 
-        /// RTC 连接字段
+        /// RTC connection fields
         let roomID: String?
         let token: String?
         let userID: String?
         let botName: String?
         let appID: String?
 
-        /// 定义服务端字段与本地属性的解码映射。
+        /// Defines decoding mappings between server fields and local properties.
         enum CodingKeys: String, CodingKey {
             case roomID = "room_id"
             case token = "room_token"
@@ -229,10 +229,10 @@ private extension RealtimeSessionService {
             case appID = "rtc_app_id"
         }
 
-        /// 解码 RTC 连接参数，无法解析的可选字段置为空。
+        /// Decodes RTC connection parameters, setting unparseable optional fields to nil.
         ///
-        /// - Parameter decoder: 提供 RTC 连接字段的解码器。
-        /// - Throws: 无法创建字段解码容器时抛出解码错误。
+        /// - Parameter decoder: The decoder supplying RTC connection fields.
+        /// - Throws: A decoding error if a keyed container cannot be created.
         init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             roomID = try? container.decode(String.self, forKey: .roomID)
@@ -243,9 +243,9 @@ private extension RealtimeSessionService {
         }
     }
 
-    /// 周期发送有效会话的心跳，首次有效故障后通知并结束循环。
+    /// Sends periodic heartbeats for valid sessions, notifying and ending the loop after the first valid failure.
     ///
-    /// - Parameter context: 当前心跳的会话、等待策略与有效性信息。
+    /// - Parameter context: The current heartbeat session, wait strategy, and validity information.
     static func runHeartbeat(_ context: HeartbeatContext) async {
         while context.versionState.isCurrent(context.version) {
             do {
@@ -276,13 +276,13 @@ private extension RealtimeSessionService {
         }
     }
 
-    /// 发送一次会话心跳并解析最新状态。
+    /// Sends one session heartbeat and parses the latest state.
     ///
     /// - Parameters:
-    ///   - sessionID: 需要保活的会话标识。
-    ///   - apiService: 发送心跳请求的 API 服务。
-    /// - Returns: 服务端返回的最新会话状态。
-    /// - Throws: 请求失败、响应无效或任务取消时抛出错误。
+    ///   - sessionID: The session identifier to keep alive.
+    ///   - apiService: The API service sending heartbeat requests.
+    /// - Returns: The latest session state from the server.
+    /// - Throws: An error on request failure, invalid response, or cancellation.
     static func heartbeatSession(
         sessionID: String,
         apiService: any ApiServicing
@@ -297,10 +297,10 @@ private extension RealtimeSessionService {
         )
     }
 
-    /// 检查服务端是否明确结束了会话。
+    /// Checks whether the server explicitly ended the session.
     ///
-    /// - Parameter session: 需要检查状态的会话。
-    /// - Throws: 会话状态非空且不为 `ACTIVE` 时抛出会话错误。
+    /// - Parameter session: The session whose state should be checked.
+    /// - Throws: A session error if its state is nonempty and not `ACTIVE`.
     static func ensureSessionActive(_ session: RealtimeSession) throws {
         guard let status = session.status, status != "ACTIVE" else {
             return
@@ -312,13 +312,13 @@ private extension RealtimeSessionService {
         )
     }
 
-    /// 校验必要字段并将响应转换为实时会话。
+    /// Validates required fields and converts the response to a realtime session.
     ///
     /// - Parameters:
-    ///   - payload: 服务端返回的原始会话字段。
-    ///   - requiresConnection: 是否必须包含完整且有效的 RTC 连接信息。
-    /// - Returns: 经过字段规范化与有效性检查的会话。
-    /// - Throws: 会话标识缺失或要求的 RTC 连接信息无效时抛出会话错误。
+    ///   - payload: The original server session fields.
+    ///   - requiresConnection: Whether complete, valid RTC connection information is required.
+    /// - Returns: The normalized and validated session.
+    /// - Throws: A session error if identity is missing or required RTC connection information is invalid.
     static func makeSession(
         from payload: SessionPayload,
         requiresConnection: Bool
@@ -348,10 +348,10 @@ private extension RealtimeSessionService {
         )
     }
 
-    /// 解析 RTC 附加字段并校验其应用标识。
+    /// Parses extra RTC fields and validates application identity.
     ///
-    /// - Parameter modelExtra: 对象或 JSON 字符串形式的 RTC 附加字段。
-    /// - Returns: 完整且匹配当前 RTC 应用的连接参数；字段无效时返回 `nil`。
+    /// - Parameter modelExtra: The extra RTC fields as an object or JSON string.
+    /// - Returns: Complete connection parameters matching the current RTC app, or `nil` for invalid fields.
     static func makeConnection(
         from modelExtra: ModelExtra?
     ) -> RealtimeSessionConnection? {
@@ -387,10 +387,10 @@ private extension RealtimeSessionService {
         )
     }
 
-    /// 去除字符串首尾空白并排除空内容。
+    /// Trims strings and rejects empty content.
     ///
-    /// - Parameter value: 待规范化的可选字符串。
-    /// - Returns: 非空的规范化字符串；没有有效内容时返回 `nil`。
+    /// - Parameter value: The optional string to normalize.
+    /// - Returns: The nonempty normalized string, or `nil` without valid content.
     static func nonEmpty(_ value: String?) -> String? {
         let normalized = value?.trimmingCharacters(
             in: .whitespacesAndNewlines
@@ -399,10 +399,10 @@ private extension RealtimeSessionService {
     }
 }
 
-/// 封装每次心跳发送前的异步等待策略。
+/// Wraps the asynchronous wait strategy before each heartbeat.
 struct RealtimeHeartbeatSleeper: Sendable {
 
-    /// 等待策略
+    /// Wait strategy
     let sleep: @Sendable () async throws -> Void
 
     static let live = RealtimeHeartbeatSleeper {
@@ -410,16 +410,16 @@ struct RealtimeHeartbeatSleeper: Sendable {
     }
 }
 
-/// 使用版本号使已停止心跳的迟到结果失效。
+/// Uses a version counter to invalidate late results from stopped heartbeats.
 private final class RealtimeHeartbeatVersion: @unchecked Sendable {
 
-    /// 并发状态
+    /// Concurrent state
     private let lock = NSLock()
     private var value: UInt64 = 0
 
-    /// 更新心跳版本，使此前的心跳结果失效。
+    /// Advances the heartbeat version, invalidating earlier results.
     ///
-    /// - Returns: 更新后的版本号。
+    /// - Returns: The updated version.
     @discardableResult
     func advance() -> UInt64 {
         lock.withLock {
@@ -428,18 +428,18 @@ private final class RealtimeHeartbeatVersion: @unchecked Sendable {
         }
     }
 
-    /// 判断心跳版本是否仍属于当前生命周期。
+    /// Checks whether a heartbeat version belongs to the current lifecycle.
     ///
-    /// - Parameter version: 待检查的心跳版本号。
-    /// - Returns: 与当前版本一致时返回 `true`。
+    /// - Parameter version: The heartbeat version to check.
+    /// - Returns: `true` if it matches the current version.
     func isCurrent(_ version: UInt64) -> Bool {
         lock.withLock { value == version }
     }
 
-    /// 仅在版本仍有效时推进版本，使该心跳失效。
+    /// Advances the version only if still valid, invalidating that heartbeat.
     ///
-    /// - Parameter version: 需要失效的心跳版本号。
-    /// - Returns: 成功使当前版本失效时返回 `true`；过期版本返回 `false`。
+    /// - Parameter version: The heartbeat version to invalidate.
+    /// - Returns: `true` if the current version was invalidated; `false` for stale versions.
     func invalidate(_ version: UInt64) -> Bool {
         lock.withLock {
             guard value == version else {

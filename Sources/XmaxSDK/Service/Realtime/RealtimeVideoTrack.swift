@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,22 +11,22 @@
 
 import Foundation
 
-/// 实时视频轨道及其动态元数据。
+/// A realtime video track and its dynamic metadata.
 public final class RealtimeVideoTrack: @unchecked Sendable {
 
-    /// 视频轨道标识。
+    /// The video track identifier.
     public let id: String
 
-    /// 动态元数据
+    /// Dynamic metadata
     private let metadataLock = NSLock()
     private var metadata: Metadata
 
-    /// 创建具有指定标识和初始元数据的视频轨道。
+    /// Creates a video track with the specified identity and initial metadata.
     ///
     /// - Parameters:
-    ///   - id: 轨道的唯一标识。
-    ///   - videoFormat: 初始视频规格；尚未确定时传入 `nil`。
-    ///   - position: 本地摄像头位置；非摄像头轨道传入 `nil`。
+    ///   - id: The unique track identifier.
+    ///   - videoFormat: The initial video format; `nil` if not yet known.
+    ///   - position: The local camera position; `nil` for non-camera tracks.
     init(
         id: String,
         videoFormat: RealtimeVideoFormat? = nil,
@@ -41,24 +41,24 @@ public final class RealtimeVideoTrack: @unchecked Sendable {
         )
     }
 
-    /// 当前视频轨道使用的视频格式。
+    /// The video format currently used by the track.
     public var videoFormat: RealtimeVideoFormat? {
         metadataLock.withLock { metadata.videoFormat }
     }
 
-    /// 本地相机轨道当前使用的摄像头位置。
+    /// The camera position currently used by the local camera track.
     public var position: CameraPosition? {
         metadataLock.withLock { metadata.position }
     }
 
-    /// 当前摄像头设备；非摄像头轨道为空。
+    /// The current camera device; nil for non-camera tracks.
     public var device: CameraDevice? {
         metadataLock.withLock { metadata.device }
     }
 
-    /// 更新设备元数据，保留当前视频轨道的身份。
+    /// Updates device metadata while retaining video track identity.
     ///
-    /// - Parameter device: 已经完成切换的摄像头设备。
+    /// - Parameter device: The camera device after switching completes.
     func updateDevice(_ device: CameraDevice) {
         metadataLock.withLock {
             metadata.device = device
@@ -66,18 +66,18 @@ public final class RealtimeVideoTrack: @unchecked Sendable {
         }
     }
 
-    /// 更新视频轨道的当前规格。
+    /// Updates the video track's current format.
     ///
-    /// - Parameter videoFormat: 新的尺寸、帧率和编码配置。
+    /// - Parameter videoFormat: The new dimensions, frame rate, and encoding configuration.
     func updateVideoFormat(_ videoFormat: RealtimeVideoFormat) {
         metadataLock.withLock {
             metadata.videoFormat = videoFormat
         }
     }
 
-    /// 更新本地相机轨道的摄像头位置。
+    /// Updates the local camera track position.
     ///
-    /// - Parameter position: 当前采集使用的摄像头位置。
+    /// - Parameter position: The camera position currently used for capture.
     func updatePosition(_ position: CameraPosition) {
         metadataLock.withLock {
             metadata.position = position
@@ -86,10 +86,10 @@ public final class RealtimeVideoTrack: @unchecked Sendable {
 }
 
 private extension RealtimeVideoTrack {
-    /// 保存可在采集与渲染期间更新的视频规格和摄像头位置。
+    /// Stores video format and camera position metadata updated during capture and rendering.
     struct Metadata {
 
-        /// 当前媒体规格
+        /// Current media format
         var videoFormat: RealtimeVideoFormat?
         var position: CameraPosition?
         var device: CameraDevice?

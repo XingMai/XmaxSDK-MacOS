@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,8 +11,8 @@
 
 import Foundation
 
-/// 接收媒体层产生的中性视频帧。
+/// Receives neutral video frames from the media layer.
 typealias MediaVideoFrameListener = @Sendable (VideoFrame) throws -> Void
 
-/// 接收媒体层产生的中性音频帧。
+/// Receives neutral audio frames from the media layer.
 typealias MediaAudioFrameListener = @Sendable (AudioFrame) throws -> Void

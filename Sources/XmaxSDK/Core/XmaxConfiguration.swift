@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,25 +11,25 @@
 
 import Foundation
 
-/// SDK 全局配置。
+/// Global SDK configuration.
 public struct XmaxConfiguration: Equatable, Sendable {
 
-    /// 调用 Xmax 服务使用的 API Key。
+    /// The API key used to call Xmax services.
     public let apiKey: String
 
-    /// SDK 连接的服务环境，同时决定日志细项语言：国内为中文，海外为英文。
-    /// 日志语言全局生效，以最后创建的 Client 为准。
+    /// The service environment, which also selects log detail language: Chinese domestically, English overseas.
+    /// Log language is global and follows the most recently created client.
     public let environment: XmaxEnvironment
 
-    /// SDK 输出的日志类型；默认为不输出日志。
+    /// The enabled SDK log types; logging is disabled by default.
     public let loggerOptions: XmaxLoggerOption
 
-    /// 创建 SDK 全局配置。
+    /// Creates global SDK configuration.
     ///
     /// - Parameters:
-    ///   - apiKey: 调用 Xmax 服务使用的 API Key。
-    ///   - environment: SDK 连接的服务环境；默认为国内环境。
-    ///   - loggerOptions: SDK 输出的日志类型；默认为空。
+    ///   - apiKey: The API key used to call Xmax services.
+    ///   - environment: The SDK service environment; defaults to the domestic environment.
+    ///   - loggerOptions: The SDK log types to enable; empty by default.
     public init(
         apiKey: String,
         environment: XmaxEnvironment = .china,
@@ -43,9 +43,9 @@ public struct XmaxConfiguration: Equatable, Sendable {
         self.loggerOptions = loggerOptions
     }
 
-    /// 确认 API Key 非空，供后续服务请求使用。
+    /// Checks that the API key is nonempty before server requests.
     ///
-    /// - Throws: API Key 为空时抛出 `XmaxError`。
+    /// - Throws: `XmaxError` if the API key is empty.
     public func validate() throws {
         guard !apiKey.isEmpty else {
             throw XmaxError(

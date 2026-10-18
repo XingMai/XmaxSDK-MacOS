@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -14,53 +14,53 @@ import CoreVideo
 import Foundation
 @preconcurrency import AgoraRtcKit
 
-/// 将声网解码帧复制到自有缓冲区，供异步渲染和插帧使用。
+/// Copies Agora decoded frames into owned buffers for asynchronous rendering and interpolation.
 final class RtcRemoteVideoSink: NSObject, AgoraVideoFrameDelegate, @unchecked Sendable {
 
-    /// 事件回调
+    /// Event callbacks
     private let frameListener: @Sendable (UInt, String, RealtimeVideoFrame) -> Void
 
-    /// 缓冲区资源
+    /// Buffer resources
     private let lock = NSLock()
     private var pool: CVPixelBufferPool?
     private var dimensions = CGSize.zero
     private var pixelFormat: OSType = 0
 
-    /// 创建远端解码帧接收器。
+    /// Creates a remote decoded frame receiver.
     ///
-    /// - Parameter frameListener: 接收数字用户标识、频道标识和自有像素缓冲区的回调。
+    /// - Parameter frameListener: The callback receiving numeric user identity, channel identity, and an owned pixel buffer.
     init(frameListener: @escaping @Sendable (UInt, String, RealtimeVideoFrame) -> Void) {
         self.frameListener = frameListener
     }
 
-    /// 指定远端帧使用 NV12 像素缓冲区。
+    /// Requests NV12 pixel buffers for remote frames.
     ///
-    /// - Returns: NV12 视频帧格式。
+    /// - Returns: The NV12 video frame format.
     func getVideoFormatPreference() -> AgoraVideoFormat { .cvPixelNV12 }
-    /// 指定在 RTC 渲染前接收解码帧。
+    /// Requests decoded frames before RTC rendering.
     ///
-    /// - Returns: 渲染前帧观察位置。
+    /// - Returns: The pre-render frame observation position.
     func getObservedFramePosition() -> AgoraVideoFramePosition { .preRenderer }
-    /// 指定回调只读取 RTC 原始帧。
+    /// Configures callbacks to read original RTC frames only.
     ///
-    /// - Returns: 只读处理模式。
+    /// - Returns: Read-only processing mode.
     func getVideoFrameProcessMode() -> AgoraVideoFrameProcessMode { .readOnly }
-    /// 要求 RTC 在回调前将旋转应用到像素。
+    /// Requests RTC to apply rotation to pixels before callbacks.
     ///
-    /// - Returns: 始终返回 `true`。
+    /// - Returns: Always returns `true`.
     func getRotationApplied() -> Bool { true }
-    /// 要求 RTC 保留未镜像的解码帧。
+    /// Requests unmirrored decoded frames from RTC.
     ///
-    /// - Returns: 始终返回 `false`。
+    /// - Returns: Always returns `false`.
     func getMirrorApplied() -> Bool { false }
 
-    /// 复制解码缓冲区并回调可异步持有的远端帧。
+    /// Copies decoded buffers and delivers remote frames safe for asynchronous retention.
     ///
     /// - Parameters:
-    ///   - frame: 声网提供的解码帧。
-    ///   - uid: 远端用户数字标识。
-    ///   - channelId: 帧所属频道标识。
-    /// - Returns: 始终返回 `true`，不阻止 RTC 继续处理该帧。
+    ///   - frame: The decoded frame supplied by Agora.
+    ///   - uid: The remote user's numeric identifier.
+    ///   - channelId: The frame's channel identifier.
+    /// - Returns: Always returns `true` so RTC can continue processing the frame.
     func onRenderVideoFrame(_ frame: AgoraOutputVideoFrame, uid: UInt, channelId: String) -> Bool {
         guard let source = frame.pixelBuffer,
               let buffer = lock.withLock({ copy(source) }) else { return true }
@@ -72,10 +72,10 @@ final class RtcRemoteVideoSink: NSObject, AgoraVideoFrameDelegate, @unchecked Se
         return true
     }
 
-    /// 将双平面像素数据和附件复制到自有缓冲区。
+    /// Copies biplanar pixel data and attachments into an owned buffer.
     ///
-    /// - Parameter source: 源像素缓冲区。
-    /// - Returns: 可独立持有的复制缓冲区；布局不支持或分配失败时返回 `nil`。
+    /// - Parameter source: The source pixel buffer.
+    /// - Returns: An independently retained copy, or `nil` for unsupported layout or allocation failure.
     private func copy(_ source: CVPixelBuffer) -> CVPixelBuffer? {
         let width = CVPixelBufferGetWidth(source)
         let height = CVPixelBufferGetHeight(source)

@@ -6,7 +6,7 @@
 
 import Foundation
 
-/// 与 Web X-Lab 使用相同的生成模式和预置参考资源。
+/// Uses the same generation modes and preset reference assets as Web X-Lab.
 enum RealtimeExampleMode: String, CaseIterable, Identifiable, Sendable {
     case charx, clothx, vibex, free
 
@@ -108,7 +108,7 @@ enum RealtimeExampleMode: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// 预设与用户上传的参考图共用同一条选择和生成流程。
+/// Presets and uploaded reference images share the selection and generation flow.
 struct RealtimeReference: Identifiable, Sendable {
     let id: String
     let mode: RealtimeExampleMode
@@ -123,7 +123,7 @@ struct RealtimeReference: Identifiable, Sendable {
 
     enum UploadState: Sendable { case ready, uploading, error }
 
-    /// 预览图通过 COS 缩放为 160px WebP，生成仍使用 Web 的原始参考图地址。
+    /// COS serves 160px WebP thumbnails; generation still uses the original Web reference URLs.
     static func preset(
         _ mode: RealtimeExampleMode,
         version: String,

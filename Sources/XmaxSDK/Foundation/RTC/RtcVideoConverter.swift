@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -13,16 +13,16 @@ import CoreMedia
 import Foundation
 @preconcurrency import AgoraRtcKit
 
-/// 保存声网外部视频帧及其连续像素数据。
+/// Retains an Agora external video frame and contiguous pixel data.
 final class RtcVideoFrame {
 
-    /// RTC 资源
+    /// RTC resources
     let value: AgoraVideoFrame
 
-    /// 校验视频平面并复制为声网外部视频帧。
+    /// Validates video planes and copies them into an Agora external frame.
     ///
-    /// - Parameter frame: 包含像素平面、尺寸和时间戳的源帧。
-    /// - Throws: 尺寸超出平台范围、平面数量或数据布局无效时抛出错误。
+    /// - Parameter frame: The source frame containing pixel planes, dimensions, and timestamp.
+    /// - Throws: An error if dimensions exceed platform limits or plane count or layout is invalid.
     init(frame: VideoFrame) throws {
         let width = frame.format.width
         let height = frame.format.height
@@ -68,26 +68,26 @@ final class RtcVideoFrame {
         updateMetadata(from: frame)
     }
 
-    /// 复用像素数据时更新时间戳和旋转信息。
+    /// Updates timestamp and rotation when reusing pixel data.
     ///
-    /// - Parameter frame: 提供最新时间戳和旋转标记的视频帧。
+    /// - Parameter frame: The frame supplying the latest timestamp and rotation.
     func updateMetadata(from frame: VideoFrame) {
         value.time = CMTime(value: frame.timestampUs, timescale: 1000000)
         value.rotation = Int32(frame.rotation.rawValue)
     }
 }
 
-/// 为显式声明像素不变的视频帧复用 RTC 数据。
+/// Reuses RTC data for frames explicitly declaring unchanged pixels.
 final class RtcVideoFrameCache {
 
-    /// 帧缓存
+    /// Frame cache
     private var cachedFrame: (id: UUID, frame: RtcVideoFrame)?
 
-    /// 获取源帧的 RTC 表示，并按像素复用标识缓存数据。
+    /// Gets a source frame's RTC representation, caching data by pixel reuse identity.
     ///
-    /// - Parameter frame: 需要适配的源视频帧。
-    /// - Returns: 像素数据已准备好的 RTC 帧。
-    /// - Throws: 帧尺寸或像素数据布局无效时抛出错误。
+    /// - Parameter frame: The source video frame to adapt.
+    /// - Returns: The RTC frame with pixel data prepared.
+    /// - Throws: An error if frame dimensions or pixel data layout are invalid.
     func frame(for frame: VideoFrame) throws -> RtcVideoFrame {
         if let id = frame.bufferReuseID, let cachedFrame, cachedFrame.id == id {
             cachedFrame.frame.updateMetadata(from: frame)
@@ -99,27 +99,27 @@ final class RtcVideoFrameCache {
         return converted
     }
 
-    /// 清除已缓存的 RTC 帧及其像素数据。
+    /// Clears cached RTC frames and pixel data.
     func removeAll() {
         cachedFrame = nil
     }
 }
 
-/// 在中性视频模型与声网类型之间转换。
+/// Converts between neutral video models and Agora types.
 enum RtcVideoConverter {
-    /// 将 SDK 视频帧转换为声网外部帧。
+    /// Converts an SDK video frame to an Agora external frame.
     ///
-    /// - Parameter frame: 待转换的 SDK 视频帧。
-    /// - Returns: 持有连续像素数据的 RTC 帧。
-    /// - Throws: 帧尺寸或像素数据布局无效时抛出错误。
+    /// - Parameter frame: The SDK video frame to convert.
+    /// - Returns: The RTC frame retaining contiguous pixel data.
+    /// - Throws: An error if frame dimensions or pixel data layout are invalid.
     static func convertFrame(_ frame: VideoFrame) throws -> RtcVideoFrame {
         try RtcVideoFrame(frame: frame)
     }
 
-    /// 将 SDK 编码参数转换为声网编码配置。
+    /// Converts SDK encoding parameters to Agora configuration.
     ///
-    /// - Parameter configuration: 尺寸、帧率、码率上下界和编码偏好。
-    /// - Returns: 初始镜像关闭、方向自适应的声网编码配置。
+    /// - Parameter configuration: Dimensions, frame rate, bitrate bounds, and encoding preferences.
+    /// - Returns: Agora encoding configuration with mirroring initially disabled and adaptive orientation.
     static func makeEncoderConfiguration(_ configuration: VideoEncodingConfiguration) -> AgoraVideoEncoderConfiguration {
         let result = AgoraVideoEncoderConfiguration(
             size: CGSize(width: configuration.width, height: configuration.height),
@@ -137,10 +137,10 @@ enum RtcVideoConverter {
         return result
     }
 
-    /// 映射 SDK 像素格式到声网外部帧格式。
+    /// Maps SDK pixel formats to Agora external frame formats.
     ///
-    /// - Parameter format: SDK 视频像素格式。
-    /// - Returns: 对应的声网像素格式标识。
+    /// - Parameter format: The SDK video pixel format.
+    /// - Returns: The corresponding Agora pixel format identifier.
     static func convertPixelFormat(_ format: VideoPixelFormat) -> Int {
         switch format {
         case .i420: 1

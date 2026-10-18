@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,27 +11,27 @@
 
 import Foundation
 
-/// 负责发送 Xmax API 请求并统一处理响应、日志和错误。
+/// Sends Xmax API requests with unified response, logging, and error handling.
 final class ApiService: ApiServicing, Sendable {
 
-    /// API 配置
+    /// API configuration
     static let defaultTimeoutInterval: TimeInterval = 15
 
-    /// 请求配置
+    /// Request configuration
     private let apiKey: String
     private let baseURL: URL
     private let timeoutInterval: TimeInterval
 
-    /// 网络资源
+    /// Network resources
     private let session: URLSession
 
-    /// 创建使用指定地址、认证信息与网络会话的 API 服务。
+    /// Creates an API service with the specified URL, credentials, and network session.
     ///
     /// - Parameters:
-    ///   - apiKey: 访问 API 的凭证，保存前去除首尾空白。
-    ///   - baseURL: 服务端 API 根地址，必须使用 HTTPS。
-    ///   - timeoutInterval: 单次请求的超时时间，单位为秒。
-    ///   - session: 实际发送网络请求的会话。
+    ///   - apiKey: The API credentials, trimmed before storage.
+    ///   - baseURL: The server API base URL; HTTPS is required.
+    ///   - timeoutInterval: The per-request timeout in seconds.
+    ///   - session: The session sending network requests.
     init(
         apiKey: String,
         baseURL: URL,
@@ -44,15 +44,15 @@ final class ApiService: ApiServicing, Sendable {
         self.session = session
     }
 
-    /// 发送 HTTP 请求并将响应数据解析为指定类型。
+    /// Sends an HTTP request and decodes response data to the specified type.
     ///
     /// - Parameters:
-    ///   - method: 请求使用的 HTTP 方法。
-    ///   - path: 相对于 API 根地址的请求路径。
-    ///   - body: 已编码的请求体；`nil` 表示无请求体。
-    ///   - responseType: 响应数据需要解码为的类型。
-    /// - Returns: 从 API 响应中解析出的业务数据。
-    /// - Throws: 凭证或地址无效、请求失败、服务端返回错误或响应解析失败时抛出错误。
+    ///   - method: The request HTTP method.
+    ///   - path: The request path relative to the API base URL.
+    ///   - body: The encoded request body; `nil` omits the body.
+    ///   - responseType: The response data decoding type.
+    /// - Returns: The business data parsed from the API response.
+    /// - Throws: An error on invalid credentials or URL, request failure, server error, or response parsing failure.
     func request<Response: Decodable & Sendable>(
         _ method: ApiMethod,
         path: String,
@@ -136,25 +136,25 @@ final class ApiService: ApiServicing, Sendable {
 
 private extension ApiService {
 
-    /// 表示 Xmax API 统一响应中的公共元数据。
+    /// Common metadata in the unified Xmax API response.
     struct EnvelopeMetadata: Decodable {
 
-        /// 响应状态
+        /// Response status
         let success: Bool?
         let code: Int?
         let message: String?
     }
 
-    /// 表示 Xmax API 成功响应中的业务数据。
+    /// Business data in a successful Xmax API response.
     struct PayloadEnvelope<Response: Decodable>: Decodable {
 
-        /// 业务数据
+        /// Business data
         let data: Response?
     }
 
-    /// 确认请求凭证、HTTPS 根地址和超时时间有效。
+    /// Validates request credentials, HTTPS base URL, and timeout.
     ///
-    /// - Throws: API Key 为空或网络配置无效时抛出错误。
+    /// - Throws: An error if the API key is empty or network configuration is invalid.
     func validateConfiguration() throws {
         guard !apiKey.isEmpty else {
             throw XmaxError(
@@ -172,14 +172,14 @@ private extension ApiService {
         }
     }
 
-    /// 组合相对路径并构建带认证与运行环境信息的 HTTP 请求。
+    /// Builds a request from a relative path with authentication and runtime environment information.
     ///
     /// - Parameters:
-    ///   - method: 请求的 HTTP 方法。
-    ///   - path: 相对 API 根地址的路径，不允许指定其他主机。
-    ///   - body: 已编码的请求体；`nil` 表示无请求体。
-    /// - Returns: 配置超时、请求头和正文后的 HTTP 请求。
-    /// - Throws: 路径为空、不合法或指向其他主机时抛出配置错误。
+    ///   - method: The request HTTP method.
+    ///   - path: The path relative to the API base URL; other hosts are disallowed.
+    ///   - body: The encoded request body; `nil` omits the body.
+    /// - Returns: The HTTP request configured with timeout, headers, and body.
+    /// - Throws: A configuration error for empty or invalid paths, or paths targeting another host.
     func makeRequest(
         method: ApiMethod,
         path: String,
@@ -230,14 +230,14 @@ private extension ApiService {
         return request
     }
 
-    /// 检查 HTTP 和业务状态，并解析统一响应中的数据字段。
+    /// Checks HTTP and business status and parses the unified response data field.
     ///
     /// - Parameters:
-    ///   - data: 服务端响应正文。
-    ///   - statusCode: HTTP 响应状态码。
-    ///   - as: 业务数据的目标解码类型。
-    /// - Returns: 解析完成的业务数据。
-    /// - Throws: 响应不是有效 JSON、请求未成功或数据缺失及类型不匹配时抛出 API 错误。
+    ///   - data: The server response body.
+    ///   - statusCode: The HTTP response status code.
+    ///   - as: The target business data decoding type.
+    /// - Returns: The parsed business data.
+    /// - Throws: An API error for invalid JSON, unsuccessful requests, missing data, or type mismatch.
     static func parseResponse<Response: Decodable>(
         _ data: Data,
         statusCode: Int,
@@ -299,10 +299,10 @@ private extension ApiService {
         }
     }
 
-    /// 将网络层错误转换为 SDK 的取消或网络错误。
+    /// Converts network errors to SDK cancellation or network errors.
     ///
-    /// - Parameter error: 网络请求产生的原始错误。
-    /// - Returns: 保留取消语义的 SDK 错误。
+    /// - Parameter error: The original network request error.
+    /// - Returns: The SDK error preserving cancellation semantics.
     static func transportError(_ error: any Error) -> XmaxError {
         if error is CancellationError {
             return XmaxError(
@@ -327,10 +327,10 @@ private extension ApiService {
         )
     }
 
-    /// 计算从指定单调时钟时间到现在的耗时。
+    /// Calculates elapsed time since the specified monotonic timestamp.
     ///
-    /// - Parameter startedAt: 请求开始时的系统运行时间，单位为纳秒。
-    /// - Returns: 已过去的整数毫秒数。
+    /// - Parameter startedAt: The system uptime at request start, in nanoseconds.
+    /// - Returns: The elapsed integer milliseconds.
     static func durationMs(since startedAt: UInt64) -> Int {
         let elapsedNanoseconds = DispatchTime.now().uptimeNanoseconds
             - startedAt

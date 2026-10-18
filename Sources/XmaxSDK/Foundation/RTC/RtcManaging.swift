@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,176 +11,176 @@
 
 import Foundation
 
-/// 定义 RTC 引擎、房间、媒体传输和远端帧输出能力。
+/// Defines RTC engine, room, media transport, and remote frame output capabilities.
 protocol RtcManaging: Sendable {
 
-    /// 获取独占的 RTC 引擎租约并完成初始化。
+    /// Acquires an exclusive RTC engine lease and completes initialization.
     ///
-    /// - Throws: 等待租约被取消或 RTC 引擎初始化失败时抛出错误。
+    /// - Throws: An error if lease waiting is cancelled or engine initialization fails.
     func initialize() async throws
 
-    /// 销毁 RTC 引擎并释放资源。
+    /// Destroys the RTC engine and releases resources.
     func destroy() async
 
-    /// 应用上传视频的编码配置。
+    /// Applies upstream video encoding configuration.
     ///
-    /// - Parameter configuration: 尺寸、帧率、码率和编码偏好。
-    /// - Throws: 厂商引擎拒绝配置时抛出错误。
+    /// - Parameter configuration: Dimensions, frame rate, bitrate, and encoding preferences.
+    /// - Throws: An error if the vendor engine rejects configuration.
     func configureVideoEncoding(
         _ configuration: VideoEncodingConfiguration
     ) throws
 
-    /// 切换至麦克风输入并开始采集。
+    /// Switches to microphone input and starts capture.
     ///
-    /// - Throws: 音频源切换或采集失败时抛出错误。
+    /// - Throws: An error on audio source switching or capture failure.
     func startAudioCapture() throws
 
-    /// 停止麦克风采集。
+    /// Stops microphone capture.
     ///
-    /// - Throws: 厂商引擎停止采集失败时抛出错误。
+    /// - Throws: An error if the vendor engine fails to stop capture.
     func stopAudioCapture() throws
 
-    /// 启用外部视频输入。
+    /// Enables external video input.
     ///
-    /// - Throws: 视频源配置失败时抛出错误。
+    /// - Throws: An error if video source configuration fails.
     func useExternalVideoSource() throws
 
-    /// 启用外部 PCM 输入。
+    /// Enables external PCM input.
     ///
-    /// - Throws: 外部音频轨创建失败时抛出错误。
+    /// - Throws: An error if external audio track creation fails.
     func startExternalAudioSource() throws
 
-    /// 停止外部 PCM 输入并释放音频轨。
+    /// Stops external PCM input and releases the audio track.
     ///
-    /// - Throws: 音频轨释放失败时抛出错误。
+    /// - Throws: An error if audio track release fails.
     func stopExternalAudioSource() throws
 
-    /// 更新上传视频镜像。
+    /// Updates upstream video mirroring.
     ///
-    /// - Parameter position: 当前摄像头位置。
-    /// - Throws: 编码镜像配置失败时抛出错误。
+    /// - Parameter position: The current camera position.
+    /// - Throws: An error if encoder mirroring configuration fails.
     func configureLocalVideoMirror(
         for position: CameraPosition
     ) throws
 
-    /// 推送外部视频帧。
+    /// Pushes an external video frame.
     ///
-    /// - Parameter frame: SDK 中性视频帧。
-    /// - Throws: 帧格式或数据无效时抛出错误。
+    /// - Parameter frame: The SDK's neutral video frame.
+    /// - Throws: An error if frame format or data is invalid.
     func pushExternalVideoFrame(_ frame: VideoFrame) throws
 
-    /// 推送外部音频帧。
+    /// Pushes an external audio frame.
     ///
-    /// - Parameter frame: 带时间戳的 10 ms PCM 数据。
-    /// - Throws: 帧格式或数据无效时抛出错误。
+    /// - Parameter frame: Timestamped 10 ms PCM data.
+    /// - Throws: An error if frame format or data is invalid.
     func pushExternalAudioFrame(_ frame: AudioFrame) throws
 
-    /// 加入 RTC 房间并等待连接完成。
+    /// Joins an RTC room and waits for connection.
     ///
-    /// - Parameter configuration: 房间、用户标识及令牌配置。
-    /// - Throws: 引擎不可用、进房失败、连接超时或调用取消时抛出错误。
+    /// - Parameter configuration: The room, user identifier, and token configuration.
+    /// - Throws: An error on unavailable engine, join failure, timeout, or cancellation.
     func joinRoom(
         configuration: RoomJoinConfiguration
     ) async throws
 
-    /// 离开当前 RTC 房间。
+    /// Leaves the current RTC room.
     func leaveRoom() async
 
-    /// 发布本地视频流。
+    /// Publishes the local video stream.
     ///
-    /// - Throws: 房间不可用或视频发布失败时抛出错误。
+    /// - Throws: An error if the room is unavailable or video publication fails.
     func publishLocalVideo() throws
 
-    /// 停止发布本地视频流。
+    /// Stops local video publication.
     ///
-    /// - Throws: 房间不可用或停止视频发布失败时抛出错误。
+    /// - Throws: An error if the room is unavailable or stopping video publication fails.
     func unpublishLocalVideo() throws
 
-    /// 发布本地音频流。
+    /// Publishes the local audio stream.
     ///
-    /// - Throws: 房间不可用或音频发布失败时抛出错误。
+    /// - Throws: An error if the room is unavailable or audio publication fails.
     func publishLocalAudio() throws
 
-    /// 停止发布本地音频流。
+    /// Stops local audio publication.
     ///
-    /// - Throws: 房间不可用或停止音频发布失败时抛出错误。
+    /// - Throws: An error if the room is unavailable or stopping audio publication fails.
     func unpublishLocalAudio() throws
 
-    /// 设置指定远端用户的视频订阅状态。
+    /// Sets video subscription state for a remote user.
     ///
     /// - Parameters:
-    ///   - userID: 远端 RTC 用户标识。
-    ///   - subscribe: 是否订阅视频流。
-    /// - Throws: 房间不可用、用户映射或订阅配置失败时抛出错误。
+    ///   - userID: The remote RTC user identifier.
+    ///   - subscribe: Whether to subscribe to the video stream.
+    /// - Throws: An error on unavailable room, user mapping failure, or subscription configuration failure.
     func subscribeRemoteVideo(
         userID: String,
         subscribe: Bool
     ) throws
 
-    /// 设置指定远端用户的音频订阅状态。
+    /// Sets audio subscription state for a remote user.
     ///
     /// - Parameters:
-    ///   - userID: 远端 RTC 用户标识。
-    ///   - subscribe: 是否订阅音频流。
-    /// - Throws: 房间不可用、用户映射或订阅配置失败时抛出错误。
+    ///   - userID: The remote RTC user identifier.
+    ///   - subscribe: Whether to subscribe to the audio stream.
+    /// - Throws: An error on unavailable room, user mapping failure, or subscription configuration failure.
     func subscribeRemoteAudio(
         userID: String,
         subscribe: Bool
     ) throws
 
-    /// 设置指定远端用户的音频播放音量。
+    /// Sets audio playback volume for a remote user.
     ///
     /// - Parameters:
-    ///   - volume: 播放音量，范围为 0 到 100。
-    ///   - userID: 远端 RTC 用户标识。
-    /// - Throws: 房间不可用或音量设置失败时抛出错误。
+    ///   - volume: The playback volume from 0 to 100.
+    ///   - userID: The remote RTC user identifier.
+    /// - Throws: An error if the room is unavailable or volume configuration fails.
     func setRemoteAudioVolume(
         _ volume: Int,
         for userID: String
     ) throws
 
-    /// 设置指定远端流的解码帧监听器。
+    /// Sets the decoded frame listener for a remote stream.
     ///
     /// - Parameters:
-    ///   - listener: 解码帧回调；传入 `nil` 清除监听。
-    ///   - stream: 需要监听的远端流。
-    /// - Throws: 房间不可用或帧监听设置失败时抛出错误。
+    ///   - listener: The decoded frame callback; `nil` clears it.
+    ///   - stream: The remote stream to observe.
+    /// - Throws: An error if the room is unavailable or frame listener configuration fails.
     func setRemoteVideoFrameListener(
         _ listener: RtcRemoteVideoFrameListener?,
         for stream: RemoteStream
     ) throws
 
-    /// 向当前 RTC 房间发送消息。
+    /// Sends a message to the current RTC room.
     ///
     /// - Parameters:
-    ///   - message: 完整 JSON 信令。
-    ///   - reportFailure: 异步发送失败时是否上报房间故障。
-    /// - Returns: 本条信令的发送任务，可用于等待独立的发送结果。
-    /// - Throws: 入队失败时抛出错误。
+    ///   - message: The complete JSON signal.
+    ///   - reportFailure: Whether asynchronous send failures report room faults.
+    /// - Returns: The signal send task for awaiting this message's result independently.
+    /// - Throws: An error if enqueueing fails.
     @discardableResult
     func sendRoomMessage(_ message: String, reportFailure: Bool) throws -> Task<Void, any Error>
 
-    /// 等待已入队的房间信令发送完成。
+    /// Waits for queued room signals to finish sending.
     ///
-    /// - Throws: 房间不可用、消息发送失败或等待取消时抛出错误。
+    /// - Throws: An error on unavailable room, send failure, or cancelled waiting.
     func awaitPendingMessages() async throws
 
-    /// 设置 RTC 连接及媒体事件监听器。
+    /// Sets the RTC connection and media event listener.
     ///
-    /// - Parameter listener: 事件监听器；传入 `nil` 清除监听。
+    /// - Parameter listener: The event listener; `nil` clears it.
     func setEventListener(_ listener: (any RtcEventListener)?)
 
-    /// 设置 RTC 网络及媒体质量监听器。
+    /// Sets the RTC network and media quality listener.
     ///
-    /// - Parameter listener: 质量监听器；传入 `nil` 清除监听。
+    /// - Parameter listener: The quality listener; `nil` clears it.
     func setQualityListener(_ listener: (any RtcQualityListener)?)
 }
 
 extension RtcManaging {
-    /// 将房间信令入队，并启用异步发送失败通知。
+    /// Enqueues a room signal with asynchronous send failure reporting enabled.
     ///
-    /// - Parameter message: 完整 JSON 信令。
-    /// - Throws: 信令无法入队时抛出错误。
+    /// - Parameter message: The complete JSON signal.
+    /// - Throws: An error if the signal cannot be enqueued.
     func sendRoomMessage(_ message: String) throws {
         try sendRoomMessage(message, reportFailure: true)
     }

@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,10 +11,10 @@
 
 import Foundation
 
-/// 对象存储上传完成后的中性结果。
+/// The neutral result of an object storage upload.
 struct StoredFile: Equatable, Sendable {
 
-    /// 远端文件信息
+    /// Remote file information
     let url: URL
     let objectKey: String
     let etag: String?

@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,52 +11,52 @@
 
 import Foundation
 
-/// 判断当前连接操作是否仍有效。
+/// Checks whether the current connection operation remains valid.
 ///
-/// - Returns: 连接操作有效时返回 `true`。
+/// - Returns: `true` if the connection operation is valid.
 typealias RealtimeConnectionValidity = @Sendable () -> Bool
 
-/// 接收指定会话的心跳失败通知。
+/// Receives heartbeat failures for the specified session.
 ///
 /// - Parameters:
-///   - sessionID: 心跳失败的会话标识。
-///   - error: 会话心跳产生的错误。
+///   - sessionID: The identifier of the session whose heartbeat failed.
+///   - error: The session heartbeat error.
 typealias RealtimeConnectionHeartbeatFailureHandler = @Sendable (
     _ sessionID: String,
     _ error: XmaxError
 ) async -> Void
 
-/// 协调服务端会话、RTC 房间、本地发布和远端媒体资源。
+/// Coordinates server sessions, RTC rooms, local publication, and remote media resources.
 actor XmaxRealtimeConnectionManager {
 
-    /// 服务层组件
+    /// Service components
     private let sessionService: any RealtimeSessionServicing
 
-    /// 媒体层组件
+    /// Media components
     private let interactionController: any InteractionControlling
 
-    /// 渲染层组件
+    /// Rendering components
     private let renderController: any RenderControlling
 
-    /// 传输层组件
+    /// Transport components
     private let streamController: any StreamControlling
 
-    /// 耗时统计
+    /// Timing metrics
     private let timing: RealtimeTiming
 
-    /// 连接资源
+    /// Connection resources
     private var activeRemoteTrack: RealtimeVideoTrack?
     private var activeSession: RealtimeSession?
     private(set) var currentTargetSize: CGSize?
 
-    /// 创建实时连接管理器。
+    /// Creates a realtime connection manager.
     ///
     /// - Parameters:
-    ///   - sessionService: 负责创建、保活和关闭服务端会话的服务。
-    ///   - interactionController: 接收远端渲染视图交互的媒体组件。
-    ///   - renderController: 管理远端轨道渲染的组件。
-    ///   - streamController: 管理 RTC 连接与本地流发布的组件。
-    ///   - timing: 记录连接启动阶段耗时的组件。
+    ///   - sessionService: The service that creates, maintains, and closes server sessions.
+    ///   - interactionController: The media component receiving interactions from remote render views.
+    ///   - renderController: The component managing remote track rendering.
+    ///   - streamController: The component managing RTC connections and local stream publication.
+    ///   - timing: The component recording connection startup timings.
     init(
         sessionService: any RealtimeSessionServicing,
         interactionController: any InteractionControlling,
@@ -71,12 +71,12 @@ actor XmaxRealtimeConnectionManager {
         self.timing = timing
     }
 
-    /// 当前会话标识；没有活跃会话时为空字符串。
+    /// The current session identifier; an empty string if no session is active.
     var currentSessionID: String {
         activeSession?.id ?? ""
     }
 
-    /// 当前连接的远端媒体流；会话或轨道尚未准备好时为 `nil`。
+    /// The connected remote media stream, or `nil` before its session and tracks are ready.
     var currentRemoteStream: RealtimeMediaStream? {
         guard activeSession != nil, let activeRemoteTrack else {
             return nil
@@ -87,9 +87,9 @@ actor XmaxRealtimeConnectionManager {
         )
     }
 
-    /// 根据当前回传尺寸更新远端轨道与渲染规格。
+    /// Updates remote track and render formats using the current return dimensions.
     ///
-    /// - Parameter videoFormat: 当前生成视频规格；配置了回传尺寸时，以回传宽高更新轨道。
+    /// - Parameter videoFormat: The generation video format; return dimensions override the track dimensions when configured.
     func updateRemoteVideoFormat(
         _ videoFormat: RealtimeVideoFormat
     ) async {
@@ -102,11 +102,11 @@ actor XmaxRealtimeConnectionManager {
         )
     }
 
-    /// 保存当前连接的回传尺寸，并同步更新远端渲染规格。
+    /// Stores return dimensions for the current connection and updates the remote render format.
     ///
     /// - Parameters:
-    ///   - size: 服务端回传视频的目标尺寸，单位为像素。
-    ///   - videoFormat: 当前生成视频规格，用于保留帧率等非尺寸配置。
+    ///   - size: The target server return video dimensions in pixels.
+    ///   - videoFormat: The generation video format used to preserve frame rate and other non-size settings.
     func updateTargetSize(
         _ size: CGSize,
         videoFormat: RealtimeVideoFormat
@@ -116,17 +116,17 @@ actor XmaxRealtimeConnectionManager {
         await updateRemoteVideoFormat(videoFormat)
     }
 
-    /// 创建服务端会话、连接 RTC 并发布本地流，返回已注册的远端媒体流。
+    /// Creates a server session, joins RTC, publishes local streams, and returns the registered remote stream.
     ///
     /// - Parameters:
-    ///   - model: 本次会话使用的生成模型。
-    ///   - videoFormat: 生成视频规格，用于初始化远端轨道。
-    ///   - targetSize: 回传视频尺寸；传入 `nil` 时使用生成尺寸。
-    ///   - includeLocalAudio: 是否发布本地音频。
-    ///   - isCurrent: 判断连接操作是否仍有效的回调。
-    ///   - onHeartbeatFailure: 接收当前会话心跳错误的回调。
-    /// - Returns: 已注册渲染与交互能力的远端媒体流；画面是否可用由后续首帧确认决定。
-    /// - Throws: 会话创建、RTC 连接或本地流发布失败，以及连接操作被取消时抛出错误。
+    ///   - model: The generation model for this session.
+    ///   - videoFormat: The generation video format used to initialize remote tracks.
+    ///   - targetSize: The return video dimensions; `nil` uses generation dimensions.
+    ///   - includeLocalAudio: Whether to publish local audio.
+    ///   - isCurrent: The callback checking connection operation validity.
+    ///   - onHeartbeatFailure: The callback receiving heartbeat errors for the current session.
+    /// - Returns: The remote stream with rendering and interaction registered; availability awaits first-frame confirmation.
+    /// - Throws: An error on session creation, RTC join, or local publication failure, or connection cancellation.
     func connect(
         model: RealtimeModel,
         videoFormat: RealtimeVideoFormat,
@@ -199,10 +199,10 @@ actor XmaxRealtimeConnectionManager {
         }
     }
 
-    /// 断开 RTC、释放远端渲染资源，并关闭服务端会话。
+    /// Disconnects RTC, releases remote render resources, and closes the server session.
     ///
-    /// - Returns: 已关闭的会话标识；没有活跃会话时返回 `nil`。
-    /// - Throws: 服务端会话关闭失败时抛出错误。
+    /// - Returns: The closed session identifier, or `nil` if none was active.
+    /// - Throws: An error if closing the server session fails.
     @discardableResult
     func disconnect() async throws -> String? {
         let session = activeSession
@@ -224,10 +224,10 @@ actor XmaxRealtimeConnectionManager {
 }
 
 private extension XmaxRealtimeConnectionManager {
-    /// 将当前回传尺寸应用到生成视频规格。
+    /// Applies current return dimensions to the generation video format.
     ///
-    /// - Parameter generationFormat: 生成视频规格。
-    /// - Returns: 采用回传宽高的视频规格；未设置回传尺寸时返回原规格。
+    /// - Parameter generationFormat: The generation video format.
+    /// - Returns: The format using return dimensions, or the original format when no return dimensions are set.
     func remoteVideoFormat(for generationFormat: RealtimeVideoFormat) -> RealtimeVideoFormat {
         guard let currentTargetSize else { return generationFormat }
         return generationFormat.resized(
@@ -236,10 +236,10 @@ private extension XmaxRealtimeConnectionManager {
         )
     }
 
-    /// 确认连接操作仍属于当前生命周期。
+    /// Checks that the connection operation belongs to the current lifecycle.
     ///
-    /// - Parameter isCurrent: 返回连接操作有效性的回调。
-    /// - Throws: 连接操作已失效时抛出取消错误。
+    /// - Parameter isCurrent: The callback reporting connection operation validity.
+    /// - Throws: Cancellation if the connection operation is no longer valid.
     static func ensureCurrent(
         _ isCurrent: RealtimeConnectionValidity
     ) throws {
@@ -251,9 +251,9 @@ private extension XmaxRealtimeConnectionManager {
         }
     }
 
-    /// 注册远端轨道渲染，并将视图交互转交媒体交互组件。
+    /// Registers remote track rendering and forwards view interactions to the media interaction component.
     ///
-    /// - Parameter track: 需要注册的远端视频轨道。
+    /// - Parameter track: The remote video track to register.
     func registerRemoteTrack(_ track: RealtimeVideoTrack) async {
         let interactionController = interactionController
         await renderController.registerRemoteTrack(
@@ -264,7 +264,7 @@ private extension XmaxRealtimeConnectionManager {
         )
     }
 
-    /// 清除本地连接状态，停止心跳并释放远端渲染与 RTC 资源。
+    /// Clears local connection state, stops heartbeats, and releases remote rendering and RTC resources.
     func rollbackConnection() async {
         let remoteTrack = activeRemoteTrack
         activeSession = nil
@@ -276,9 +276,9 @@ private extension XmaxRealtimeConnectionManager {
         await streamController.disconnect()
     }
 
-    /// 释放远端轨道的渲染资源，失败时记录日志。
+    /// Releases remote track render resources and logs failures.
     ///
-    /// - Parameter track: 需要重置的远端轨道；可传入 `nil` 清理未绑定轨道的渲染状态。
+    /// - Parameter track: The remote track to reset; `nil` clears render state without a bound track.
     func resetRemoteRendering(track: RealtimeVideoTrack?) async {
         do {
             try await renderController.resetRemoteTrack(track)
@@ -292,9 +292,9 @@ private extension XmaxRealtimeConnectionManager {
         }
     }
 
-    /// 关闭连接未成功建立的服务端会话，失败时记录日志。
+    /// Closes a server session whose connection failed and logs any close failure.
     ///
-    /// - Parameter sessionID: 需要关闭的会话标识。
+    /// - Parameter sessionID: The session identifier to close.
     func closeSessionAfterFailedConnection(_ sessionID: String) async {
         do {
             try await sessionService.closeSession(sessionID: sessionID)

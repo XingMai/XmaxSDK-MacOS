@@ -7,7 +7,7 @@
 import SwiftUI
 import XmaxSDK
 
-/// 原生 macOS 摄像头与实时生成示例。
+/// Native macOS camera and realtime generation example.
 @main
 struct XLabApp: App {
     var body: some Scene {

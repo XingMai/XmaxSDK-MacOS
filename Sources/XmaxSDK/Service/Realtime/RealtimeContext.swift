@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,20 +11,20 @@
 
 import Foundation
 
-/// 单次实时生成任务的文本和参考资源上下文。
+/// Text and reference context for one realtime generation task.
 public struct RealtimeContext: Equatable, Sendable {
 
-    /// 实时生成使用的文本条件。
+    /// The realtime generation text prompt.
     public let prompt: String
 
-    /// 已上传参考图片的可选远端路径。
+    /// The optional remote path of an uploaded reference image.
     public let referencePath: String?
 
-    /// 创建实时生成条件，并去除文本与参考路径首尾空白。
+    /// Creates generation conditions and trims the prompt and reference path.
     ///
     /// - Parameters:
-    ///   - prompt: 实时生成的文本条件。
-    ///   - referencePath: 参考图的远端路径；`nil` 或仅包含空白时不使用参考图。
+    ///   - prompt: The realtime generation text prompt.
+    ///   - referencePath: The reference image remote path; `nil` or whitespace omits the image.
     public init(
         prompt: String,
         referencePath: String? = nil

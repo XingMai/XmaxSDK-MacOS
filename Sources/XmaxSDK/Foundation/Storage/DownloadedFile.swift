@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,10 +11,10 @@
 
 import Foundation
 
-/// 远端文件下载完成后的中性结果。
+/// The neutral result of a completed remote file download.
 struct DownloadedFile: Equatable, Sendable {
 
-    /// 本地文件信息
+    /// Local file information
     let fileURL: URL
     let byteCount: Int64
 }

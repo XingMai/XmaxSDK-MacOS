@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -13,10 +13,10 @@ import Foundation
 
 @testable import XmaxSDK
 
-/// 不创建厂商引擎的 RTC 替身。
+/// An RTC stub that does not create a vendor engine.
 final class RtcPlatformStub: RtcPlatform, @unchecked Sendable {
 
-    /// 房间工厂
+    /// Room factory
     private let makeRoom: @Sendable (String) throws -> any RtcRoom
 
     init(makeRoom: @escaping @Sendable (String) throws -> any RtcRoom = { _ in RtcRoomStub() }) {
@@ -40,11 +40,11 @@ final class RtcPlatformStub: RtcPlatform, @unchecked Sendable {
 
 final class RtcRoomStub: RtcRoom, @unchecked Sendable {
 
-    /// 可控操作
+    /// Controllable operations
     private let onJoin: @Sendable () throws -> Void
     private let onFlush: @Sendable () async throws -> Void
 
-    /// 监听及调用记录
+    /// Listeners and call records
     private let lock = NSLock()
     private var listener: (@Sendable (RtcRoomEvent) -> Void)?
     private var lastListener: (@Sendable (RtcRoomEvent) -> Void)?

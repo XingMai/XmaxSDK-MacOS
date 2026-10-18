@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,23 +11,23 @@
 
 import Foundation
 
-/// 管理系统摄像头及其原始视频帧输出。
+/// Manages system cameras and raw video frame output.
 protocol CameraCaptureManaging: Sendable {
 
-    /// 查询当前可用的摄像头设备。
+    /// Lists currently available camera devices.
     ///
-    /// - Returns: 包含设备标识、名称和默认状态的设备列表。
+    /// - Returns: Devices with their identifiers, names, and default status.
     func listCameraDevices() -> [CameraDevice]
 
-    /// 启动指定设备，输出目标尺寸的 NV12 帧。
+    /// Starts the specified device and outputs NV12 frames at the target dimensions.
     ///
     /// - Parameters:
-    ///   - videoFormat: 输出像素格式和尺寸。
-    ///   - frameRate: 目标采集帧率。
-    ///   - deviceID: 采集设备的标识。
-    ///   - frameListener: 在采集串行队列接收视频帧。
-    ///   - errorListener: 接收采集运行错误。
-    /// - Throws: 设备、规格或采集启动失败时抛出错误。
+    ///   - videoFormat: The output pixel format and dimensions.
+    ///   - frameRate: The target capture frame rate.
+    ///   - deviceID: The capture device identifier.
+    ///   - frameListener: Receives video frames on the serial capture queue.
+    ///   - errorListener: Receives capture runtime errors.
+    /// - Throws: An error on invalid devices or formats, or capture startup failure.
     func start(
         videoFormat: VideoFormat,
         frameRate: Int,
@@ -36,12 +36,12 @@ protocol CameraCaptureManaging: Sendable {
         errorListener: @escaping XmaxErrorListener
     ) async throws
 
-    /// 切换摄像头，保持输出尺寸和帧率。
+    /// Switches cameras while retaining output dimensions and frame rate.
     ///
-    /// - Parameter deviceID: 目标设备标识。
-    /// - Throws: 设备不可用或切换失败时抛出错误。
+    /// - Parameter deviceID: The target device identifier.
+    /// - Throws: An error if the device is unavailable or switching fails.
     func switchCamera(to deviceID: String) async throws
 
-    /// 停止采集，等待正在处理的帧结束并释放设备。
+    /// Stops capture, waits for in-flight frames, and releases the device.
     func stop() async
 }

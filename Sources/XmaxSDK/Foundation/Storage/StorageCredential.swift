@@ -3,16 +3,16 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 对象存储单次请求使用的临时凭证。
+/// Temporary credentials for one object storage request.
 struct StorageCredential: Equatable, Sendable {
 
-    /// 临时访问凭证
+    /// Temporary access credentials
     let accessKeyID: String
     let secretAccessKey: String
     let sessionToken: String

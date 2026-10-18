@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -12,31 +12,31 @@
 @preconcurrency import AVFoundation
 import Foundation
 
-/// 使用 AVFoundation 采集视频；设备操作和帧处理由同一串行队列管理。
+/// Captures video with AVFoundation, serializing device operations and frame handling on one queue.
 final class CameraCaptureManager: NSObject, CameraCaptureManaging, @unchecked Sendable {
 
-    /// 平台资源
+    /// Platform resources
     private let session = AVCaptureSession()
     private let output = AVCaptureVideoDataOutput()
     private let captureQueue = DispatchQueue(label: "ai.xmax.sdk.camera", qos: .userInitiated)
 
-    /// 采集配置（仅在 captureQueue 访问）
+    /// Capture configuration (captureQueue only)
     private var input: AVCaptureDeviceInput?
     private var videoFormat: VideoFormat?
     private var frameRate = 0
 
-    /// 事件监听
+    /// Event listeners
     private var frameListener: (@Sendable (VideoFrame) throws -> Void)?
     private var errorListener: XmaxErrorListener?
     private var observers: [NSObjectProtocol] = []
 
-    /// 运行状态
+    /// Runtime state
     private var lastTimestampUs: Int64?
     private var hasReportedFrameError = false
 
-    /// 查询内置、外接及系统提供的连续互通摄像头。
+    /// Lists built-in, external, and system Continuity Camera devices.
     ///
-    /// - Returns: 当前可选择的设备及默认设备状态。
+    /// - Returns: Selectable devices and their default status.
     func listCameraDevices() -> [CameraDevice] {
         let defaultID = AVCaptureDevice.default(for: .video)?.uniqueID
         return Self.captureDevices().map { device in
@@ -49,12 +49,12 @@ final class CameraCaptureManager: NSObject, CameraCaptureManaging, @unchecked Se
         }
     }
 
-    /// 将系统摄像头位置转换为 SDK 位置；macOS 内置摄像头未报告位置时按前置处理。
+    /// Converts system camera positions to SDK positions; treats built-in macOS cameras with unknown positions as front-facing.
     ///
     /// - Parameters:
-    ///   - position: 系统报告的摄像头位置。
-    ///   - deviceType: 用于识别内置摄像头的设备类型。
-    /// - Returns: 预览和上传镜像共同使用的摄像头位置。
+    ///   - position: The camera position reported by the system.
+    ///   - deviceType: The device type used to identify built-in cameras.
+    /// - Returns: The camera position shared by preview and upload mirroring.
     static func resolvePosition(
         _ position: AVCaptureDevice.Position,
         deviceType: AVCaptureDevice.DeviceType
@@ -64,9 +64,9 @@ final class CameraCaptureManager: NSObject, CameraCaptureManaging, @unchecked Se
         return deviceType == .builtInWideAngleCamera ? .front : .unspecified
     }
 
-    /// 查询系统视频设备，不启动采集会话。
+    /// Lists system video devices without starting capture.
     ///
-    /// - Returns: 当前系统提供的视频采集设备。
+    /// - Returns: The system's current video capture devices.
     private static func captureDevices() -> [AVCaptureDevice] {
         let types: [AVCaptureDevice.DeviceType]
         if #available(macOS 14.0, *) {
@@ -79,15 +79,15 @@ final class CameraCaptureManager: NSObject, CameraCaptureManaging, @unchecked Se
         ).devices
     }
 
-    /// 启动摄像头，输出已经转正并调整到目标尺寸的 NV12 帧。
+    /// Starts camera capture and outputs upright NV12 frames at the target dimensions.
     ///
     /// - Parameters:
-    ///   - videoFormat: 输出像素格式和尺寸。
-    ///   - frameRate: 采集帧率。
-    ///   - deviceID: 目标摄像头设备标识。
-    ///   - frameListener: 在采集串行队列接收视频帧。
-    ///   - errorListener: 接收采集运行错误。
-    /// - Throws: 设备、规格或采集启动失败时抛出错误。
+    ///   - videoFormat: The output pixel format and dimensions.
+    ///   - frameRate: The capture frame rate.
+    ///   - deviceID: The target camera device identifier.
+    ///   - frameListener: Receives video frames on the serial capture queue.
+    ///   - errorListener: Receives capture runtime errors.
+    /// - Throws: An error on invalid devices or formats, or capture startup failure.
     func start(
         videoFormat: VideoFormat,
         frameRate: Int,
@@ -159,10 +159,10 @@ final class CameraCaptureManager: NSObject, CameraCaptureManaging, @unchecked Se
         }
     }
 
-    /// 切换摄像头，保持输出尺寸和帧率。
+    /// Switches cameras while retaining output dimensions and frame rate.
     ///
-    /// - Parameter position: 目标摄像头位置。
-    /// - Throws: 设备不可用或切换失败时抛出错误。
+    /// - Parameter deviceID: The target camera device identifier.
+    /// - Throws: An error if the device is unavailable or switching fails.
     func switchCamera(to deviceID: String) async throws {
         try Task.checkCancellation()
 
@@ -207,7 +207,7 @@ final class CameraCaptureManager: NSObject, CameraCaptureManaging, @unchecked Se
         }
     }
 
-    /// 停止采集，等待正在处理的帧结束并释放设备。
+    /// Stops capture, waits for in-flight frames, and releases the device.
     func stop() async {
         await withCheckedContinuation { continuation in
             captureQueue.async { [self] in
@@ -220,12 +220,12 @@ final class CameraCaptureManager: NSObject, CameraCaptureManaging, @unchecked Se
 }
 
 extension CameraCaptureManager: AVCaptureVideoDataOutputSampleBufferDelegate {
-    /// 将采集帧转换为目标尺寸和方向，并回调使用主机时钟时间戳的视频帧。
+    /// Converts captured frames to the target dimensions and orientation, using host-clock timestamps for callbacks.
     ///
     /// - Parameters:
-    ///   - output: 输出视频样本的采集输出。
-    ///   - sampleBuffer: 包含像素缓冲区和采集时间戳的视频样本。
-    ///   - connection: 当前视频输出的采集连接。
+    ///   - output: The capture output producing video samples.
+    ///   - sampleBuffer: The video sample containing its pixel buffer and capture timestamp.
+    ///   - connection: The active video output capture connection.
     func captureOutput(
         _ output: AVCaptureOutput,
         didOutput sampleBuffer: CMSampleBuffer,
@@ -283,16 +283,16 @@ extension CameraCaptureManager: AVCaptureVideoDataOutputSampleBufferDelegate {
 }
 
 private extension CameraCaptureManager {
-    /// 替换摄像头输入，并应用支持目标帧率的采集格式。
+    /// Replaces camera input and applies a capture format supporting the target frame rate.
     ///
-    /// - Parameter position: 目标摄像头位置。
-    /// - Throws: 摄像头不可用、采集格式不受支持或设备配置失败时抛出错误。
+    /// - Parameter deviceID: The target camera device identifier.
+    /// - Throws: An error on unavailable cameras, unsupported capture formats, or device configuration failure.
     func replaceInput(deviceID: String) throws {
         guard let device = Self.captureDevices().first(where: { $0.uniqueID == deviceID }) else {
             throw Self.cameraError("The requested camera is unavailable")
         }
 
-        // 优先选择不超过 1920×1080 的 16:9 格式，再回退到不超过 1920×1440 的 4:3 格式。
+        // Prefers 16:9 formats up to 1920×1080, falling back to 4:3 formats up to 1920×1440.
         let selected = device.formats.compactMap { format -> (
             format: AVCaptureDevice.Format, area: Int64, isWide: Bool
         )? in
@@ -358,21 +358,21 @@ private extension CameraCaptureManager {
         }
     }
 
-    /// 配置视频采集连接，并关闭系统自动镜像。
+    /// Configures the video capture connection and disables automatic system mirroring.
     ///
-    /// - Throws: 采集连接不可用或不支持方向设置时抛出错误。
+    /// - Throws: An error if the capture connection is unavailable or orientation configuration is unsupported.
     func configureConnection() throws {
         guard let connection = output.connection(with: .video) else {
             throw Self.cameraError("Camera video connection is unavailable")
         }
-        // 原生 macOS 以设备输出为基准，窗口布局不改变采集方向。
+        // Native macOS uses device output orientation independently of window layout.
         if connection.isVideoMirroringSupported {
             connection.automaticallyAdjustsVideoMirroring = false
             connection.isVideoMirrored = false
         }
     }
 
-    /// 监听设备断开与采集异常，并在采集中断结束后尝试恢复。
+    /// Observes device disconnection and capture failures, attempting recovery after interruptions end.
     func observeSession() {
         let errorListener = errorListener
         observers.append(NotificationCenter.default.addObserver(
@@ -416,7 +416,7 @@ private extension CameraCaptureManager {
         })
     }
 
-    /// 停止采集并移除输入、输出、观察者及帧回调。
+    /// Stops capture and removes inputs, outputs, observers, and frame callbacks.
     func stopCapture() {
         frameListener = nil
         errorListener = nil
@@ -444,10 +444,10 @@ private extension CameraCaptureManager {
         hasReportedFrameError = false
     }
 
-    /// 构造摄像头采集错误。
+    /// Creates a camera capture error.
     ///
-    /// - Parameter message: 错误描述。
-    /// - Returns: 包含指定描述的媒体错误。
+    /// - Parameter message: The error description.
+    /// - Returns: A media error with the specified description.
     static func cameraError(_ message: String) -> XmaxError {
         XmaxError(code: .mediaError, message: message)
     }

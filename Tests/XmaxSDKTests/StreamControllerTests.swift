@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -572,7 +572,7 @@ final class StreamControllerTests: XCTestCase {
             ]
         )
 
-        // 尚未生成时不推送视频帧。
+        // Does not push video frames before generation starts.
         try controller.pushLocalVideoFrame(frame)
         let taskID = UUID().uuidString
         let videoFormat = RealtimeVideoFormat(width: 832, height: 1472, fps: 24)

@@ -3,73 +3,73 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 实时业务连接状态。
+/// Realtime business connection state.
 public enum RealtimeConnectionState: String, CaseIterable, Sendable {
 
-    /// 没有可用的本地媒体流。
+    /// No local media stream is available.
     case idle = "Idle"
 
-    /// 正在准备本地媒体流；摄像头还需等待有效帧和预览视图绑定。
+    /// Preparing local media; cameras also require a valid frame and bound preview.
     case preparing = "Preparing"
 
-    /// 本地媒体流已就绪，可以预览、连接和生成。
+    /// Local media is ready for preview, connection, and generation.
     case ready = "Ready"
 
-    /// 正在创建 Session、加入 Room 并发布本地流。
+    /// Creating a session, joining the room, and publishing local streams.
     case connecting = "Connecting"
 
-    /// 实时连接已建立，当前没有生成任务。
+    /// Realtime is connected with no generation task.
     case connected = "Connected"
 
-    /// 实时连接已建立且生成任务正在运行。
+    /// Realtime is connected and generation is running.
     case generating = "Generating"
 
-    /// 正在清理生成、Room 和 Session 资源。
+    /// Cleaning up generation, room, and session resources.
     case disconnecting = "Disconnecting"
 
 }
 
-/// 进入当前实时状态的原因。
+/// The reason for entering the current realtime state.
 public enum RealtimeReason: Equatable, Sendable {
 
-    /// 主动停止或正常释放资源。
+    /// Explicit stop or normal resource release.
     case normal
 
-    /// 显示方向变化，需要重新配置生成。
+    /// Display orientation changed and generation requires reconfiguration.
     case orientationChanged
 
-    /// 操作或运行异常导致当前流程结束。
+    /// An operation or runtime failure ended the current flow.
     case failure(XmaxError)
 }
 
-/// 实时业务当前状态快照。
+/// The current realtime business state snapshot.
 public struct RealtimeState: Equatable, Sendable {
 
-    /// 当前连接生命周期状态。
+    /// The current connection lifecycle state.
     public let connectionState: RealtimeConnectionState
 
-    /// 当前或最近一次实时 Session 标识。
+    /// The current or most recent realtime session identifier.
     public let sessionID: String?
 
-    /// 当前生成任务标识。
+    /// The current generation task identifier.
     public let taskID: String?
 
-    /// 进入当前状态的原因；正常开始新的操作时清空。
+    /// The reason for the current state; cleared when starting a new operation normally.
     public let reason: RealtimeReason?
 
-    /// 创建实时状态快照。
+    /// Creates a realtime state snapshot.
     ///
     /// - Parameters:
-    ///   - connectionState: 当前连接生命周期状态。
-    ///   - sessionID: 当前或最近一次实时 Session 标识。
-    ///   - taskID: 当前生成任务标识。
-    ///   - reason: 状态变化原因，默认无。
+    ///   - connectionState: The current connection lifecycle state.
+    ///   - sessionID: The current or most recent realtime session identifier.
+    ///   - taskID: The current generation task identifier.
+    ///   - reason: The state change reason; none by default.
     public init(
         connectionState: RealtimeConnectionState,
         sessionID: String? = nil,
@@ -83,7 +83,7 @@ public struct RealtimeState: Equatable, Sendable {
     }
 }
 
-/// 实时状态监听器。
+/// The realtime state listener.
 public typealias RealtimeStateListener = @MainActor @Sendable (
     RealtimeState
 ) -> Void

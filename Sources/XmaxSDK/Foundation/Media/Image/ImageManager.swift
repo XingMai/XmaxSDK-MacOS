@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -12,13 +12,13 @@
 import Foundation
 import ImageIO
 
-/// 使用 ImageIO 提供 SDK 内部图片解码能力。
+/// Provides internal image decoding through ImageIO.
 final class ImageManager: ImageManaging, Sendable {
-    /// 解码图片数据并应用图片方向，返回可重复处理的像素图像。
+    /// Decodes image data, applies orientation, and returns reusable pixel data.
     ///
-    /// - Parameter data: JPEG、PNG 等受支持格式的编码图片数据。
-    /// - Returns: 已应用原始方向的解码图像。
-    /// - Throws: 数据为空、格式不支持或图片解码失败时抛出错误。
+    /// - Parameter data: Encoded image data in JPEG, PNG, or another supported format.
+    /// - Returns: The decoded image with source orientation applied.
+    /// - Throws: An error on empty data, unsupported formats, or image decoding failure.
     func decode(_ data: Data) throws -> any DecodedImage {
         guard !data.isEmpty,
               let source = CGImageSourceCreateWithData(data as CFData, nil) else {
@@ -57,10 +57,10 @@ final class ImageManager: ImageManaging, Sendable {
         return CoreGraphicsDecodedImage(image: image)
     }
 
-    /// 创建图片处理错误。
+    /// Creates an image processing error.
     ///
-    /// - Parameter message: 图片处理失败的可读说明。
-    /// - Returns: 具有媒体错误码的 SDK 错误。
+    /// - Parameter message: A readable image processing failure description.
+    /// - Returns: An SDK error with the media error code.
     private static func processingError(_ message: String) -> XmaxError {
         XmaxError(code: .mediaError, message: message)
     }

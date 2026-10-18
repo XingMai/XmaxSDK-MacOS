@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,22 +11,22 @@
 
 import AppKit
 
-/// 将实时视频轨道绑定到具体 AppKit 渲染视图。
+/// Binds a realtime video track to an AppKit render view.
 @MainActor
 final class VideoRenderBinding {
 
-    /// 渲染操作
+    /// Render operations
     private let attachHandler: (NSView, VideoContentMode) throws -> Void
     private let detachHandler: (NSView) throws -> Void
 
-    /// 运行状态
+    /// Runtime state
     private weak var attachedView: NSView?
 
-    /// 创建轨道与视图之间的渲染绑定。
+    /// Creates a track-to-view render binding.
     ///
     /// - Parameters:
-    ///   - attachHandler: 将内容绑定到视图并应用显示模式的操作。
-    ///   - detachHandler: 从视图解除内容的操作。
+    ///   - attachHandler: The operation binding content to a view and applying its display mode.
+    ///   - detachHandler: The operation removing content from a view.
     init(
         attachHandler: @escaping (NSView, VideoContentMode) throws -> Void,
         detachHandler: @escaping (NSView) throws -> Void
@@ -35,12 +35,12 @@ final class VideoRenderBinding {
         self.detachHandler = detachHandler
     }
 
-    /// 解除旧视图后，将内容绑定到目标视图。
+    /// Unbinds the old view before binding content to the target view.
     ///
     /// - Parameters:
-    ///   - view: 新的渲染目标视图。
-    ///   - contentMode: 视频缩放与裁剪方式。
-    /// - Throws: 旧视图解绑或新视图绑定失败时抛出错误。
+    ///   - view: The new render target view.
+    ///   - contentMode: The video scaling and cropping mode.
+    /// - Throws: An error if unbinding the old view or binding the new view fails.
     func attach(
         to view: NSView,
         contentMode: VideoContentMode
@@ -54,10 +54,10 @@ final class VideoRenderBinding {
         attachedView = view
     }
 
-    /// 仅在指定视图为当前绑定目标时解除渲染。
+    /// Unbinds rendering only if the specified view is currently bound.
     ///
-    /// - Parameter view: 需要解除绑定的视图。
-    /// - Throws: 底层解绑操作失败时抛出错误。
+    /// - Parameter view: The view to unbind.
+    /// - Throws: An error if the underlying unbind operation fails.
     func detach(from view: NSView) throws {
         guard attachedView === view else {
             return
@@ -65,9 +65,9 @@ final class VideoRenderBinding {
         try detach()
     }
 
-    /// 清除图片预览并解除当前视图的渲染绑定。
+    /// Clears image preview and removes the current view render binding.
     ///
-    /// - Throws: 底层解绑操作失败时抛出错误。
+    /// - Throws: An error if the underlying unbind operation fails.
     func detach() throws {
         guard let attachedView else {
             return

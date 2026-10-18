@@ -3,36 +3,36 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 实时性能限制状态。
+/// Realtime performance limitation state.
 public enum RealtimePerformanceStatus: String, CaseIterable, Sendable {
 
-    /// 设备性能受限，接入方应考虑使用建议的视频格式。
+    /// Device performance is limited; callers should consider the suggested video format.
     case limited = "Limited"
 
-    /// 设备性能已经恢复。
+    /// Device performance has recovered.
     case recovered = "Recovered"
 }
 
-/// 实时性能告警信息。
+/// Realtime performance alarm information.
 public struct RealtimePerformanceAlarm: Equatable, Sendable {
 
-    /// 当前设备性能是受限还是已经恢复。
+    /// Whether device performance is limited or recovered.
     public let status: RealtimePerformanceStatus
 
-    /// RTC 建议的降级视频格式；建议参数无效时为空。
+    /// The RTC-recommended fallback format; nil for invalid recommendations.
     public let suggestedVideoFormat: RealtimeVideoFormat?
 
-    /// 创建实时性能告警信息。
+    /// Creates realtime performance alarm information.
     ///
     /// - Parameters:
-    ///   - status: 设备当前的性能限制状态。
-    ///   - suggestedVideoFormat: 建议采用的视频规格；没有有效建议时传入 `nil`。
+    ///   - status: The current device performance limitation state.
+    ///   - suggestedVideoFormat: The suggested video format; `nil` without a valid recommendation.
     public init(
         status: RealtimePerformanceStatus,
         suggestedVideoFormat: RealtimeVideoFormat?
@@ -42,7 +42,7 @@ public struct RealtimePerformanceAlarm: Equatable, Sendable {
     }
 }
 
-/// 实时性能告警监听器。
+/// The realtime performance alarm listener.
 public typealias RealtimePerformanceAlarmListener = @MainActor @Sendable (
     RealtimePerformanceAlarm
 ) -> Void

@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -22,12 +22,12 @@ enum RealtimeSessionServicingCall: Equatable {
 final class RealtimeSessionServicingStub: RealtimeSessionServicing,
     @unchecked Sendable {
 
-    /// 测试配置
+    /// Test configuration
     private let session: RealtimeSession
     private let createError: (any Error)?
     private let closeError: (any Error)?
 
-    /// 并发状态
+    /// Concurrent state
     private let lock = NSLock()
     private var storedCalls: [RealtimeSessionServicingCall] = []
     private var heartbeatFailureHandler:

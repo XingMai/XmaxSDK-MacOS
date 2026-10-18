@@ -9,11 +9,11 @@ import Foundation
 import ImageIO
 import XmaxSDK
 
-/// 管理示例的会话生命周期、模式选择与参考图上传。
+/// Manages the example session lifecycle, mode selection, and reference image uploads.
 @MainActor
 final class RealtimeSessionController: ObservableObject {
 
-    /// 用户配置：与 Web 的 localStorage 一致，保存在当前用户的应用设置中。
+    /// User settings are persisted per user, matching the Web localStorage behavior.
     @Published var apiKey = UserDefaults.standard.string(forKey: "xmax.xlab.apiKey") ?? "" {
         didSet { UserDefaults.standard.set(apiKey, forKey: "xmax.xlab.apiKey") }
     }
@@ -28,7 +28,7 @@ final class RealtimeSessionController: ObservableObject {
         }
     }
 
-    /// 显示状态
+    /// Display state
     @Published private(set) var sessionActive = false
     @Published private(set) var localStream: RealtimeMediaStream?
     @Published private(set) var remoteStream: RealtimeMediaStream?
@@ -46,7 +46,7 @@ final class RealtimeSessionController: ObservableObject {
     @Published private(set) var interpolationSwitching = false
     @Published private(set) var remoteAudioVolume: Float = 0
 
-    /// SDK 资源与操作归属
+    /// SDK resources and operation ownership
     private var client: XmaxClient?
     private var manager: (any XmaxRealtimeManaging)?
     private var lifecycleID = UUID()
@@ -77,7 +77,7 @@ final class RealtimeSessionController: ObservableObject {
         uploadedReferences.contains { $0.mode == activeMode && $0.uploadState == .uploading }
     }
 
-    /// 启动中保持启动页；本地预览先在页面背景挂载，满足 SDK 的媒体就绪条件。
+    /// Keeps the landing page during startup and mounts the local preview in the background to satisfy SDK readiness.
     func start() async {
         guard !isBusy, localStream == nil else { return }
         guard hasAPIKey else {
@@ -155,7 +155,7 @@ final class RealtimeSessionController: ObservableObject {
         }
     }
 
-    /// 只消费一次初始预设；生成连接成功前不切换页面，失败则释放摄像头。
+    /// Consumes the initial preset once, opens the session page after connection succeeds, and releases the camera on failure.
     private func startPendingGeneration() async {
         guard state.connectionState == .ready, localStream != nil,
               let reference = pendingInitialReference else { return }
@@ -176,7 +176,7 @@ final class RealtimeSessionController: ObservableObject {
         if lifecycleID == operation { isBusy = false }
     }
 
-    /// 条件更新不锁住整个页面；连续选择串行应用，只保留最新的待处理选择。
+    /// Condition updates keep the page interactive; selections are applied serially with only the latest pending selection retained.
     func selectReference(_ reference: RealtimeReference) async {
         guard canGenerate, reference.uploadState != .uploading else { return }
         let intent = UUID()
@@ -188,7 +188,7 @@ final class RealtimeSessionController: ObservableObject {
         }
     }
 
-    /// 自由输入与选图复用生成队列，切换页签本身不重新生成。
+    /// Free Prompt and image selection share the generation queue; switching tabs alone does not regenerate.
     func submitPrompt() async {
         guard canGenerate, !referenceUploading else { return }
         let reference = RealtimeReference(
@@ -201,7 +201,7 @@ final class RealtimeSessionController: ObservableObject {
         await enqueue(reference: reference, intent: intent)
     }
 
-    /// 本地文件立即插入列表首位；上传进度和重试状态属于条目，不锁定其他控件。
+    /// Local files appear first immediately; per-item progress and retries leave other controls available.
     func uploadReference(at fileURL: URL, mode: RealtimeExampleMode) async {
         guard canGenerate else { return }
         let scoped = fileURL.startAccessingSecurityScopedResource()
@@ -300,7 +300,7 @@ final class RealtimeSessionController: ObservableObject {
         uploadedReferences.removeAll { $0.id == reference.id }
     }
 
-    /// 同步 SDK 插帧开关及故障降级，不以逐帧状态驱动按钮。
+    /// Synchronizes the SDK interpolation setting and fallback state without updating buttons for every frame.
     func refreshInterpolationState() async {
         let operation = lifecycleID
         guard let manager else { return }
@@ -333,7 +333,7 @@ final class RealtimeSessionController: ObservableObject {
 
     func dismissError() { errorMessage = nil }
 
-    /// 与 Web 一致，先返回启动页，再在后台完成 SDK 资源释放。
+    /// Returns to the landing page before releasing SDK resources in the background, matching the Web example.
     func close() async {
         guard !isBusy else { return }
         let manager = manager
@@ -369,7 +369,7 @@ final class RealtimeSessionController: ObservableObject {
         networkQuality = nil
     }
 
-    /// 与 Web 一致保留原始尺寸，以白底 JPEG 0.9 上传，避免透明图片变黑。
+    /// Preserves the original dimensions and uploads white-background JPEG at 0.9 quality to avoid black transparent areas.
     nonisolated private static func jpegData(_ data: Data) throws -> Data {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil),
               let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],

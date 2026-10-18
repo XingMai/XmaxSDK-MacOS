@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -15,13 +15,13 @@ import Foundation
 
 final class MediaServicingStub: MediaServicing, @unchecked Sendable {
 
-    /// 测试配置
+    /// Test configuration
     let model: RealtimeModel
     private let resolvedSize: CGSize
     private let resolutionError: (any Error)?
     private let frameInterpolationSupported: Bool
 
-    /// 并发状态
+    /// Concurrent state
     private let lock = NSLock()
     private var storedRequestedSizes: [CGSize] = []
 

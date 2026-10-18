@@ -9,7 +9,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 import XmaxSDK
 
-/// 对齐 Web X-Lab 的启动页、顶栏设置和双屏会话布局。
+/// Matches the Web X-Lab landing page, toolbar settings, and split-screen session layout.
 struct RealtimeView: View {
     @Environment(\.displayScale) private var displayScale
     @StateObject private var controller = RealtimeSessionController()
@@ -44,7 +44,7 @@ struct RealtimeView: View {
             }
         }
         .background {
-            // SDK 要求预览先绑定才能进入 ready；启动页持续显示 loading，连接成功后才显示双屏。
+            // The SDK requires a bound preview before readiness; the landing page shows loading until connected.
             if !controller.sessionActive, let stream = controller.localStream {
                 XmaxVideo(track: stream.videoTrack)
                     .frame(width: 1, height: 1)
@@ -71,7 +71,7 @@ struct RealtimeView: View {
         .onDisappear { controller.viewDidDisappear() }
     }
 
-    /// 品牌与会话设置
+    /// Branding and session settings
     private func header(viewportWidth: CGFloat) -> some View {
         let controlHeight = min(48, max(35, viewportWidth * 0.0055 + 26))
         let logoHeight = min(52, max(34, viewportWidth * 0.008 + 24))
@@ -157,7 +157,7 @@ struct RealtimeView: View {
         }
     }
 
-    /// 启动页沿用 Web 的尺寸公式、麦克风开关和单一启动入口。
+    /// Uses the Web landing page sizing formula, microphone toggle, and single start action.
     private func landingPage(viewportWidth: CGFloat) -> some View {
         let fontSize = min(45, max(27, viewportWidth * 0.01 + 18))
         let smallSize = min(15, max(12, viewportWidth * 0.0028 + 9.5))
@@ -267,7 +267,7 @@ struct RealtimeView: View {
     }
 }
 
-/// 会话顶栏沿用 Web 的统计、远端音量、插帧、计时与停止按钮。
+/// Uses the Web session toolbar statistics, remote volume, interpolation, timer, and stop controls.
 struct RealtimeSessionHeaderControls: View {
     @ObservedObject var controller: RealtimeSessionController
     @State private var volumeOpen = false
@@ -335,14 +335,14 @@ struct RealtimeSessionHeaderControls: View {
         }
     }
 
-    /// 会话计时从生成连接成功开始，结束后归零。
+    /// Session timing starts when generation connects and resets when the session ends.
     private func elapsed(at date: Date) -> String {
         let seconds = max(0, Int(date.timeIntervalSince(controller.sessionStartedAt ?? date)))
         return String(format: "%02d:%02d", seconds / 60, seconds % 60)
     }
 }
 
-/// 双屏与分类列表保持挂载，切换模式时保留各自滚动位置。
+/// Keeps both video panels and category lists mounted to preserve scroll positions across modes.
 struct RealtimeSessionWorkspace: View {
     @ObservedObject var controller: RealtimeSessionController
     @State private var importPresented = false
@@ -488,7 +488,7 @@ struct RealtimeSessionWorkspace: View {
         .frame(maxWidth: 880).padding(.top, 4)
     }
 
-    /// 记录上传所属模式，不使用异步返回时的当前页签。
+    /// Captures the upload mode instead of reading the active tab after the asynchronous result.
     private func presentImporter() {
         uploadMode = controller.activeMode
         importPresented = true

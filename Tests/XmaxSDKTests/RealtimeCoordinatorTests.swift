@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -649,7 +649,7 @@ final class RealtimeCoordinatorTests: XCTestCase {
                 return
             }
 
-            // 固定交错顺序：状态通知返回前，确保另一个关闭请求已经进入。
+            // Fixes execution order: another close request must enter before the state notification returns.
             let callbackGate = DispatchSemaphore(value: 0)
             closeTask = Task.detached {
                 let task = Task {
@@ -903,10 +903,10 @@ private extension RealtimeCoordinatorTests {
 
 private actor RealtimeCoordinatorProbe {
 
-    /// 操作状态
+    /// Operation state
     private(set) var operationStarted = false
 
-    /// 清理记录
+    /// Cleanup records
     private(set) var cleanupScopes: [
         RealtimeCoordinator.TerminationScope
     ] = []
@@ -924,7 +924,7 @@ private actor RealtimeCoordinatorProbe {
 
 private final class RealtimeCoordinatorEventRecorder: @unchecked Sendable {
 
-    /// 并发状态
+    /// Concurrent state
     private let lock = NSLock()
     private var events: [String] = []
 
@@ -941,7 +941,7 @@ private final class RealtimeCoordinatorEventRecorder: @unchecked Sendable {
 
 private final class RealtimeCoordinatorErrorRecorder: @unchecked Sendable {
 
-    /// 并发状态
+    /// Concurrent state
     private let lock = NSLock()
     private var error: XmaxError?
 

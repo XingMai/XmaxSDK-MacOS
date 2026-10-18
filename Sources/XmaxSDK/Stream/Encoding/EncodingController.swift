@@ -3,29 +3,29 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 根据实时视频格式配置 RTC 视频编码参数。
+/// Configures RTC encoding from the realtime video format.
 final class EncodingController: EncodingControlling, Sendable {
 
-    /// 基础层组件
+    /// Foundation components
     private let rtcManager: any RtcManaging
 
-    /// 创建负责应用 RTC 视频编码配置的控制器。
+    /// Creates a controller applying RTC video encoding configuration.
     ///
-    /// - Parameter rtcManager: 接收编码配置的 RTC 管理器。
+    /// - Parameter rtcManager: The RTC manager receiving encoding configuration.
     init(rtcManager: any RtcManaging) {
         self.rtcManager = rtcManager
     }
 
-    /// 校验视频规格并应用解析后的 RTC 编码参数。
+    /// Validates video format and applies resolved RTC encoding parameters.
     ///
-    /// - Parameter videoFormat: 包含尺寸、帧率、可选码率及编码偏好的视频规格。
-    /// - Throws: 视频规格无效、默认码率解析或 RTC 配置失败时抛出错误。
+    /// - Parameter videoFormat: The format containing dimensions, frame rate, optional bitrate, and encoding preferences.
+    /// - Throws: An error on invalid format, default bitrate resolution failure, or RTC configuration failure.
     func configure(_ videoFormat: RealtimeVideoFormat) throws {
         try videoFormat.validate()
 

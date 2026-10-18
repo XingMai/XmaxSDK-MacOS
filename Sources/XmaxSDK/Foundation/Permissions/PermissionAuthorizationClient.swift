@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,13 +11,13 @@
 
 @preconcurrency import AVFoundation
 
-/// SDK 需要检查的媒体权限。
+/// Media permissions checked by the SDK.
 enum MediaPermission: Equatable, Sendable {
     case camera
     case microphone
 }
 
-/// 平台媒体权限的中性授权状态。
+/// Neutral authorization states for platform media permissions.
 enum MediaAuthorizationStatus: Sendable {
     case notDetermined
     case restricted
@@ -25,10 +25,10 @@ enum MediaAuthorizationStatus: Sendable {
     case authorized
 }
 
-/// 提供平台媒体权限查询与异步授权接口。
+/// Provides platform media permission queries and asynchronous authorization.
 struct PermissionAuthorizationClient: Sendable {
 
-    /// 授权接口
+    /// Authorization interface
     let authorizationStatus: @Sendable (
         _ permission: MediaPermission
     ) -> MediaAuthorizationStatus
@@ -36,7 +36,7 @@ struct PermissionAuthorizationClient: Sendable {
         _ permission: MediaPermission
     ) async throws -> Bool
 
-    /// 平台实现
+    /// Platform implementation
     static let live = PermissionAuthorizationClient(
         authorizationStatus: { permission in
             let status = AVCaptureDevice.authorizationStatus(
@@ -63,7 +63,7 @@ struct PermissionAuthorizationClient: Sendable {
 
 private extension MediaPermission {
 
-    /// 系统媒体类型
+    /// System media types
     var mediaType: AVMediaType {
         switch self {
         case .camera:

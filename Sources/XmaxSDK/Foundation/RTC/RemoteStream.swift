@@ -3,20 +3,20 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// 标识 RTC 房间中的一条远端主流。
+/// Identifies a remote primary stream in an RTC room.
 struct RemoteStream: Equatable, Hashable, Sendable {
 
-    /// 流标识
+    /// Stream identity
     let roomID: String
     let userID: String
 
-    /// 生成跨房间唯一的远端流键。
+    /// Creates a remote stream key unique across rooms.
     var key: String {
         "\(roomID):\(userID)"
     }

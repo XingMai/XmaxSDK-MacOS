@@ -3,51 +3,51 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// RTC 网络质量等级。
+/// RTC network quality levels.
 public enum RealtimeNetworkQualityLevel: String, CaseIterable, Sendable {
 
-    /// RTC 尚未提供有效质量数据。
+    /// RTC has not supplied valid quality data.
     case unknown = "Unknown"
 
-    /// 网络质量优秀。
+    /// Excellent network quality.
     case excellent = "Excellent"
 
-    /// 网络质量良好。
+    /// Good network quality.
     case good = "Good"
 
-    /// 网络质量较差，实时体验可能开始受影响。
+    /// Poor network quality; realtime experience may begin to degrade.
     case poor = "Poor"
 
-    /// 网络质量很差，实时体验明显受影响。
+    /// Very poor network quality, noticeably affecting realtime experience.
     case bad = "Bad"
 
-    /// 网络质量极差，媒体传输可能严重中断。
+    /// Extremely poor network quality; media delivery may be severely interrupted.
     case veryBad = "VeryBad"
 
-    /// 网络连接已经中断。
+    /// The network connection is disconnected.
     case down = "Down"
 }
 
-/// 实时会话的上下行网络质量。
+/// Upstream and downstream realtime session network quality.
 public struct RealtimeNetworkQuality: Equatable, Sendable {
 
-    /// 本地向 RTC 房间发送媒体的网络质量。
+    /// The quality of local media transmission to the RTC room.
     public let uplink: RealtimeNetworkQualityLevel
 
-    /// 本地从 RTC 房间接收媒体的网络质量。
+    /// The quality of local media reception from the RTC room.
     public let downlink: RealtimeNetworkQualityLevel
 
-    /// 创建上下行网络质量快照。
+    /// Creates an upstream and downstream network quality snapshot.
     ///
     /// - Parameters:
-    ///   - uplink: 本地媒体上行的网络质量。
-    ///   - downlink: 远端媒体下行的网络质量。
+    ///   - uplink: The local media upstream network quality.
+    ///   - downlink: The remote media downstream network quality.
     public init(
         uplink: RealtimeNetworkQualityLevel,
         downlink: RealtimeNetworkQualityLevel
@@ -57,7 +57,7 @@ public struct RealtimeNetworkQuality: Equatable, Sendable {
     }
 }
 
-/// 实时网络质量监听器。
+/// The realtime network quality listener.
 public typealias RealtimeNetworkQualityListener = @MainActor @Sendable (
     RealtimeNetworkQuality
 ) -> Void

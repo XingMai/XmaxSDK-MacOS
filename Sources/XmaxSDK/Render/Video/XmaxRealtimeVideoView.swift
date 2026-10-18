@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,16 +11,16 @@
 
 import AppKit
 
-/// 持续显示本地预览，并在远端首帧提交后覆盖显示生成结果。
+/// Continuously previews local video and overlays generation after the first remote frame is submitted.
 @MainActor
 public final class XmaxRealtimeVideoView: NSView {
 
-    /// 本地摄像头视频轨道。
+    /// The local camera video track.
     public var localTrack: RealtimeVideoTrack? {
         didSet { localVideoView.track = localTrack }
     }
 
-    /// 远端生成视频轨道；为空时立即恢复本地预览。
+    /// The remote generated track; nil immediately restores local preview.
     public var remoteTrack: RealtimeVideoTrack? {
         didSet {
             guard oldValue !== remoteTrack else { return }
@@ -28,7 +28,7 @@ public final class XmaxRealtimeVideoView: NSView {
         }
     }
 
-    /// 本地和远端视频共用的缩放与裁剪方式。
+    /// The shared local and remote video scaling and cropping mode.
     public var videoContentMode: VideoContentMode = .fill {
         didSet {
             localVideoView.videoContentMode = videoContentMode
@@ -36,16 +36,16 @@ public final class XmaxRealtimeVideoView: NSView {
         }
     }
 
-    /// 视频视图
+    /// Video views
     private let localVideoView = XmaxVideoView()
     private let remoteVideoView = XmaxVideoView()
 
-    /// 创建实时视频容器。
+    /// Creates a realtime video container.
     ///
     /// - Parameters:
-    ///   - localTrack: 持续预览的本地轨道。
-    ///   - remoteTrack: 覆盖显示的生成结果轨道。
-    ///   - videoContentMode: 视频内容的显示模式。
+    ///   - localTrack: The continuously previewed local track.
+    ///   - remoteTrack: The generation result track displayed as an overlay.
+    ///   - videoContentMode: The video content display mode.
     public init(
         localTrack: RealtimeVideoTrack? = nil,
         remoteTrack: RealtimeVideoTrack? = nil,
@@ -58,30 +58,30 @@ public final class XmaxRealtimeVideoView: NSView {
         configureView()
     }
 
-    /// 使用指定布局区域创建实时视频容器。
+    /// Creates a realtime video container with the specified frame.
     ///
-    /// - Parameter frame: 视图初始布局区域。
+    /// - Parameter frame: The initial view frame.
     public override init(frame: CGRect) {
         super.init(frame: frame)
         configureView()
     }
 
-    /// 从 Interface Builder 归档恢复实时视频容器。
+    /// Restores a realtime video container from an Interface Builder archive.
     ///
-    /// - Parameter coder: 视图归档解码器。
+    /// - Parameter coder: The view archive decoder.
     public required init?(coder: NSCoder) {
         super.init(coder: coder)
         configureView()
     }
 
-    /// 同步两个视频子视图的布局。
+    /// Synchronizes both video subview layouts.
     public override func layout() {
         super.layout()
         localVideoView.frame = bounds
         remoteVideoView.frame = bounds
     }
 
-    /// 安装本地预览和远端结果图层。
+    /// Installs local preview and remote result layers.
     private func configureView() {
         wantsLayer = true
         layer?.backgroundColor = NSColor.black.cgColor
@@ -94,7 +94,7 @@ public final class XmaxRealtimeVideoView: NSView {
         updateRemoteTrack()
     }
 
-    /// 等待新远端轨道的首帧，防止切换期间显示空白画面。
+    /// Waits for the new remote track's first frame to avoid blank output during switching.
     private func updateRemoteTrack() {
         remoteVideoView.frameDisplayHandler = nil
         remoteVideoView.track = nil

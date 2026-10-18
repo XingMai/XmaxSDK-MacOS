@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,25 +11,25 @@
 
 import SwiftUI
 
-/// 在 SwiftUI 中自动切换本地预览和远端生成画面。
+/// Automatically switches between local preview and remote generation in SwiftUI.
 @MainActor
 public struct XmaxRealtimeVideo: NSViewRepresentable {
 
-    /// 当前显示的本地视频轨道。
+    /// The displayed local video track.
     public let localTrack: RealtimeVideoTrack?
 
-    /// 当前显示的远端生成视频轨道。
+    /// The displayed remote generation video track.
     public let remoteTrack: RealtimeVideoTrack?
 
-    /// 视频内容在容器中的显示模式。
+    /// The video content display mode in its container.
     public let videoContentMode: VideoContentMode
 
-    /// 创建 SwiftUI 实时视频组件。
+    /// Creates a SwiftUI realtime video component.
     ///
     /// - Parameters:
-    ///   - localTrack: 需要持续预览的本地视频轨道。
-    ///   - remoteTrack: 需要覆盖显示的远端生成视频轨道。
-    ///   - videoContentMode: 本地与远端视频的内容显示模式。
+    ///   - localTrack: The local video track to preview continuously.
+    ///   - remoteTrack: The remote generated track to display as an overlay.
+    ///   - videoContentMode: The content display mode for local and remote video.
     public init(
         localTrack: RealtimeVideoTrack?,
         remoteTrack: RealtimeVideoTrack?,
@@ -40,10 +40,10 @@ public struct XmaxRealtimeVideo: NSViewRepresentable {
         self.videoContentMode = videoContentMode
     }
 
-    /// 创建承载 SwiftUI 视频内容的 AppKit 视图。
+    /// Creates an AppKit view hosting SwiftUI video content.
     ///
-    /// - Parameter context: SwiftUI 提供的视图创建上下文。
-    /// - Returns: 配置本地与远端轨道的 SDK 实时视频视图。
+    /// - Parameter context: The SwiftUI view creation context.
+    /// - Returns: The SDK realtime video view configured with local and remote tracks.
     public func makeNSView(context: Context) -> XmaxRealtimeVideoView {
         XmaxRealtimeVideoView(
             localTrack: localTrack,
@@ -52,11 +52,11 @@ public struct XmaxRealtimeVideo: NSViewRepresentable {
         )
     }
 
-    /// 将最新轨道和显示配置同步到 AppKit 视图。
+    /// Synchronizes track and display configuration changes to the AppKit view.
     ///
     /// - Parameters:
-    ///   - view: 需要更新的 SDK 视频视图。
-    ///   - context: SwiftUI 提供的视图更新上下文。
+    ///   - view: The SDK video view to update.
+    ///   - context: The SwiftUI view update context.
     public func updateNSView(
         _ view: XmaxRealtimeVideoView,
         context: Context
@@ -66,11 +66,11 @@ public struct XmaxRealtimeVideo: NSViewRepresentable {
         view.remoteTrack = remoteTrack
     }
 
-    /// 在 SwiftUI 移除视图时解除视频轨道绑定。
+    /// Unbinds video tracks when SwiftUI removes the view.
     ///
     /// - Parameters:
-    ///   - view: 即将移除的 SDK 视频视图。
-    ///   - coordinator: 无额外状态的 SwiftUI 协调对象。
+    ///   - view: The SDK video view being removed.
+    ///   - coordinator: The stateless SwiftUI coordinator.
     public static func dismantleNSView(
         _ view: XmaxRealtimeVideoView,
         coordinator: Void

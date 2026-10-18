@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -12,47 +12,47 @@
 import CoreGraphics
 import Foundation
 
-/// 协调系统摄像头采集、外部视频上传和 SDK 本地预览。
+/// Coordinates system camera capture, external video upload, and SDK local preview.
 final class CameraController: CameraControlling, @unchecked Sendable {
 
-    /// 轨道标识
+    /// Track identity
     private static let localVideoTrackID = "video0"
 
-    /// 基础层组件
+    /// Foundation components
     private let rtcManager: any RtcManaging
     private let permissionManager: any PermissionManaging
     private let captureManager: any CameraCaptureManaging
 
-    /// 服务层组件
+    /// Service components
     private let mediaService: any MediaServicing
 
-    /// 事件监听
+    /// Event listeners
     private let videoFrameListener: MediaVideoFrameListener
     private let errorListener: XmaxErrorListener
     private var previewReadyHandler: CameraPreviewReadyHandler?
 
-    /// 并发控制
+    /// Concurrency control
     private let stateLock = NSLock()
 
-    /// 本地资源
+    /// Local resources
     private var activeTrack: RealtimeVideoTrack?
     private var preview: Preview?
 
-    /// 预览状态
+    /// Preview state
     private var hasCapturedFrame = false
     private var isPreviewAttached = false
 
-    /// 麦克风配置与采集状态
+    /// Microphone configuration and capture state
     private var storedUseMicrophone = false
     private var isMicrophoneCapturing = false
 
-    /// 使用系统权限和采集组件创建摄像头控制器。
+    /// Creates a camera controller with system permission and capture components.
     ///
     /// - Parameters:
-    ///   - rtcManager: 配置 RTC 外部视频和麦克风的组件。
-    ///   - mediaService: 提供模型尺寸规则的服务。
-    ///   - videoFrameListener: 接收相机视频帧的回调。
-    ///   - errorListener: 接收采集运行错误的回调。
+    ///   - rtcManager: The component configuring RTC external video and microphone input.
+    ///   - mediaService: The service providing model dimension rules.
+    ///   - videoFrameListener: The callback receiving camera video frames.
+    ///   - errorListener: The callback receiving capture runtime errors.
     @MainActor
     convenience init(
         rtcManager: any RtcManaging,
@@ -70,15 +70,15 @@ final class CameraController: CameraControlling, @unchecked Sendable {
         )
     }
 
-    /// 使用指定依赖创建摄像头控制器。
+    /// Creates a camera controller with the specified dependencies.
     ///
     /// - Parameters:
-    ///   - rtcManager: RTC 媒体适配组件。
-    ///   - permissionManager: 摄像头及麦克风权限组件。
-    ///   - mediaService: 模型尺寸规则服务。
-    ///   - captureManager: 系统视频采集组件。
-    ///   - videoFrameListener: 接收相机视频帧的回调。
-    ///   - errorListener: 接收采集运行错误的回调。
+    ///   - rtcManager: The RTC media adapter.
+    ///   - permissionManager: The camera and microphone permission component.
+    ///   - mediaService: The model dimension rules service.
+    ///   - captureManager: The system video capture component.
+    ///   - videoFrameListener: The callback receiving camera video frames.
+    ///   - errorListener: The callback receiving capture runtime errors.
     init(
         rtcManager: any RtcManaging,
         permissionManager: any PermissionManaging,
@@ -95,18 +95,18 @@ final class CameraController: CameraControlling, @unchecked Sendable {
         self.errorListener = errorListener
     }
 
-    /// 查询可用于创建或切换摄像头流的设备。
+    /// Lists devices available for camera stream creation or switching.
     ///
-    /// - Returns: 当前可用的摄像头设备。
+    /// - Returns: The currently available camera devices.
     func listCameraDevices() -> [CameraDevice] {
         captureManager.listCameraDevices()
     }
 
-    /// 解析显式设备标识或系统默认设备，不自动替换已失效的显式选择。
+    /// Resolves an explicit device or system default without silently replacing an unavailable explicit selection.
     ///
-    /// - Parameter deviceID: 指定设备标识；为空时使用默认设备。
-    /// - Returns: 当前可用的目标设备。
-    /// - Throws: 指定设备不可用或没有摄像头时抛出媒体错误。
+    /// - Parameter deviceID: The specified device identifier; an empty value uses the default device.
+    /// - Returns: The available target device.
+    /// - Throws: A media error if the specified device is unavailable or no camera exists.
     private func resolveDevice(_ deviceID: String?) throws -> CameraDevice {
         let devices = captureManager.listCameraDevices()
         let device: CameraDevice?
@@ -121,19 +121,19 @@ final class CameraController: CameraControlling, @unchecked Sendable {
         return device
     }
 
-    /// 当前活动的本地相机视频轨道；尚未创建时返回空值。
+    /// The active local camera video track, or nil before creation.
     var currentTrack: RealtimeVideoTrack? {
         stateLock.withLock { activeTrack }
     }
 
-    /// 当前相机流是否配置为使用麦克风。
+    /// Whether the current camera stream is configured to use the microphone.
     var useMicrophone: Bool {
         stateLock.withLock { activeTrack != nil && storedUseMicrophone }
     }
 
-    /// 设置当前相机流的一次性内部就绪处理；条件为已收到有效帧且预览已绑定。
+    /// Sets a one-time readiness handler requiring both a valid captured frame and a bound preview.
     ///
-    /// - Parameter handler: 就绪时调用的处理闭包；传入空值时清除。
+    /// - Parameter handler: The readiness callback; an empty value clears it.
     func setPreviewReadyHandler(_ handler: CameraPreviewReadyHandler?) {
         let track = stateLock.withLock {
             previewReadyHandler = handler
@@ -142,14 +142,14 @@ final class CameraController: CameraControlling, @unchecked Sendable {
         if let track { notifyPreviewReady(for: track) }
     }
 
-    /// 创建并启动本地相机流。
+    /// Creates and starts a local camera stream.
     ///
     /// - Parameters:
-    ///   - videoFormat: 期望的输出尺寸、帧率和编码配置；尺寸按模型规则调整。
-    ///   - deviceID: 首次启动使用的设备标识；为空时使用系统默认摄像头。
-    ///   - useMicrophone: 是否申请麦克风权限并允许实时连接时启动音频采集。
-    /// - Returns: 包含本地相机视频轨道的媒体流。
-    /// - Throws: 已有活动相机流、格式无效、权限不足或采集启动失败时抛出错误。
+    ///   - videoFormat: The requested dimensions, frame rate, and encoding configuration; dimensions follow model rules.
+    ///   - deviceID: The initial device identifier; an empty value uses the system default camera.
+    ///   - useMicrophone: Whether to request microphone permission and allow capture when realtime connects.
+    /// - Returns: The media stream containing the local camera video track.
+    /// - Throws: An error on an existing camera stream, invalid format, insufficient permissions, or capture startup failure.
     func createLocalCameraStream(
         videoFormat: RealtimeVideoFormat,
         deviceID: String?,
@@ -209,21 +209,21 @@ final class CameraController: CameraControlling, @unchecked Sendable {
         }
     }
 
-    /// 为已启用麦克风的相机流启动音频采集，不开启本地回放。
+    /// Starts audio capture for a microphone-enabled camera stream without local playback.
     ///
-    /// - Throws: RTC 音频源配置或麦克风采集启动失败时抛出错误。
+    /// - Throws: An error on RTC audio source configuration or microphone capture startup failure.
     func startMicrophoneCapture() throws {
         try stateLock.withLock {
             guard activeTrack != nil, storedUseMicrophone, !isMicrophoneCapturing else { return }
-            // 启动失败时也保留待停止状态，由连接清理回收可能已启动的设备。
+            // Retains stop-pending state after startup failure so connection cleanup can reclaim partially started devices.
             isMicrophoneCapturing = true
             try rtcManager.startAudioCapture()
         }
     }
 
-    /// 停止麦克风采集，保留下一次连接所需的配置。
+    /// Stops microphone capture while retaining configuration for the next connection.
     ///
-    /// - Throws: RTC 麦克风采集停止失败时抛出错误。
+    /// - Throws: An error if stopping RTC microphone capture fails.
     func stopMicrophoneCapture() throws {
         try stateLock.withLock {
             guard isMicrophoneCapturing else { return }
@@ -232,7 +232,7 @@ final class CameraController: CameraControlling, @unchecked Sendable {
         }
     }
 
-    /// 停止相机和麦克风采集，并释放当前轨道及本地预览资源。
+    /// Stops camera and microphone capture and releases the track and local preview resources.
     func stopLocalCameraStream() async {
         do {
             try stopMicrophoneCapture()
@@ -263,10 +263,10 @@ final class CameraController: CameraControlling, @unchecked Sendable {
         }
     }
 
-    /// 切换到指定摄像头设备，保留当前视频轨道。
+    /// Switches to the specified camera device while retaining the current video track.
     ///
-    /// - Returns: 包含更新后相机轨道的媒体流。
-    /// - Throws: 相机流尚未启动、设备切换或镜像配置失败时抛出错误。
+    /// - Returns: The media stream containing the updated camera track.
+    /// - Throws: An error if no camera stream is active, device switching fails, or mirror configuration fails.
     func switchCamera(to deviceID: String) async throws -> RealtimeMediaStream {
         guard let track = currentTrack, let previousDevice = track.device else {
             throw XmaxError(code: .rtcError, message: "Local camera preview is not started")
@@ -289,20 +289,20 @@ final class CameraController: CameraControlling, @unchecked Sendable {
 }
 
 private extension CameraController {
-    /// 持有摄像头预览呈现器和帧分发器。
+    /// Retains the camera preview presenter and frame dispatcher.
     struct Preview: Sendable {
 
-        /// 预览组件
+        /// Preview components
         let presenter: DecodedVideoPreviewPresenter
         let dispatcher: DecodedVideoPreviewDispatcher
     }
 
-    /// 创建并注册相机轨道对应的预览绑定。
+    /// Creates and registers a preview binding for the camera track.
     ///
     /// - Parameters:
-    ///   - track: 需要预览的本地相机轨道。
-    ///   - position: 决定预览镜像的摄像头位置。
-    /// - Returns: 供后续帧提交和资源释放使用的预览组件。
+    ///   - track: The local camera track to preview.
+    ///   - position: The camera position determining preview mirroring.
+    /// - Returns: The preview components used for frame submission and resource release.
     @MainActor
     func makePreview(for track: RealtimeVideoTrack, position: CameraPosition) -> Preview {
         let presenter = DecodedVideoPreviewPresenter()
@@ -331,13 +331,13 @@ private extension CameraController {
         return preview
     }
 
-    /// 将当前轨道的采集帧提交给预览和媒体监听器。
+    /// Submits captured frames for the current track to preview and media listeners.
     ///
     /// - Parameters:
-    ///   - frame: 已完成方向和尺寸转换的采集帧。
-    ///   - track: 产生该帧的相机轨道。
-    ///   - preview: 该轨道持有的预览组件。
-    /// - Throws: 视频帧监听器处理失败时抛出错误。
+    ///   - frame: The captured frame after orientation and dimension conversion.
+    ///   - track: The camera track producing the frame.
+    ///   - preview: The preview components retained by this track.
+    /// - Throws: An error if the video frame listener fails to process the frame.
     func handleFrame(_ frame: VideoFrame, track: RealtimeVideoTrack, preview: Preview) throws {
         let accepted = try stateLock.withLock {
             guard activeTrack === track else { return false }
@@ -349,9 +349,9 @@ private extension CameraController {
         if accepted { notifyPreviewReady(for: track) }
     }
 
-    /// 在已有有效帧和预览绑定时一次性通知就绪。
+    /// Reports readiness once after a valid frame arrives and preview is bound.
     ///
-    /// - Parameter track: 需要核对有效性的相机轨道。
+    /// - Parameter track: The camera track whose validity must be checked.
     func notifyPreviewReady(for track: RealtimeVideoTrack) {
         let shouldNotify = stateLock.withLock {
             activeTrack === track && hasCapturedFrame && isPreviewAttached &&
@@ -377,11 +377,11 @@ private extension CameraController {
         }
     }
 
-    /// 按模型尺寸规则解析摄像头的实际输出规格。
+    /// Resolves the actual camera output format using model dimension rules.
     ///
-    /// - Parameter videoFormat: 调用方请求的相机视频规格。
-    /// - Returns: 保留帧率及编码选项的有效输出规格。
-    /// - Throws: 输入规格无效或模型不支持目标尺寸时抛出错误。
+    /// - Parameter videoFormat: The requested camera video format.
+    /// - Returns: The valid output format retaining frame rate and encoding options.
+    /// - Throws: An error if input format is invalid or the model does not support target dimensions.
     func resolveVideoFormat(_ videoFormat: RealtimeVideoFormat) throws -> RealtimeVideoFormat {
         try videoFormat.validate()
         let targetSize = try mediaService.resolveMediaSize(

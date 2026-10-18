@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -12,9 +12,9 @@
 import Foundation
 @preconcurrency import AgoraRtcKit
 
-/// 将声网单个连接的回调转发给 RTC Manager。
+/// Forwards one Agora connection's callbacks to the RTC manager.
 final class RtcRoomEventBridge: NSObject, AgoraRtcEngineDelegate {
-    /// 封装单次声网连接的用户、媒体及质量事件。
+    /// Wraps user, media, and quality events for one Agora connection.
     enum Event {
         case joined(UInt)
         case account(UInt, String)
@@ -26,96 +26,96 @@ final class RtcRoomEventBridge: NSObject, AgoraRtcEngineDelegate {
         case remoteStats(AgoraRtcRemoteVideoStats)
     }
 
-    /// 事件回调
+    /// Event callbacks
     private let handler: @Sendable (Event) -> Void
 
-    /// 创建房间事件桥接器。
+    /// Creates a room event bridge.
     ///
-    /// - Parameter handler: 接收转换后事件的回调。
+    /// - Parameter handler: The callback receiving converted events.
     init(handler: @escaping @Sendable (Event) -> Void) {
         self.handler = handler
     }
 
-    /// 转发本地进房成功事件。
+    /// Forwards successful local room join events.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - channel: 已加入的频道标识。
-    ///   - uid: 本地用户的数字标识。
-    ///   - elapsed: 进房调用至成功的耗时，单位为毫秒。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - channel: The joined channel identifier.
+    ///   - uid: The local user's numeric identifier.
+    ///   - elapsed: The duration from join call to success in milliseconds.
     func rtcEngine(_ engine: AgoraRtcEngineKit, didJoinChannel channel: String, withUid uid: UInt, elapsed: Int) {
         handler(.joined(uid))
     }
 
-    /// 转发远端数字用户标识与账号的映射。
+    /// Forwards mappings between remote numeric user identifiers and accounts.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - uid: 远端用户数字标识。
-    ///   - userInfo: 包含用户账号的信息。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - uid: The remote user's numeric identifier.
+    ///   - userInfo: The user account information.
     func rtcEngine(_ engine: AgoraRtcEngineKit, didUserInfoUpdatedWithUserId uid: UInt, userInfo: AgoraUserInfo) {
         guard let account = userInfo.userAccount, !account.isEmpty else { return }
         handler(.account(uid, account))
     }
 
-    /// 转发远端用户加入事件。
+    /// Forwards remote user join events.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - uid: 加入的远端用户数字标识。
-    ///   - elapsed: 加入通知的耗时，单位为毫秒。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - uid: The joined remote user's numeric identifier.
+    ///   - elapsed: The join notification duration in milliseconds.
     func rtcEngine(_ engine: AgoraRtcEngineKit, didJoinedOfUid uid: UInt, elapsed: Int) {
         handler(.userJoined(uid))
     }
 
-    /// 在远端离开时通知其视频已停止发布。
+    /// Reports stopped video publication when a remote user leaves.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - uid: 离开的远端用户数字标识。
-    ///   - reason: 用户离线原因。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - uid: The departing remote user's numeric identifier.
+    ///   - reason: The user offline reason.
     func rtcEngine(_ engine: AgoraRtcEngineKit, didOfflineOfUid uid: UInt, reason: AgoraUserOfflineReason) {
         handler(.publication(uid, false))
     }
 
-    /// 将远端视频静音变化转换为发布状态。
+    /// Converts remote video mute changes to publication state.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - muted: 远端视频是否被静音。
-    ///   - uid: 远端用户数字标识。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - muted: Whether remote video is muted.
+    ///   - uid: The remote user's numeric identifier.
     func rtcEngine(_ engine: AgoraRtcEngineKit, didVideoMuted muted: Bool, byUid uid: UInt) {
         handler(.publication(uid, !muted))
     }
 
-    /// 将远端视频启用变化转换为发布状态。
+    /// Converts remote video enablement changes to publication state.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - enabled: 远端视频是否启用。
-    ///   - uid: 远端用户数字标识。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - enabled: Whether remote video is enabled.
+    ///   - uid: The remote user's numeric identifier.
     func rtcEngine(_ engine: AgoraRtcEngineKit, didVideoEnabled enabled: Bool, byUid uid: UInt) {
         handler(.publication(uid, enabled))
     }
 
-    /// 将远端视频启用变化转换为发布状态。
+    /// Converts remote video enablement changes to publication state.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - enabled: 远端视频是否启用。
-    ///   - uid: 远端用户数字标识。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - enabled: Whether remote video is enabled.
+    ///   - uid: The remote user's numeric identifier.
     func rtcEngine(_ engine: AgoraRtcEngineKit, didLocalVideoEnabled enabled: Bool, byUid uid: UInt) {
         handler(.publication(uid, enabled))
     }
 
-    /// 根据远端用户状态位计算视频发布状态。
+    /// Derives video publication state from remote user status bits.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - uid: 远端用户数字标识。
-    ///   - state: 远端用户的状态位集合。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - uid: The remote user's numeric identifier.
+    ///   - state: The remote user's status bits.
     func rtcEngine(_ engine: AgoraRtcEngineKit, remoteUserStateChangedOfUid uid: UInt, state: UInt) {
-        // AgoraBase.h 中的 USER_STATE 位标记；订阅前也能识别远端发布状态。
+        // USER_STATE flags from AgoraBase.h reveal remote publication state even before subscription.
         let muteVideo: UInt = 1 << 1
         let enableVideo: UInt = 1 << 4
         let enableLocalVideo: UInt = 1 << 8
@@ -123,14 +123,14 @@ final class RtcRoomEventBridge: NSObject, AgoraRtcEngineDelegate {
         handler(.publication(uid, published))
     }
 
-    /// 根据远端视频接收状态转发视频发布或停止事件。
+    /// Forwards video publication or stop events based on remote receiving state.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - uid: 远端用户数字标识。
-    ///   - state: 当前视频接收状态。
-    ///   - reason: 状态变化原因。
-    ///   - elapsed: 状态变化耗时，单位为毫秒。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - uid: The remote user's numeric identifier.
+    ///   - state: The current video receiving state.
+    ///   - reason: The state change reason.
+    ///   - elapsed: The state change duration in milliseconds.
     func rtcEngine(_ engine: AgoraRtcEngineKit, remoteVideoStateChangedOfUid uid: UInt, state: AgoraVideoRemoteState, reason: AgoraVideoRemoteReason, elapsed: Int) {
         if state == .starting || state == .decoding {
             handler(.publication(uid, true))
@@ -139,60 +139,60 @@ final class RtcRoomEventBridge: NSObject, AgoraRtcEngineDelegate {
         }
     }
 
-    /// 在 RTC 连接失败时转发连接错误。
+    /// Forwards connection errors when RTC connection fails.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - state: 当前连接状态。
-    ///   - reason: 连接状态变化原因。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - state: The current connection state.
+    ///   - reason: The connection state change reason.
     func rtcEngine(_ engine: AgoraRtcEngineKit, connectionChangedTo state: AgoraConnectionState, reason: AgoraConnectionChangedReason) {
         if state == .failed {
             handler(.failure("Agora connection failed: \(reason.rawValue)"))
         }
     }
 
-    /// 在令牌过期时通知房间连接失败。
+    /// Reports room connection failure when the token expires.
     ///
-    /// - Parameter engine: 请求新令牌的 RTC 引擎。
+    /// - Parameter engine: The RTC engine requesting a new token.
     func rtcEngineRequestToken(_ engine: AgoraRtcEngineKit) {
         handler(.failure("Agora RTC token expired"))
     }
 
-    /// 记录声网引擎上报的错误。
+    /// Logs errors reported by the Agora engine.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - errorCode: 声网错误码。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - errorCode: The Agora error code.
     func rtcEngine(_ engine: AgoraRtcEngineKit, didOccurError errorCode: AgoraErrorCode) {
         XmaxLogger.rtc.error(message: "声网 RTC 错误 (Agora RTC Error)\n└─ \(errorCode.rawValue)")
     }
 
-    /// 转发本地用户的上下行网络质量。
+    /// Forwards local upstream and downstream network quality.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - uid: 质量统计对应的用户；零表示本地用户。
-    ///   - txQuality: 上行网络质量。
-    ///   - rxQuality: 下行网络质量。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - uid: The user associated with the metrics; zero denotes the local user.
+    ///   - txQuality: The upstream network quality.
+    ///   - rxQuality: The downstream network quality.
     func rtcEngine(_ engine: AgoraRtcEngineKit, networkQuality uid: UInt, txQuality: AgoraNetworkQuality, rxQuality: AgoraNetworkQuality) {
         if uid == 0 { handler(.quality(txQuality, rxQuality)) }
     }
 
-    /// 转发本地视频上行统计。
+    /// Forwards local upstream video statistics.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - stats: 当前本地视频统计。
-    ///   - sourceType: 统计对应的视频源类型。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - stats: The current local video statistics.
+    ///   - sourceType: The video source type associated with the statistics.
     func rtcEngine(_ engine: AgoraRtcEngineKit, localVideoStats stats: AgoraRtcLocalVideoStats, sourceType: AgoraVideoSourceType) {
         handler(.localStats(stats))
     }
 
-    /// 转发远端视频下行统计。
+    /// Forwards remote downstream video statistics.
     ///
     /// - Parameters:
-    ///   - engine: 产生回调的 RTC 引擎。
-    ///   - stats: 当前远端视频统计。
+    ///   - engine: The RTC engine producing the callback.
+    ///   - stats: The current remote video statistics.
     func rtcEngine(_ engine: AgoraRtcEngineKit, remoteVideoStats stats: AgoraRtcRemoteVideoStats) {
         handler(.remoteStats(stats))
     }

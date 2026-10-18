@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,31 +11,31 @@
 
 import Foundation
 
-/// 从媒体基准计算传输档位，不改变采集或模型生成规格。
+/// Calculates transport tiers from the media baseline without changing capture or model generation format.
 enum QualityVideoFormat {
 
-    /// 档位配置
+    /// Tier configuration
     static let scales: [Double] = [1, 0.8, 0.65, 0.5, 0.5]
     static let frameRates = [30, 24, 24, 20, 16]
 
-    /// 计算下行档位的尺寸上限，不进行像素对齐或插帧限制。
+    /// Calculates downstream dimension limits without pixel alignment or interpolation limits.
     ///
     /// - Parameters:
-    ///   - baseline: 不随调档变化的媒体原始规格。
-    ///   - level: 下行目标档位，取值范围为 1...5。
-    /// - Returns: 保持原始比例的尺寸上限，可包含小数像素。
+    ///   - baseline: The original media format, unchanged by tier adjustments.
+    ///   - level: The target downstream tier in 1...5.
+    /// - Returns: Dimension limits preserving aspect ratio, potentially with fractional pixels.
     static func resolveDownlinkMaximumSize(_ baseline: RealtimeVideoFormat, level: Int) -> CGSize {
         let scale = sizeScale(baseline, level: level)
         return CGSize(width: Double(baseline.width) * scale, height: Double(baseline.height) * scale)
     }
 
-    /// 按基准规格计算指定方向和档位的传输格式。
+    /// Calculates transport format for a direction and tier from the baseline.
     ///
     /// - Parameters:
-    ///   - baseline: 本地媒体原始规格。
-    ///   - level: 目标档位，范围限制为 `1...5`。
-    ///   - downlink: 是否为下行；下行固定使用 24 fps，上行不超过基准帧率。
-    /// - Returns: 完成尺寸、帧率和编码选项映射的传输规格。
+    ///   - baseline: The original local media format.
+    ///   - level: The target tier, clamped to `1...5`.
+    ///   - downlink: Whether downstream; uses 24 fps downstream and at most the baseline frame rate upstream.
+    /// - Returns: The transport format with dimensions, frame rate, and encoding options mapped.
     static func resolve(_ baseline: RealtimeVideoFormat, level: Int, downlink: Bool) -> RealtimeVideoFormat {
         let index = min(5, max(1, level)) - 1
         let scale = sizeScale(baseline, level: level)
@@ -49,12 +49,12 @@ enum QualityVideoFormat {
         )
     }
 
-    /// 按比例缩小尺寸，优先保持精确比例和偶数对齐。
+    /// Scales dimensions down, preferring exact aspect ratio and even alignment.
     ///
     /// - Parameters:
-    ///   - size: 原始整数像素尺寸。
-    ///   - scale: 目标尺寸缩放比例。
-    /// - Returns: 偶数对齐的像素尺寸；无法保持精确比例时按像素精度向下对齐。
+    ///   - size: The original integer-pixel dimensions.
+    ///   - scale: The target dimension scale factor.
+    /// - Returns: Even-aligned dimensions, rounding down to pixel precision when exact aspect ratio cannot be preserved.
     static func scaledSize(_ size: CGSize, scale: Double) -> CGSize {
         let width = Int(size.width)
         let height = Int(size.height)
@@ -71,12 +71,12 @@ enum QualityVideoFormat {
         )
     }
 
-    /// 计算档位对应的尺寸缩放比例，保留短边最低尺寸且不放大。
+    /// Calculates tier scaling while preserving the minimum short side and avoiding upscaling.
     ///
     /// - Parameters:
-    ///   - baseline: 原始媒体规格。
-    ///   - level: 目标档位，取值范围为 1...5。
-    /// - Returns: 不超过 1 的尺寸缩放比例。
+    ///   - baseline: The original media format.
+    ///   - level: The target tier in 1...5.
+    /// - Returns: A dimension scale factor at most 1.
     private static func sizeScale(_ baseline: RealtimeVideoFormat, level: Int) -> Double {
         let index = min(5, max(1, level)) - 1
         let shortSide = min(baseline.width, baseline.height)

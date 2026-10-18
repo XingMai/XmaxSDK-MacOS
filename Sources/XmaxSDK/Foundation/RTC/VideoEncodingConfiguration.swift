@@ -3,40 +3,40 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
-/// RTC 主视频流编码参数。
+/// RTC primary video stream encoding parameters.
 struct VideoEncodingConfiguration: Equatable, Sendable {
-    /// 指定网络受限时的视频编码退化偏好。
+    /// Defines video encoding degradation preferences under limited network conditions.
     enum EncoderPreference: Equatable, Sendable {
         case auto
         case maintainFramerate
         case maintainQuality
     }
 
-    /// 视频规格
+    /// Video format
     let width: Int
     let height: Int
     let frameRate: Int
 
-    /// 码率与编码策略
+    /// Bitrate and encoding strategy
     let minimumBitrate: Int
     let maximumBitrate: Int
     let encoderPreference: EncoderPreference
 
-    /// 创建 RTC 视频编码配置。
+    /// Creates RTC video encoding configuration.
     ///
     /// - Parameters:
-    ///   - width: 编码宽度，单位为像素。
-    ///   - height: 编码高度，单位为像素。
-    ///   - frameRate: 编码帧率，单位为 fps。
-    ///   - minimumBitrate: 最小码率，单位为 kbps；默认值由平台处理。
-    ///   - maximumBitrate: 最大码率，单位为 kbps；负值表示使用平台默认值。
-    ///   - encoderPreference: 网络受限时的编码偏好。
+    ///   - width: The encoding width in pixels.
+    ///   - height: The encoding height in pixels.
+    ///   - frameRate: The encoding frame rate in fps.
+    ///   - minimumBitrate: The minimum bitrate in kbps; the platform handles the default.
+    ///   - maximumBitrate: The maximum bitrate in kbps; negative values use the platform default.
+    ///   - encoderPreference: The encoding preference under limited network conditions.
     init(
         width: Int,
         height: Int,

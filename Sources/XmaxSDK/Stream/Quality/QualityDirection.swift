@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,17 +11,17 @@
 
 import Foundation
 
-/// 单个传输方向的网络采样与升降档规则。
+/// Network sampling and tier adjustment rules for one transport direction.
 struct QualityDirection: Sendable {
 
-    /// 媒体基准
+    /// Media baseline
     let baseline: RealtimeVideoFormat
     let downlink: Bool
 
-    /// 当前档位
+    /// Current tier
     private(set) var level: Int
 
-    /// 采样窗口
+    /// Sampling window
     private var goodSamples = 0
     private var poorSamples = 0
     private var lastSample: TimeInterval?
@@ -29,12 +29,12 @@ struct QualityDirection: Sendable {
     private var upgradeAfter: TimeInterval = 0
     private var probeUntil: TimeInterval = 0
 
-    /// 创建单个方向的质量策略，并解析可用的初始档位。
+    /// Creates a directional quality policy and resolves an available initial tier.
     ///
     /// - Parameters:
-    ///   - baseline: 不会随调档变化的媒体原始规格。
-    ///   - level: 初始档位，超出范围时限制到 `1...5`。
-    ///   - downlink: 是否为下行方向。
+    ///   - baseline: The original media format, unchanged by tier adjustments.
+    ///   - level: The initial tier, clamped to `1...5`.
+    ///   - downlink: Whether this is the downstream direction.
     init(baseline: RealtimeVideoFormat, level: Int, downlink: Bool) {
         self.baseline = baseline
         self.downlink = downlink
@@ -42,31 +42,31 @@ struct QualityDirection: Sendable {
         while self.level > 1, !supports(self.level) { self.level -= 1 }
     }
 
-    /// 当前传输规格
+    /// Current transport format
     var format: RealtimeVideoFormat { format(at: level) }
 
-    /// 计算指定档位对应的传输规格。
+    /// Calculates the transport format for a tier.
     ///
-    /// - Parameter level: 目标传输档位。
-    /// - Returns: 由当前媒体基准和方向解析的规格。
+    /// - Parameter level: The target transport tier.
+    /// - Returns: The format resolved from the current media baseline and direction.
     func format(at level: Int) -> RealtimeVideoFormat {
         QualityVideoFormat.resolve(baseline, level: level, downlink: downlink)
     }
 
-    /// 清空连续好坏网络采样及最后采样时间。
+    /// Clears consecutive good and poor network samples and the last sample time.
     mutating func resetSamples() {
         goodSamples = 0
         poorSamples = 0
         lastSample = nil
     }
 
-    /// 根据有效连续采样和冷却条件提出升降档候选。
+    /// Proposes tier changes from valid consecutive samples and cooldown conditions.
     ///
     /// - Parameters:
-    ///   - quality: 当前网络质量等级。
-    ///   - sampledAt: 该质量样本的单调时钟时间，单位为秒。
-    ///   - now: 当前单调时钟时间，单位为秒。
-    /// - Returns: 可执行的候选档位；无需调整时返回 `nil`。
+    ///   - quality: The current network quality level.
+    ///   - sampledAt: The quality sample's monotonic timestamp in seconds.
+    ///   - now: The current monotonic timestamp in seconds.
+    /// - Returns: The actionable candidate tier, or `nil` if no adjustment is needed.
     mutating func observe(_ quality: RealtimeNetworkQualityLevel, sampledAt: TimeInterval, now: TimeInterval) -> Int? {
         guard sampledAt <= now, lastSample.map({ sampledAt > $0 }) ?? true else { return nil }
         if let lastSample, sampledAt - lastSample > 5 { resetSamples() }
@@ -103,12 +103,12 @@ struct QualityDirection: Sendable {
         return nil
     }
 
-    /// 记录调档结果，并更新稳定窗口及升档冷却期。
+    /// Records adjustment results and updates the stability window and upgrade cooldown.
     ///
     /// - Parameters:
-    ///   - next: 本次尝试的目标档位。
-    ///   - success: 该档位是否成功应用。
-    ///   - now: 当前单调时钟时间，单位为秒。
+    ///   - next: The attempted target tier.
+    ///   - success: Whether the tier applied successfully.
+    ///   - now: The current monotonic timestamp in seconds.
     mutating func complete(level next: Int, success: Bool, now: TimeInterval) {
         resetSamples()
         stableUntil = now + 4
@@ -122,10 +122,10 @@ struct QualityDirection: Sendable {
         level = next
     }
 
-    /// 判断指定档位是否满足当前方向的编码预算。
+    /// Checks whether a tier meets the current direction's encoding budget.
     ///
-    /// - Parameter level: 需要校验的档位。
-    /// - Returns: 下行或上行码率预算可成功解析时返回 `true`。
+    /// - Parameter level: The tier to validate.
+    /// - Returns: `true` if the downstream or upstream bitrate budget resolves successfully.
     func supports(_ level: Int) -> Bool {
         downlink || (try? EncodingBitratePolicy.resolve(format(at: level))) != nil
     }

@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -46,7 +46,7 @@ final class RtcManagingStub: RtcManaging, @unchecked Sendable {
     ) async throws -> Void
     typealias LeaveRoomHandler = @Sendable () async -> Void
 
-    /// 测试配置
+    /// Test configuration
     private let encodingError: (any Error)?
     private let configureLocalVideoMirrorHandler: (@Sendable (CameraPosition) throws -> Void)?
     private let initializationError: (any Error)?
@@ -68,7 +68,7 @@ final class RtcManagingStub: RtcManaging, @unchecked Sendable {
     private let setRemoteVideoFrameListenerError: (any Error)?
     var flushHandler: (@Sendable () async throws -> Void)?
 
-    /// 并发状态
+    /// Concurrent state
     private let lock = NSLock()
     private var storedCalls: [RtcManagingCall] = []
     private weak var storedEventListener: (any RtcEventListener)?

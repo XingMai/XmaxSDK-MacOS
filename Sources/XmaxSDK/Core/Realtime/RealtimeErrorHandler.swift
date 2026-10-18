@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,34 +11,34 @@
 
 import Foundation
 
-/// 记录实时错误，并将后台故障交给 Coordinator 统一结束生命周期。
+/// Logs realtime errors and forwards background failures to the coordinator for lifecycle termination.
 final class RealtimeErrorHandler: @unchecked Sendable {
 
-    /// 接收运行中错误、清理范围及有效性检查回调，完成相应生命周期的终止。
+    /// Receives runtime errors, cleanup scope, and a validity callback to terminate the corresponding lifecycle.
     typealias FailureHandler = @Sendable (
         XmaxError, RealtimeCoordinator.TerminationScope, @escaping @Sendable () -> Bool
     ) async -> Void
 
-    /// 并发控制
+    /// Concurrency control
     private let lock = NSLock()
 
-    /// 故障生命周期
+    /// Failure lifecycle
     private var mediaRevision = UUID()
     private var connectionRevision = UUID()
 
-    /// 内部故障处理
+    /// Internal failure handling
     private var failureHandler: FailureHandler?
 
-    /// 设置运行中故障的终止处理回调。
+    /// Sets the runtime failure termination callback.
     ///
-    /// - Parameter handler: 接收错误、清理范围和生命周期有效性检查的回调。
+    /// - Parameter handler: The callback receiving the error, cleanup scope, and lifecycle validity check.
     func setFailureHandler(_ handler: @escaping FailureHandler) {
         lock.withLock { failureHandler = handler }
     }
 
-    /// 使已结束生命周期内尚未处理的故障失效。
+    /// Invalidates unhandled failures from a completed lifecycle.
     ///
-    /// - Parameter target: 已清理的资源范围；连接清理仅使连接故障失效，完整清理同时使媒体故障失效。
+    /// - Parameter target: The cleaned resource scope; connection cleanup invalidates connection failures, while full cleanup also invalidates media failures.
     func invalidatePendingFailures(target: RealtimeCoordinator.TerminationScope = .all) {
         lock.withLock {
             connectionRevision = UUID()
@@ -46,11 +46,11 @@ final class RealtimeErrorHandler: @unchecked Sendable {
         }
     }
 
-    /// 异步转交运行中故障；未指定清理范围或处理器时仅记录错误日志。
+    /// Forwards runtime failures asynchronously; only logs when no cleanup scope or handler is supplied.
     ///
     /// - Parameters:
-    ///   - error: 需要处理的运行中错误。
-    ///   - target: 错误影响的资源范围；传入 `nil` 时不终止生命周期。
+    ///   - error: The runtime error to handle.
+    ///   - target: The affected resource scope; `nil` leaves the lifecycle running.
     func forward(
         _ error: XmaxError,
         target: RealtimeCoordinator.TerminationScope? = nil
@@ -72,9 +72,9 @@ final class RealtimeErrorHandler: @unchecked Sendable {
         }
     }
 
-    /// 输出实时错误的错误码和错误信息日志。
+    /// Logs the code and message of a realtime error.
     ///
-    /// - Parameter error: 需要记录的 SDK 错误。
+    /// - Parameter error: The SDK error to log.
     func report(_ error: XmaxError) async {
         XmaxLogger.realtime.error(
             message: "实时服务错误 (Realtime Service Error)\n" +

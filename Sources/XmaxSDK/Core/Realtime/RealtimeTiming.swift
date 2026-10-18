@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,33 +11,33 @@
 
 import Foundation
 
-/// 记录实时生成启动链路各阶段耗时。
+/// Records the duration of each realtime generation startup stage.
 final class RealtimeTiming: @unchecked Sendable {
 
-    /// 并发控制
+    /// Concurrency control
     private let lock = NSLock()
 
-    /// 启动耗时记录
+    /// Startup timing records
     private var state = State()
     private var isMeasuring = false
     private let now: @Sendable () -> UInt64
 
-    /// 主线程观察
+    /// Main-thread observation
     private var listener: RealtimeLaunchTimingListener?
     private var listenerID = UUID()
     private var revision: UInt64 = 0
     private var deliveredRevision: UInt64 = 0
 
-    /// 创建使用单调时钟的启动记录器。
+    /// Creates a startup recorder using a monotonic clock.
     ///
-    /// - Parameter now: 返回纳秒时间的时钟，测试可注入确定性的时间序列。
+    /// - Parameter now: The clock returning nanoseconds; tests can inject a deterministic time sequence.
     init(now: @escaping @Sendable () -> UInt64 = { DispatchTime.now().uptimeNanoseconds }) {
         self.now = now
     }
 
-    /// 设置观察者并投递当前快照；替换或清除时使已排队的旧回调失效。
+    /// Sets the observer and delivers the current snapshot; replacing or clearing it invalidates queued callbacks.
     ///
-    /// - Parameter listener: 主线程回调；传入 `nil` 时清除观察者。
+    /// - Parameter listener: The main-thread callback; `nil` clears the observer.
     func setListener(_ listener: RealtimeLaunchTimingListener?) {
         lock.withLock {
             self.listener = listener
@@ -46,7 +46,7 @@ final class RealtimeTiming: @unchecked Sendable {
         }
     }
 
-    /// 开始一次启动耗时记录，并清空上次的阶段时间。
+    /// Begins startup timing and clears the previous stage timestamps.
     func begin() {
         lock.withLock {
             state = State(startedAt: now())
@@ -55,7 +55,7 @@ final class RealtimeTiming: @unchecked Sendable {
         }
     }
 
-    /// 记录服务端会话创建的开始时间。
+    /// Records the start of server session creation.
     func beginSessionCreation() {
         lock.withLock {
             guard isMeasuring else { return }
@@ -63,7 +63,7 @@ final class RealtimeTiming: @unchecked Sendable {
         }
     }
 
-    /// 记录服务端会话创建的完成时间。
+    /// Records the completion of server session creation.
     func finishSessionCreation() {
         lock.withLock {
             guard isMeasuring else { return }
@@ -72,7 +72,7 @@ final class RealtimeTiming: @unchecked Sendable {
         }
     }
 
-    /// 记录 RTC 进房的开始时间。
+    /// Records the start of the RTC join.
     func beginRoomJoin() {
         lock.withLock {
             guard isMeasuring else { return }
@@ -80,7 +80,7 @@ final class RealtimeTiming: @unchecked Sendable {
         }
     }
 
-    /// 记录 RTC 进房的完成时间。
+    /// Records the completion of the RTC join.
     func finishRoomJoin() {
         lock.withLock {
             guard isMeasuring else { return }
@@ -89,7 +89,7 @@ final class RealtimeTiming: @unchecked Sendable {
         }
     }
 
-    /// 记录本地流发布的开始时间。
+    /// Records the start of local stream publication.
     func beginLocalPublication() {
         lock.withLock {
             guard isMeasuring else { return }
@@ -97,7 +97,7 @@ final class RealtimeTiming: @unchecked Sendable {
         }
     }
 
-    /// 记录本地流发布的完成时间。
+    /// Records the completion of local stream publication.
     func finishLocalPublication() {
         lock.withLock {
             guard isMeasuring else { return }
@@ -106,9 +106,9 @@ final class RealtimeTiming: @unchecked Sendable {
         }
     }
 
-    /// 记录生成请求发送的开始时间，并重置该任务的首帧时间。
+    /// Records when the generation request starts sending and resets its first-frame timestamp.
     ///
-    /// - Parameter taskID: 本次生成任务的标识。
+    /// - Parameter taskID: The generation task identifier.
     func beginSignal(taskID: String) {
         lock.withLock {
             guard isMeasuring else { return }
@@ -118,9 +118,9 @@ final class RealtimeTiming: @unchecked Sendable {
         }
     }
 
-    /// 记录当前生成任务的结果首帧可显示时间。
+    /// Records when the current task's first result frame becomes displayable.
     ///
-    /// - Parameter taskID: 结果帧所属的任务标识；非当前任务的通知被忽略。
+    /// - Parameter taskID: The result frame task identifier; notifications for other tasks are ignored.
     func finishFirstFrame(taskID: String) {
         lock.withLock {
             guard isMeasuring, state.taskID == taskID, state.firstFrameAt == nil else { return }
@@ -129,9 +129,9 @@ final class RealtimeTiming: @unchecked Sendable {
         }
     }
 
-    /// 记录启动完成时间，并在启用性能日志时输出完整耗时汇总。
+    /// Records startup completion and logs the full timing summary when performance logging is enabled.
     ///
-    /// - Parameter taskID: 已完成启动的生成任务标识；非当前任务的通知被忽略。
+    /// - Parameter taskID: The completed startup task identifier; notifications for other tasks are ignored.
     func finish(taskID: String) {
         let snapshot = lock.withLock { () -> State? in
             guard isMeasuring, state.taskID == taskID,
@@ -151,9 +151,9 @@ final class RealtimeTiming: @unchecked Sendable {
         )
     }
 
-    /// 记录启动失败时间，并在启用性能日志时输出未完成阶段的耗时；取消不计为失败。
+    /// Records startup failure and logs incomplete stage durations when enabled; cancellation is not failure.
     ///
-    /// - Parameter error: 导致启动失败的错误。
+    /// - Parameter error: The error that caused startup to fail.
     func finishFailure(_ error: any Error) {
         let xmaxError = XmaxError.from(error)
         guard xmaxError.code != .cancelled else { return }
@@ -175,40 +175,40 @@ final class RealtimeTiming: @unchecked Sendable {
 }
 
 extension RealtimeTiming {
-    /// 保存一次启动的阶段时间与任务标识，所有时间均为单调时钟纳秒值。
+    /// Stores stage timestamps and task identity for one startup, using monotonic nanoseconds.
     struct State: Sendable {
 
-        /// 启动起点
+        /// Startup origin
         var startedAt: UInt64?
 
-        /// 服务端会话创建
+        /// Server session creation
         var sessionStartedAt: UInt64?
         var sessionFinishedAt: UInt64?
 
-        /// RTC 房间连接
+        /// RTC room connection
         var roomJoinStartedAt: UInt64?
         var roomJoinFinishedAt: UInt64?
 
-        /// 本地流发布
+        /// Local stream publication
         var publicationStartedAt: UInt64?
         var publicationFinishedAt: UInt64?
 
-        /// 生成请求与首帧
+        /// Generation request and first frame
         var signalStartedAt: UInt64?
         var firstFrameAt: UInt64?
 
-        /// 启动结果
+        /// Startup outcome
         var readyAt: UInt64?
         var failureAt: UInt64?
 
-        /// 生成任务
+        /// Generation task
         var taskID: String?
     }
 
-    /// 将与 iOS 日志共用的时间点转换为已完成阶段的毫秒快照。
+    /// Converts timestamps shared with iOS logs into a millisecond snapshot of completed stages.
     ///
-    /// - Parameter state: 单次启动记录；尚未开始时返回空快照。
-    /// - Returns: 四阶段和完整启动耗时，未完成阶段保持 `nil`。
+    /// - Parameter state: The startup record; returns an empty snapshot before startup begins.
+    /// - Returns: The four stages and total startup duration, with incomplete stages set to `nil`.
     static func snapshot(_ state: State) -> RealtimeLaunchTiming {
         guard state.startedAt != nil else { return RealtimeLaunchTiming() }
         func milliseconds(_ start: UInt64?, _ end: UInt64?) -> Double? {
@@ -224,10 +224,10 @@ extension RealtimeTiming {
         )
     }
 
-    /// 生成启动成功的耗时汇总文本。
+    /// Formats a successful generation startup timing summary.
     ///
-    /// - Parameter state: 包含启动和各阶段时间的记录。
-    /// - Returns: 包含总耗时与四个阶段耗时的日志文本；缺少关键时间时返回不可用提示。
+    /// - Parameter state: The record containing startup and stage timestamps.
+    /// - Returns: The total and four stage durations, or an unavailable message if required timestamps are missing.
     static func format(_ state: State) -> String {
         guard let startedAt = state.startedAt,
               state.firstFrameAt != nil,
@@ -243,12 +243,12 @@ extension RealtimeTiming {
         return lines.joined(separator: "\n")
     }
 
-    /// 生成启动未完成的耗时汇总文本。
+    /// Formats an incomplete generation startup timing summary.
     ///
     /// - Parameters:
-    ///   - state: 包含失败时间与已记录阶段时间的记录。
-    ///   - error: 导致启动失败的 SDK 错误。
-    /// - Returns: 包含已耗时、阶段耗时、停留阶段和错误原因的日志文本。
+    ///   - state: The record containing the failure time and recorded stage timestamps.
+    ///   - error: The SDK error that caused startup to fail.
+    /// - Returns: Elapsed time, stage durations, current stage, and failure reason for logging.
     static func formatFailure(_ state: State, error: XmaxError) -> String {
         guard let startedAt = state.startedAt,
               let failureAt = state.failureAt else {
@@ -269,7 +269,7 @@ extension RealtimeTiming {
 
 private extension RealtimeTiming {
 
-    /// 在持锁期间排队投递不可变快照，不在锁内执行宿主回调。
+    /// Queues immutable snapshots under the lock without invoking host callbacks inside it.
     func publishLocked() {
         guard let listener else { return }
         let snapshot = Self.snapshot(state)
@@ -287,12 +287,12 @@ private extension RealtimeTiming {
         }
     }
 
-    /// 按启动顺序生成会话创建、RTC 进房、本地发布和首帧到达的耗时行。
+    /// Formats session creation, RTC join, local publication, and first-frame durations in startup order.
     ///
     /// - Parameters:
-    ///   - state: 启动阶段的时间记录。
-    ///   - failureAt: 启动失败时间；非 `nil` 时用于计算尚未完成阶段的耗时。
-    /// - Returns: 可拼接到汇总日志中的四个阶段明细。
+    ///   - state: The startup stage timestamps.
+    ///   - failureAt: The startup failure time; used to calculate incomplete stage durations when non-`nil`.
+    /// - Returns: The four stage details for inclusion in the summary log.
     static func stageDetails(_ state: State, failureAt: UInt64? = nil) -> [String] {
         let stages: [(String, UInt64?, UInt64?)] = [
             (XmaxLogger.localized("创建会话：", "Session Creation: "),
@@ -312,10 +312,10 @@ private extension RealtimeTiming {
         }
     }
 
-    /// 根据已记录的时间确定启动当前停留的阶段。
+    /// Determines the current startup stage from recorded timestamps.
     ///
-    /// - Parameter state: 启动阶段的时间记录。
-    /// - Returns: 当前日志语言对应的阶段名称。
+    /// - Parameter state: The startup stage timestamps.
+    /// - Returns: The stage name in the current log language.
     static func pendingStage(_ state: State) -> String {
         if state.firstFrameAt != nil {
             return XmaxLogger.localized("首帧已就绪，正在完成启动", "First Frame Ready, Completing Startup")
@@ -344,12 +344,12 @@ private extension RealtimeTiming {
         return XmaxLogger.localized("调用与本地准备", "Invocation and Local Preparation")
     }
 
-    /// 将两个纳秒时间点的间隔格式化为毫秒。
+    /// Formats the interval between two nanosecond timestamps as milliseconds.
     ///
     /// - Parameters:
-    ///   - start: 阶段开始时间。
-    ///   - end: 阶段结束时间。
-    /// - Returns: 保留一位小数的毫秒文本；时间缺失或结束早于开始时返回 `—`。
+    ///   - start: The stage start time.
+    ///   - end: The stage end time.
+    /// - Returns: Milliseconds with one decimal place, or an em dash for missing or reversed timestamps.
     static func duration(_ start: UInt64?, _ end: UInt64?) -> String {
         guard let start, let end, end >= start else { return "—" }
         return String(format: "%.1f ms", Double(end - start) / 1000000)

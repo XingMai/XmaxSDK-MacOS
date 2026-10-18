@@ -3,7 +3,7 @@
 //  XmaxSDK
 //  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
-//  Author: 翁跃庭 (Yueting Weng)
+//  Author: Yueting Weng
 //  GitHub: https://github.com/WengYuehTing
 //
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
@@ -11,38 +11,38 @@
 
 import CoreGraphics
 
-/// 定义本地媒体、生成画布、回传尺寸和平台媒体能力的业务规则。
+/// Defines business rules for local media, generation canvas, return dimensions, and platform capabilities.
 public protocol MediaServicing: Sendable {
 
-    /// 当前媒体规则使用的实时生成模型。
+    /// The realtime model used by the media rules.
     var model: RealtimeModel { get }
 
-    /// 计算本地媒体帧尺寸，并校验摄像头的模型分辨率桶。
+    /// Calculates local frame dimensions and validates camera resolution buckets.
     ///
     /// - Parameters:
-    ///   - size: 摄像头请求尺寸或图片、视频按显示方向解析后的整数像素尺寸。
-    ///   - source: 媒体来源；摄像头须精确匹配模型已配置的分辨率桶。
-    /// - Returns: 不放大、不超过模型最大像素面积的 4 对齐尺寸，优先保持精确比例。
-    /// - Throws: 尺寸无效、摄像头不匹配分辨率桶或无法形成有效输出尺寸时抛出错误。
+    ///   - size: Requested camera dimensions or oriented integer-pixel image or video dimensions.
+    ///   - source: The media source; cameras must exactly match configured model resolution buckets.
+    /// - Returns: Dimensions aligned to four pixels without upscaling or exceeding model area limits, preferring exact aspect ratio.
+    /// - Throws: An error on invalid dimensions, unmatched camera resolution buckets, or no valid output dimensions.
     func resolveMediaSize(_ size: CGSize, source: RealtimeMediaSource) throws -> CGSize
 
-    /// 综合档位尺寸上限和可选插帧限制，计算最终回传尺寸。
+    /// Calculates final return dimensions from tier limits and optional interpolation constraints.
     ///
     /// - Parameters:
-    ///   - sourceSize: 原始媒体的整数像素尺寸，用于确定比例和不放大的边界。
-    ///   - maximumSize: 下行档位允许的宽高上限，可包含小数像素。
-    ///   - frameInterpolationEnabled: 是否额外限制总像素不超过 900000；不检查设备能力。
-    /// - Returns: 不超过上限、宽高均为 4 的倍数的尺寸；优先精确等比，无法等比时分别向下对齐。
-    /// - Throws: 尺寸无效，或约束内无法容纳至少 4 × 4 像素时抛出 `XmaxError`。
+    ///   - sourceSize: The original integer-pixel media dimensions defining aspect ratio and no-upscaling bounds.
+    ///   - maximumSize: The downstream tier dimension limits, potentially containing fractional pixels.
+    ///   - frameInterpolationEnabled: Whether to additionally limit total pixels to 900000; does not check device capabilities.
+    /// - Returns: Dimensions within limits and aligned to four pixels; prefers exact aspect ratio, otherwise rounds each side down.
+    /// - Throws: `XmaxError` for invalid dimensions or limits that cannot accommodate at least 4 × 4 pixels.
     func resolveTargetSize(
         _ sourceSize: CGSize,
         maximumSize: CGSize,
         frameInterpolationEnabled: Bool
     ) throws -> CGSize
 
-    /// 判断当前设备是否支持对指定分辨率的视频进行插帧。
+    /// Checks device interpolation support for the specified video resolution.
     ///
-    /// - Parameter size: 客户端收到的、用于插帧处理的视频分辨率。
-    /// - Returns: 当前系统、设备和视频规格均支持插帧时返回 `true`。
+    /// - Parameter size: The received video resolution used for interpolation.
+    /// - Returns: `true` if the system, device, and video format all support interpolation.
     func supportsFrameInterpolation(for size: CGSize) -> Bool
 }
