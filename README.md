@@ -21,12 +21,12 @@ and supply video frames through the external video source API.
 
 ## What you can build with XmaxSDK
 
-| Realtime Use Case | Description | Generation Conditions |
-| --- | --- | --- |
-| **Character Swapping** | Replace a person in a live camera feed with a reference character. | Prompt: `视频中角色替换成参考图中角色`. Use a clear reference image of the desired character. |
-| **Virtual Try-On** | Apply a reference outfit to a person in a live feed. | Prompt: `视频中人物衣服替换成参考图中衣服`. Use an image of the target outfit; enable `faceRestoration` to preserve the original face. |
-| **Video Restyling** | Transform a live scene into a reference visual style. | Prompt: `视频风格变为参考图指定的风格`. Use an image showing the desired style. |
-| **Free Prompt** | Direct the transformation with your own prompt and optional reference image. | Pass a `RealtimeContext` when starting generation or updating an active session. |
+| Realtime Use Case | Description | Generation Conditions | Demo |
+| --- | --- | --- | --- |
+| **Character Swapping** | Replace a person in a live camera feed with a reference character. | Prompt: `视频中角色替换成参考图中角色`. Use a clear reference image of the desired character. | <a href="./Materials/videos/use-cases/character-swapping.mp4"><img src="./Materials/images/use-cases/character-swapping-poster.png" alt="Play the Character Swapping demo" width="120"><br>▶ Play demo</a> |
+| **Virtual Try-On** | Apply a reference outfit to a person in a live feed. | Prompt: `视频中人物衣服替换成参考图中衣服`. Use an image of the target outfit; enable `faceRestoration` to preserve the original face. | <a href="./Materials/videos/use-cases/virtual-try-on.mp4"><img src="./Materials/images/use-cases/virtual-try-on-poster.png" alt="Play the Virtual Try-On demo" width="120"><br>▶ Play demo</a> |
+| **Video Restyling** | Transform a live scene into a reference visual style. | Prompt: `视频风格变为参考图指定的风格`. Use an image showing the desired style. | <a href="./Materials/videos/use-cases/video-restyling.mp4"><img src="./Materials/images/use-cases/video-restyling-poster.png" alt="Play the Video Restyling demo" width="120"><br>▶ Play demo</a> |
+| **Free Prompt** | Direct the transformation with your own prompt and optional reference image. | Pass a `RealtimeContext` when starting generation or updating an active session. | — |
 
 The current macOS SDK supports camera input and caller-owned external video input.
 Static images and local video files are not exposed as built-in realtime inputs.
@@ -61,27 +61,24 @@ Provide your API key at runtime. Local camera preview does not require an API ke
 
 XmaxSDK supports [**Swift Package Manager**](#swift-package-manager) and
 [**CocoaPods**](#cocoapods), using the same SDK sources.
-Version `1.0.0` is currently under development; the local checkout instructions
-below do not require a published release or version tag.
+Version `1.0.0` is currently under development. Until a version tag is published,
+select the `feature/yueting-v1.0.0` branch or use a local checkout.
 
 ### Swift Package Manager
 
-For the current checkout, in Xcode choose **File → Add Package Dependencies → Add
-Local**, select the `XmaxSDK` directory, and add the **XmaxSDK** product to your
-application target.
-
-A Swift package can use the same checkout:
-
-```swift
-.package(path: "/path/to/XmaxSDK")
-```
-
-Once the source is available in the remote repository, add it through **File → Add
-Package Dependencies** using the repository URL and select a branch or published
-version containing the SDK:
+In Xcode, choose **File → Add Package Dependencies**, enter the repository URL,
+select a branch or published version, and add the **XmaxSDK** product to your
+application target:
 
 ```text
 https://github.com/XingMai/XmaxSDK-MacOS.git
+```
+
+For local development, choose **Add Local** and select the SDK checkout instead.
+A Swift package can reference the local checkout:
+
+```swift
+.package(path: "/path/to/XmaxSDK")
 ```
 
 SwiftPM resolves Agora RTC from its official package. COS is supplied as macOS
@@ -122,6 +119,8 @@ pod install --repo-update
 CocoaPods obtains Agora and COS from their official Pods. The podspec includes
 the COS privacy manifest through `XmaxSDK_COS.bundle`. Add the SDK through one
 package manager per application target to avoid duplicate dependencies.
+See the [installation guide](./Materials/installation.md) for packaging and target
+configuration details.
 
 <br>
 
@@ -336,6 +335,10 @@ capture resources remain the application's responsibility.
 
 <br>
 
+For more examples, see the [usage guide](./Materials/usage.md).
+
+<br>
+
 ## Example Project
 
 Open [`Examples/XLab/XLab.xcodeproj`](./Examples/XLab/XLab.xcodeproj) in Xcode,
@@ -355,6 +358,12 @@ on the left and generated results on the right. It demonstrates:
 Kingfisher is an **example-only dependency** for reference image loading and
 caching. Preset thumbnails request 160 px WebP images through COS image processing;
 generation continues to use the original reference image URLs.
+
+<br>
+
+Shared branding and demonstration media are in [Materials](./Materials/README.md).
+The copied iOS XLab screenshots are design references; the native macOS example
+uses the side-by-side layout described above.
 
 <br>
 
