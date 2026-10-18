@@ -59,6 +59,50 @@ Use one package manager for the SDK and its dependencies in an application targe
 Do not add the same frameworks separately through SwiftPM, CocoaPods, or manual
 embedding.
 
+## Manual integration
+
+Once a macOS SDK binary release is available, download the SDK archive linked in
+the [README](../README.md#manual) and extract `XmaxSDK.xcframework`.
+Use the installation guide from the same SDK version as the downloaded archive.
+
+### Download the dependencies
+
+Use these pinned macOS dependencies:
+
+- [Agora RTC 4.6.2](https://download.agora.io/sdk/release/AgoraRtcEngine_macOS-4.6.2.zip):
+  `AgoraRtcKit.xcframework`, `Agorafdkaac.xcframework`, `Agoraffmpeg.xcframework`,
+  `AgoraSoundTouch.xcframework`, and `video_dec.xcframework`.
+- [Agora Infrastructure 1.3.5](https://download.agora.io/sdk/release/AgoraInfra_macOS-1.3.5.zip):
+  `aosl.xcframework`.
+- [COS macOS 6.5.7](https://github.com/XingMai/XmaxSDK-MacOS/releases/tag/cos-6.5.7-spm.1):
+  `QCloudCore-6.5.7.xcframework.zip` and `QCloudCOSXML-6.5.7.xcframework.zip`.
+  Extract both archives and keep the framework resources and redistribution notices.
+
+### Configure embedding
+
+Add the frameworks to the application target under **Frameworks, Libraries, and
+Embedded Content**:
+
+| Framework | Embed setting |
+| --- | --- |
+| `XmaxSDK.xcframework` | Do Not Embed |
+| `AgoraRtcKit.xcframework` | Embed & Sign |
+| `Agorafdkaac.xcframework` | Embed & Sign |
+| `Agoraffmpeg.xcframework` | Embed & Sign |
+| `AgoraSoundTouch.xcframework` | Embed & Sign |
+| `video_dec.xcframework` | Embed & Sign |
+| `aosl.xcframework` | Embed & Sign |
+| `QCloudCore.xcframework` | Embed & Sign |
+| `QCloudCOSXML.xcframework` | Embed & Sign |
+
+The SDK is static; the listed Agora and Xmax-packaged COS dependencies are dynamic.
+Use macOS variants containing the architecture of your application. The SDK
+archive includes both `arm64` and `x86_64` in one native macOS variant.
+Retain the dependencies' licenses and privacy manifests in the application.
+
+Set the deployment target to macOS 13.0 or later and use Swift 6 language mode.
+Configure camera, microphone, and network access as described below.
+
 ## Configure the application target
 
 Add `NSCameraUsageDescription` to your application's `Info.plist` for built-in
