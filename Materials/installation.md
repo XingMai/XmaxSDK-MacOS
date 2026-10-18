@@ -34,7 +34,7 @@ use `.package(path: "/path/to/XmaxSDK")`.
   handles linking, embedding, and signing the dynamic dependencies.
 - Keep the bundled licenses, notices, resources, and privacy manifests when
   redistributing the frameworks. See the
-  [redistribution notices](../Resources/COS/COS-6.5.7-NOTICES.txt).
+  [redistribution notices](https://github.com/XingMai/XmaxSDK-MacOS/releases/download/cos-6.5.7-spm.1/COS-6.5.7-NOTICES.txt).
 
 The frameworks are built from Tencent's [unmodified 6.5.7 source](https://github.com/tencentyun/qcloud-sdk-ios/tree/6.5.7),
 without optional analytics components. This is Xmax's binary packaging, not an
@@ -52,8 +52,8 @@ pod install --repo-update
 
 Open the generated `.xcworkspace`. CocoaPods builds the same `Sources/XmaxSDK`
 using official Agora `4.6.2` and COS `6.5.7` dependencies; it does not link the
-SwiftPM Release assets. The SDK pod includes `XmaxSDK_COS.bundle` to retain
-the COS privacy manifest.
+SwiftPM Release assets. COS declares its own `QCloudCOSXML` privacy resource
+bundle in its official podspec; XmaxSDK does not add a duplicate resource bundle.
 
 Use one package manager for the SDK and its dependencies in an application target.
 Do not add the same frameworks separately through SwiftPM, CocoaPods, or manual

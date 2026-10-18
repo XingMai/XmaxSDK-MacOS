@@ -118,9 +118,9 @@ Install the dependencies and open the generated `.xcworkspace`:
 pod install --repo-update
 ```
 
-CocoaPods obtains Agora and COS from their official Pods. The podspec includes
-the COS privacy manifest through `XmaxSDK_COS.bundle`. Add the SDK through one
-package manager per application target to avoid duplicate dependencies.
+CocoaPods obtains Agora and COS from their official Pods, using the dependencies'
+own resource packaging. Add the SDK through one package manager per application
+target to avoid duplicate dependencies.
 See the [installation guide](./Materials/installation.md) for packaging and target
 configuration details.
 
@@ -379,8 +379,8 @@ uses the side-by-side layout described above.
 SwiftPM downloads Xmax-built dynamic COS frameworks; CocoaPods uses official source
 dependencies. The COS build origin and distribution are documented in the
 [installation guide](./Materials/installation.md#swift-package-manager).
-[Redistribution notices](./Resources/COS/COS-6.5.7-NOTICES.txt) are also included in
-the framework resources and the COS dependency release.
+[Redistribution notices](https://github.com/XingMai/XmaxSDK-MacOS/releases/download/cos-6.5.7-spm.1/COS-6.5.7-NOTICES.txt)
+are included in the framework resources and the COS dependency release.
 Retain the third-party licenses and privacy manifests when redistributing dependencies.
 
 <br>

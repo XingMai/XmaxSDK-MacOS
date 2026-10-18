@@ -20,10 +20,6 @@ Pod::Spec.new do |spec|
   spec.module_name = 'XmaxSDK'
   spec.static_framework = true
   spec.source_files = 'Sources/XmaxSDK/**/*.swift'
-  # Preserve the upstream COS manifest even when a cached Pod omits that file.
-  spec.resource_bundles = {
-    'XmaxSDK_COS' => ['Resources/COS/PrivacyInfo.xcprivacy']
-  }
 
   spec.dependency 'AgoraRtcEngine_macOS/RtcBasic', '4.6.2'
   spec.dependency 'QCloudCOSXML/Transfer', '6.5.7'
