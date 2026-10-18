@@ -177,7 +177,7 @@ final class CameraController: CameraControlling, @unchecked Sendable {
             }
             try Task.checkCancellation()
             try rtcManager.useExternalVideoSource()
-            try rtcManager.configureLocalVideoMirror(for: .unspecified)
+            try rtcManager.configureLocalVideoMirror(for: device.position)
             let preview = await makePreview(for: track, position: device.position)
             stateLock.withLock {
                 activeTrack = track
@@ -275,9 +275,10 @@ final class CameraController: CameraControlling, @unchecked Sendable {
         let device = try resolveDevice(deviceID)
         try await captureManager.switchCamera(to: device.id)
         do {
-            try rtcManager.configureLocalVideoMirror(for: .unspecified)
+            try rtcManager.configureLocalVideoMirror(for: device.position)
         } catch {
             try? await captureManager.switchCamera(to: previousDevice.id)
+            try? rtcManager.configureLocalVideoMirror(for: previousDevice.position)
             throw error
         }
         track.updateDevice(device)

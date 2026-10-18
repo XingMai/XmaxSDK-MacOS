@@ -10,8 +10,8 @@ import XCTest
 
 final class CameraControllerTests: XCTestCase, @unchecked Sendable {
 
-    private let builtIn = CameraDevice(id: "builtin", name: "Built-in", isDefault: true, position: .unspecified)
-    private let external = CameraDevice(id: "usb", name: "USB", isDefault: false, position: .unspecified)
+    private let builtIn = CameraDevice(id: "builtin", name: "Built-in", isDefault: true, position: .front)
+    private let external = CameraDevice(id: "usb", name: "USB", isDefault: false, position: .back)
     private let format = RealtimeVideoFormat(width: 1920, height: 1024, fps: 30)
 
     func testDefaultCameraUsesSystemDefaultInsteadOfFirstDevice() async throws {
@@ -36,14 +36,56 @@ final class CameraControllerTests: XCTestCase, @unchecked Sendable {
         XCTAssertNil(controller.currentTrack)
     }
 
+    func testCameraStreamConfiguresUplinkMirrorUsingDevicePosition() async throws {
+        for position in [CameraPosition.front, .back, .unspecified] {
+            let device = CameraDevice(id: "camera", name: "Camera", isDefault: true, position: position)
+            let capture = CameraCaptureManagingStub(devices: [device])
+            let rtc = RtcManagingStub()
+            let controller = makeController(capture, rtc: rtc)
+            _ = try await controller.createLocalCameraStream(videoFormat: format, deviceID: nil)
+            XCTAssertEqual(rtc.calls, [.useExternalVideoSource, .configureLocalVideoMirror(position)])
+            await controller.stopLocalCameraStream()
+        }
+    }
+
     func testCameraSwitchKeepsTrackIdentityAndUpdatesDevice() async throws {
         let capture = CameraCaptureManagingStub(devices: [builtIn, external])
-        let controller = makeController(capture)
+        let rtc = RtcManagingStub()
+        let controller = makeController(capture, rtc: rtc)
         let local = try await controller.createLocalCameraStream(videoFormat: format, deviceID: "builtin")
         let switched = try await controller.switchCamera(to: "usb")
         XCTAssertTrue(local.videoTrack === switched.videoTrack)
         XCTAssertEqual(switched.videoTrack?.device, external)
         XCTAssertEqual(capture.calls, [.start("builtin"), .switchCamera("usb")])
+        XCTAssertEqual(rtc.calls, [
+            .useExternalVideoSource, .configureLocalVideoMirror(.front),
+            .configureLocalVideoMirror(.back)
+        ])
+        await controller.stopLocalCameraStream()
+    }
+
+    func testMirrorConfigurationFailureRestoresPreviousCameraAndMirror() async throws {
+        let capture = CameraCaptureManagingStub(devices: [builtIn, external])
+        let rtc = RtcManagingStub(configureLocalVideoMirrorHandler: { position in
+            if position == .back {
+                throw XmaxError(code: .rtcError, message: "Mirror configuration failed")
+            }
+        })
+        let controller = makeController(capture, rtc: rtc)
+        let local = try await controller.createLocalCameraStream(videoFormat: format, deviceID: nil)
+        do {
+            _ = try await controller.switchCamera(to: "usb")
+            XCTFail("Expected mirror configuration failure")
+        } catch {
+            XCTAssertEqual((error as? XmaxError)?.code, .rtcError)
+        }
+        XCTAssertTrue(controller.currentTrack === local.videoTrack)
+        XCTAssertEqual(controller.currentTrack?.device, builtIn)
+        XCTAssertEqual(capture.calls, [.start("builtin"), .switchCamera("usb"), .switchCamera("builtin")])
+        XCTAssertEqual(rtc.calls, [
+            .useExternalVideoSource, .configureLocalVideoMirror(.front),
+            .configureLocalVideoMirror(.back), .configureLocalVideoMirror(.front)
+        ])
         await controller.stopLocalCameraStream()
     }
 
@@ -113,9 +155,12 @@ final class CameraControllerTests: XCTestCase, @unchecked Sendable {
         XCTAssertNil(controller.currentTrack)
     }
 
-    private func makeController(_ capture: CameraCaptureManagingStub) -> CameraController {
+    private func makeController(
+        _ capture: CameraCaptureManagingStub,
+        rtc: RtcManagingStub = RtcManagingStub()
+    ) -> CameraController {
         CameraController(
-            rtcManager: RtcManagingStub(), permissionManager: PermissionManagingStub(),
+            rtcManager: rtc, permissionManager: PermissionManagingStub(),
             mediaService: MediaService(), captureManager: capture
         )
     }
