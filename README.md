@@ -292,8 +292,7 @@ XmaxRealtimeVideo(
 )
 ```
 
-See the [SwiftUI guide](./Materials/usage.md#appkit-and-swiftui) for state binding and the
-[example project](#example-project) for a complete implementation.
+See the [SwiftUI guide](./Materials/usage.md#appkit-and-swiftui) for state binding.
 
 <br>
 
@@ -358,18 +357,6 @@ this through `setStateListener`.
 > [!TIP]
 > For complete usage examples, including camera input, reference images,
 > and external video input, see the [usage guide](./Materials/usage.md).
-
-<br>
-
-## Example Project
-
-A complete example application using SwiftUI and AppKit video views
-is available in [`Examples/XLab`](./Examples/XLab).
-It demonstrates real-time generation using live camera feeds, with local preview
-and generated results displayed side by side.
-
-<p align="center"><img src="./Materials/images/xlab/home.jpg" alt="X-Lab home" width="20%" /><img src="./Materials/images/xlab/features.jpg" alt="X-Lab SDK features" width="20%" /><img src="./Materials/images/xlab/storage.jpg" alt="X-Lab storage service" width="20%" /><img src="./Materials/images/xlab/realtime-generation.jpg" alt="X-Lab realtime generation" width="20%" /><img src="./Materials/images/xlab/trajectory-generation.jpg" alt="X-Lab trajectory generation" width="20%" /></p>
-<p align="center"><sub>iOS X-Lab screenshots</sub></p>
 
 <br>
 
