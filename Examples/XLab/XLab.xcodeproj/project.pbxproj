@@ -7,20 +7,24 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1C5ADE15981992EF7502F356 /* RealtimePresets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C90C03ACF0D5C4002662A1D /* RealtimePresets.swift */; };
 		4403B64BCF3910B853B93F8A /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27270E9D49719B4C4E95860A /* Cocoa.framework */; };
 		7BC10EC787E309BEC21398FE /* XmaxSDK in Frameworks */ = {isa = PBXBuildFile; productRef = F8829C532C02FAB86C47E1CA /* XmaxSDK */; };
 		86D6168F5F536B5CA91B403E /* RealtimeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91671F51C16A5AB79EAA0070 /* RealtimeComponents.swift */; };
 		C2ACB832134F712FA61CFE36 /* RealtimeSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77356DA9FD252880FEFF294C /* RealtimeSessionController.swift */; };
 		D702308119484BAA6DC18EE8 /* RealtimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501AAEB78BA4EA3003EC92DB /* RealtimeView.swift */; };
 		DC67A9F7CE5DD8755A622623 /* XLabApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA9D53EB98D4B342D2949AD /* XLabApp.swift */; };
+		FF1CE2280780D71DF25F743B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 36E3C4A5FF8289133401A01F /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		27270E9D49719B4C4E95860A /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		36E3C4A5FF8289133401A01F /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		501AAEB78BA4EA3003EC92DB /* RealtimeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RealtimeView.swift; sourceTree = "<group>"; };
 		730F7B3828B7F7E3D0BF00E7 /* XLab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XLab.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		77356DA9FD252880FEFF294C /* RealtimeSessionController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RealtimeSessionController.swift; sourceTree = "<group>"; };
 		91671F51C16A5AB79EAA0070 /* RealtimeComponents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RealtimeComponents.swift; sourceTree = "<group>"; };
+		9C90C03ACF0D5C4002662A1D /* RealtimePresets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RealtimePresets.swift; sourceTree = "<group>"; };
 		9FA9D53EB98D4B342D2949AD /* XLabApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = XLabApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -52,6 +56,8 @@
 				501AAEB78BA4EA3003EC92DB /* RealtimeView.swift */,
 				9FA9D53EB98D4B342D2949AD /* XLabApp.swift */,
 				91671F51C16A5AB79EAA0070 /* RealtimeComponents.swift */,
+				9C90C03ACF0D5C4002662A1D /* RealtimePresets.swift */,
+				36E3C4A5FF8289133401A01F /* Assets.xcassets */,
 			);
 			name = XLab;
 			path = XLab;
@@ -142,6 +148,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FF1CE2280780D71DF25F743B /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -156,6 +163,7 @@
 				D702308119484BAA6DC18EE8 /* RealtimeView.swift in Sources */,
 				DC67A9F7CE5DD8755A622623 /* XLabApp.swift in Sources */,
 				86D6168F5F536B5CA91B403E /* RealtimeComponents.swift in Sources */,
+				1C5ADE15981992EF7502F356 /* RealtimePresets.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

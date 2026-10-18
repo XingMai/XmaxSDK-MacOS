@@ -19,6 +19,9 @@ abort 'Could not resolve the SDK version.' unless version
   Dir.glob(source.join('*.swift').to_s).sort.each do |file|
     target.source_build_phase.add_file_reference(group.new_file(File.basename(file)))
   end
+  if source.join('Assets.xcassets').exist?
+    target.resources_build_phase.add_file_reference(group.new_file('Assets.xcassets'))
+  end
   target.build_configurations.each do |configuration|
     settings = configuration.build_settings
     settings['SWIFT_VERSION'] = '6.0'
