@@ -14,10 +14,10 @@ enum RealtimeExampleMode: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .charx: "角色替换"
-        case .clothx: "虚拟试衣"
-        case .vibex: "风格迁移"
-        case .free: "自由输入"
+        case .charx: "Character Swap"
+        case .clothx: "Virtual Try-On"
+        case .vibex: "Style Transfer"
+        case .free: "Free Input"
         }
     }
 
@@ -114,9 +114,16 @@ struct RealtimeReference: Identifiable, Sendable {
     let mode: RealtimeExampleMode
     let name: String
     let thumbnailURL: URL
-    let referencePath: String
+    var referencePath: String
+    var thumbnailData: Data? = nil
+    var prompt: String? = nil
+    var uploadState: UploadState = .ready
+    var uploadProgress: Double = 0
+    var uploadError: String? = nil
 
-    /// 构造与 Web 预设保持一致的版本化资源地址，无需重复上传。
+    enum UploadState: Sendable { case ready, uploading, error }
+
+    /// 预览图通过 COS 缩放为 160px WebP，生成仍使用 Web 的原始参考图地址。
     static func preset(
         _ mode: RealtimeExampleMode,
         version: String,
@@ -125,7 +132,7 @@ struct RealtimeReference: Identifiable, Sendable {
         reference: String
     ) -> Self {
         let base = "https://platform.xmaxai.com/images/source/\(mode.rawValue)"
-        let thumbnail = "\(base)/\(image)?presetVersion=\(version)"
+        let thumbnail = "\(base)/\(image)?presetVersion=\(version)&imageMogr2/thumbnail/160x160/format/webp/quality/80"
         let path = "\(base)/\(reference)?presetVersion=\(version)"
         return Self(id: path, mode: mode, name: name, thumbnailURL: URL(string: thumbnail)!, referencePath: path)
     }

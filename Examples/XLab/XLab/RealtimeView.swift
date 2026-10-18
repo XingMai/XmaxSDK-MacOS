@@ -4,43 +4,64 @@
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
+import Kingfisher
 import SwiftUI
 import UniformTypeIdentifiers
 import XmaxSDK
 
 /// 对齐 Web X-Lab 的启动页、顶栏设置和双屏会话布局。
 struct RealtimeView: View {
+    @Environment(\.displayScale) private var displayScale
     @StateObject private var controller = RealtimeSessionController()
     @State private var keyEditorOpen = false
     @State private var modelPickerOpen = false
-    @State private var cameraPickerOpen = false
+    @State private var wechatOpen = false
     @FocusState private var keyFieldFocused: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            if controller.localStream == nil {
-                landingPage
-            } else {
-                Spacer(minLength: 20)
-                RealtimeSessionWorkspace(controller: controller)
-                Spacer(minLength: 20)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 0) {
+                    if controller.sessionActive {
+                        Spacer(minLength: 0)
+                        header(viewportWidth: geometry.size.width)
+                        RealtimeSessionWorkspace(controller: controller)
+                        Spacer(minLength: 0)
+                    } else {
+                        header(viewportWidth: geometry.size.width)
+                        Spacer(minLength: 30)
+                        landingPage(viewportWidth: geometry.size.width)
+                        Spacer(minLength: 30)
+                        footer
+                    }
+                }
+                .modifier(RealtimePageEntry())
+                .id(controller.sessionActive)
+                .padding(.horizontal, 28)
+                .padding(.top, 16)
+                .padding(.bottom, 48)
+                .frame(minHeight: geometry.size.height)
             }
-            footer
         }
-        .padding(.horizontal, 28)
-        .padding(.top, 16)
-        .padding(.bottom, 20)
+        .background {
+            // SDK 要求预览先绑定才能进入 ready；启动页持续显示 loading，连接成功后才显示双屏。
+            if !controller.sessionActive, let stream = controller.localStream {
+                XmaxVideo(track: stream.videoTrack)
+                    .frame(width: 1, height: 1)
+                    .opacity(0)
+                    .accessibilityHidden(true)
+            }
+        }
         .background(.white)
+        .font(RealtimeHeaderTypography.font(size: 13))
         .foregroundStyle(RealtimePalette.text)
         .preferredColorScheme(.light)
         .tint(RealtimePalette.accent)
-        .overlay(alignment: .bottom) {
+        .overlay(alignment: .top) {
             if let message = controller.errorMessage {
-                errorToast(message).padding(.bottom, 55)
+                errorToast(message).padding(.top, 84)
             }
         }
-        .task { await controller.refreshDevices() }
         .task(id: controller.errorMessage) {
             guard controller.errorMessage != nil else { return }
             try? await Task.sleep(for: .seconds(6))
@@ -51,64 +72,41 @@ struct RealtimeView: View {
     }
 
     // 品牌与会话设置
-    private var header: some View {
-        HStack(spacing: 14) {
+    private func header(viewportWidth: CGFloat) -> some View {
+        let controlHeight = min(48, max(35, viewportWidth * 0.0055 + 26))
+        let logoHeight = min(52, max(34, viewportWidth * 0.008 + 24))
+        return HStack(spacing: 12) {
             Image("XmaxWordmark")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 154, height: 39)
-                .accessibilityLabel("Xmax AI")
+                .resizable().scaledToFit()
+                .frame(width: logoHeight * 552 / 172, height: logoHeight)
+                .accessibilityLabel("Xmax")
             Spacer()
-            if controller.localStream == nil {
-                modelPicker
-                keyButton
+            if controller.sessionActive {
+                RealtimeSessionHeaderControls(controller: controller)
             } else {
-                Text(controller.model.displayName)
-                    .font(.system(size: 12))
-                    .foregroundStyle(RealtimePalette.secondary)
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(controller.state.connectionState == .generating ? .green : RealtimePalette.secondary)
-                        .frame(width: 5, height: 5)
-                    Text(connectionTitle).font(.system(size: 11))
-                }
-                .foregroundStyle(RealtimePalette.secondary)
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    Text(elapsed(at: context.date))
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
-                        .padding(.horizontal, 15)
-                        .frame(height: 39)
-                        .background(.white, in: Capsule())
-                        .overlay(Capsule().strokeBorder(RealtimePalette.border))
-                }
-                Button { Task { await controller.close() } } label: {
-                    Label("Stop Session", systemImage: "stop.fill")
-                }
-                .buttonStyle(RealtimeActionButtonStyle(appearance: .destructive))
-                .disabled(controller.isBusy)
-                .help("结束生成并关闭摄像头")
+                modelPicker(height: controlHeight)
+                keyButton(height: controlHeight)
             }
         }
-        .frame(height: 52)
+        .padding(.top, 8)
+        .padding(.bottom, 24)
     }
 
-    private var modelPicker: some View {
+    private func modelPicker(height: CGFloat) -> some View {
         Button { modelPickerOpen.toggle() } label: {
-            HStack(spacing: 10) {
-                Text(controller.model.displayName)
-                Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
-            }
-            .font(.system(size: 12))
-            .foregroundStyle(RealtimePalette.text)
-            .padding(.horizontal, 17)
-            .frame(height: 39)
-            .background(.white, in: Capsule())
-            .overlay(Capsule().strokeBorder(RealtimePalette.border))
+            Text(controller.model.displayName)
+                .padding(.leading, 18)
+                .padding(.trailing, 30)
+                .overlay(alignment: .trailing) {
+                    RealtimeHeaderChevron()
+                        .foregroundStyle(RealtimePalette.secondary)
+                        .padding(.trailing, 14)
+                }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RealtimeHeaderButtonStyle(height: height, horizontalPadding: 0))
         .fixedSize()
         .disabled(controller.isBusy)
-        .accessibilityLabel("生成模型")
+        .accessibilityLabel("Model")
         .popover(isPresented: $modelPickerOpen, arrowEdge: .bottom) {
             VStack(spacing: 2) {
                 ForEach(RealtimeModel.allCases, id: \.self) { model in
@@ -123,217 +121,259 @@ struct RealtimeView: View {
         }
     }
 
-    private var keyButton: some View {
+    private func keyButton(height: CGFloat) -> some View {
         Button { keyEditorOpen.toggle() } label: {
             HStack(spacing: 8) {
-                Image(systemName: "key")
-                if controller.hasAPIKey { Text("Key 已设置") }
+                RealtimeKeyIcon()
+                if controller.hasAPIKey {
+                    Text(controller.apiKey).lineLimit(1).truncationMode(.tail)
+                        .frame(maxWidth: 270)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
-        .buttonStyle(RealtimeActionButtonStyle())
-        .disabled(controller.isBusy)
-        .help("设置 API Key")
-        .accessibilityLabel("设置 API Key")
+        .buttonStyle(RealtimeHeaderButtonStyle(
+            height: height, iconOnly: !controller.hasAPIKey, muted: !controller.hasAPIKey
+        ))
+        .fixedSize(horizontal: true, vertical: false)
+        .help("API Key")
+        .accessibilityLabel("API Key")
         .popover(isPresented: $keyEditorOpen, arrowEdge: .bottom) {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("API Key").font(.system(size: 13, weight: .semibold))
-                SecureField("输入你的 API Key", text: $controller.apiKey)
-                    .textFieldStyle(.roundedBorder)
-                    .focused($keyFieldFocused)
-                    .onSubmit { keyEditorOpen = false }
-                    .accessibilityLabel("API Key")
-                Text("仅在本次会话中使用，不保存到磁盘。")
-                    .font(.system(size: 11))
-                    .foregroundStyle(RealtimePalette.secondary)
-                HStack {
-                    Spacer()
-                    Button("完成") { keyEditorOpen = false }
-                        .buttonStyle(RealtimeActionButtonStyle(appearance: .primary))
-                }
-            }
-            .padding(18)
-            .frame(width: 300)
-            .onAppear { keyFieldFocused = true }
+            TextField("API Key", text: $controller.apiKey)
+                .textFieldStyle(.plain)
+                .font(RealtimeHeaderTypography.font(size: 13))
+                .padding(.vertical, 8).padding(.horizontal, 12)
+                .background(RealtimePalette.surface, in: RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(
+                    keyFieldFocused ? RealtimePalette.accent : RealtimePalette.border
+                ))
+                .focused($keyFieldFocused)
+                .onSubmit { keyEditorOpen = false }
+                .onExitCommand { keyEditorOpen = false }
+                .accessibilityLabel("API Key")
+                .padding(10)
+                .frame(width: 280)
+                .onAppear { keyFieldFocused = true }
         }
     }
 
-    // 启动入口：一键生成与本地预览共用摄像头生命周期
-    private var landingPage: some View {
-        GeometryReader { geometry in
-            VStack(spacing: 28) {
-                Text("Reimagining Live Video with Xmax")
-                    .font(.system(size: 34, weight: .medium))
-                    .tracking(-1.2)
-                ZStack {
-                    RealtimeCheckerboard()
-                    VStack(spacing: 18) {
-                        Button {
-                            if !controller.hasAPIKey { keyEditorOpen = true }
-                            Task { await controller.startPreview(autoGenerate: true) }
-                        } label: {
-                            HStack(spacing: 10) {
-                                if controller.isBusy {
-                                    ProgressView().controlSize(.small).tint(.white)
-                                } else {
-                                    Image(systemName: "video")
+    // 启动页沿用 Web 的尺寸公式、麦克风开关和单一启动入口。
+    private func landingPage(viewportWidth: CGFloat) -> some View {
+        let fontSize = min(45, max(27, viewportWidth * 0.01 + 18))
+        let smallSize = min(15, max(12, viewportWidth * 0.0028 + 9.5))
+        return VStack(spacing: 0) {
+            Text("Reimagining Live Video with Xmax")
+                .font(RealtimeHeaderTypography.font(size: fontSize, weight: .medium))
+                .tracking(-fontSize * 0.03)
+                .padding(.bottom, min(40, max(26, viewportWidth * 0.011 + 17)))
+            ZStack {
+                RealtimeCheckerboard()
+                VStack(spacing: 20) {
+                    RealtimeStartButton(isLoading: controller.isBusy, viewportWidth: viewportWidth) {
+                        Task { await controller.start() }
+                    }
+                    Button { controller.useMicrophone.toggle() } label: {
+                        HStack(spacing: 8) {
+                            RealtimeWebIcon(kind: .microphone).frame(width: 14, height: 14)
+                            Text("Microphone")
+                            Capsule().fill(controller.useMicrophone ? RealtimePalette.accent : .white.opacity(0.18))
+                                .frame(width: 30, height: 18)
+                                .overlay(alignment: .leading) {
+                                    Circle().fill(.white).frame(width: 14, height: 14)
+                                        .offset(x: controller.useMicrophone ? 14 : 2)
                                 }
-                                Text(controller.isBusy ? "Starting…" : "Start Camera")
-                            }
-                            .font(.system(size: 16, weight: .semibold))
-                            .padding(.horizontal, 17)
-                            .padding(.vertical, 6)
                         }
-                        .buttonStyle(RealtimeActionButtonStyle(appearance: .primary))
-                        .disabled(controller.isBusy)
-                        .help("开启摄像头并使用首个角色预设开始生成")
-                        cameraPicker
-                        Button("仅本地预览") {
-                            Task { await controller.startPreview() }
-                        }
-                        .buttonStyle(.plain)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.6))
-                        .disabled(controller.isBusy)
+                        .font(RealtimeHeaderTypography.font(size: smallSize))
+                        .foregroundStyle(.white.opacity(controller.useMicrophone ? 1 : 0.55))
+                        .padding(.leading, 14).padding(.trailing, 7).padding(.vertical, 6)
+                        .background(.black.opacity(0.28), in: Capsule())
+                        .overlay(Capsule().strokeBorder(.white.opacity(controller.useMicrophone ? 0.3 : 0.16)))
                     }
-                    VStack {
-                        Spacer()
-                        Text("选择摄像头，开启你的实时创作。")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.white.opacity(0.5))
-                            .padding(.bottom, 22)
-                    }
-                }
-                .aspectRatio(1920.0 / 1024.0, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 24))
-                Text("XmaxSDK \(XmaxSDKInfo.version) · macOS")
-                    .font(.system(size: 10))
-                    .foregroundStyle(RealtimePalette.secondary.opacity(0.75))
-            }
-            .frame(width: min(780, geometry.size.width - 80))
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-    }
-
-    private var cameraPicker: some View {
-        Button { cameraPickerOpen.toggle() } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "video")
-                Text(controller.devices.first { $0.id == controller.selectedDeviceID }?.name ?? "系统默认摄像头")
-                    .lineLimit(1)
-                    .frame(maxWidth: 230)
-                Image(systemName: "chevron.down").font(.system(size: 8, weight: .semibold))
-            }
-            .font(.system(size: 11))
-            .foregroundStyle(.white.opacity(0.75))
-            .padding(.horizontal, 13)
-            .padding(.vertical, 9)
-            .background(.black.opacity(0.25), in: Capsule())
-            .overlay(Capsule().strokeBorder(.white.opacity(0.14)))
-        }
-        .buttonStyle(.plain)
-        .fixedSize()
-        .disabled(controller.isBusy)
-        .accessibilityLabel("选择摄像头")
-        .popover(isPresented: $cameraPickerOpen, arrowEdge: .bottom) {
-            VStack(spacing: 2) {
-                RealtimeMenuOption(title: "系统默认摄像头", isSelected: controller.selectedDeviceID.isEmpty) {
-                    controller.selectedDeviceID = ""
-                    cameraPickerOpen = false
-                }
-                ForEach(controller.devices) { device in
-                    RealtimeMenuOption(title: device.name, isSelected: controller.selectedDeviceID == device.id) {
-                        controller.selectedDeviceID = device.id
-                        cameraPickerOpen = false
-                    }
-                }
-                Divider().padding(.vertical, 5)
-                Button("刷新摄像头列表") { Task { await controller.refreshDevices() } }
                     .buttonStyle(.plain)
-                    .font(.system(size: 11))
-                    .padding(9)
+                    .accessibilityLabel("Microphone")
+                    .accessibilityValue(controller.useMicrophone ? "On" : "Off")
+                    .animation(.easeInOut(duration: 0.15), value: controller.useMicrophone)
+                }
+                VStack {
+                    Spacer()
+                    Text("By clicking Start, you agree to our [Terms of Use](https://platform.xmaxai.com/docs/resources/terms) and [Privacy Policy](https://platform.xmaxai.com/docs/resources/privacy).")
+                        .font(RealtimeHeaderTypography.font(size: smallSize))
+                        .foregroundStyle(Color(red: 0.612, green: 0.639, blue: 0.686))
+                        .tint(Color(red: 0.765, green: 0.776, blue: 0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20).padding(.bottom, 30)
+                }
             }
-            .padding(8)
-            .frame(width: 290)
+            .aspectRatio(1920.0 / 1024.0, contentMode: .fit)
+            .frame(width: min(viewportWidth - 56, min(940, max(580, viewportWidth * 0.45))))
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            Text("Copyright © 2026 XMAX.AI PTE.LTD. All rights reserved.")
+                .font(RealtimeHeaderTypography.font(size: min(14, max(11.5, viewportWidth * 0.0028 + 9))))
+                .foregroundStyle(RealtimePalette.secondary)
+                .padding(.top, 16)
         }
+        .frame(maxWidth: .infinity)
     }
 
     private var footer: some View {
-        HStack(spacing: 22) {
-            Text("© 2026 XMAX.AI PTE. LTD.")
-                .font(.system(size: 10))
+        HStack(spacing: 24) {
+            HStack(spacing: 18) {
+                Button { wechatOpen.toggle() } label: { RealtimeWebIcon(kind: .wechat).frame(width: 20, height: 20) }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("WeChat")
+                    .popover(isPresented: $wechatOpen, arrowEdge: .top) {
+                        VStack(spacing: 8) {
+                            KFImage(URL(string: "https://assets.22duck.fun/image/wechatAccount.jpg"))
+                                .placeholder { Color.white }
+                                .downsampling(size: CGSize(width: 180, height: 180))
+                                .scaleFactor(displayScale)
+                                .backgroundDecode()
+                                .cancelOnDisappear(true)
+                                .resizable().scaledToFit()
+                                .frame(width: 180, height: 180)
+                            Text("Follow us on WeChat").font(RealtimeHeaderTypography.font(size: 12))
+                        }.padding(14)
+                    }
+                Link(destination: URL(string: "https://x.com/XmaxAIOfficial")!) {
+                    RealtimeWebIcon(kind: .socialX).frame(width: 18, height: 18)
+                }.accessibilityLabel("X")
+                Link(destination: URL(string: "https://www.xmaxai.com")!) {
+                    RealtimeWebIcon(kind: .globe).frame(width: 20, height: 20)
+                }.accessibilityLabel("Website")
+            }
             Spacer()
-            Link("GitHub", destination: URL(string: "https://github.com/XingMai/XmaxSDK-MacOS")!)
+            Link("Contact Us", destination: URL(string: "mailto:contact@xmax.ai")!)
             Link("API Platform", destination: URL(string: "https://platform.xmaxai.com")!)
         }
-        .font(.system(size: 11))
+        .font(RealtimeHeaderTypography.font(size: 13))
         .foregroundStyle(RealtimePalette.secondary)
-        .padding(.top, 12)
+        .padding(.top, 56)
     }
 
-    private var connectionTitle: String {
-        switch controller.state.connectionState {
-        case .idle: "未连接"
-        case .preparing: "准备摄像头"
-        case .ready: controller.hasAPIKey ? "预览就绪" : "本地预览"
-        case .connecting: "连接中"
-        case .connected: "已连接"
-        case .generating: "实时生成中"
-        case .disconnecting: "结束会话"
+    private func errorToast(_ message: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.circle").foregroundStyle(Color(red: 0.898, green: 0.282, blue: 0.302))
+            Text(message).font(RealtimeHeaderTypography.font(size: 14)).textSelection(.enabled)
+            Button { controller.dismissError() } label: {
+                Image(systemName: "xmark").frame(width: 24, height: 24)
+            }.buttonStyle(.plain).foregroundStyle(RealtimePalette.secondary).accessibilityLabel("Dismiss")
+        }
+        .padding(.vertical, 12).padding(.leading, 16).padding(.trailing, 14)
+        .frame(maxWidth: 560)
+        .background(.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(RealtimePalette.text.opacity(0.08)))
+        .shadow(color: RealtimePalette.text.opacity(0.14), radius: 16, y: 12)
+        .padding(.horizontal, 28)
+    }
+}
+
+/// 会话顶栏沿用 Web 的统计、远端音量、插帧、计时与停止按钮。
+struct RealtimeSessionHeaderControls: View {
+    @ObservedObject var controller: RealtimeSessionController
+    @State private var volumeOpen = false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            RealtimeHeaderPill { Text(controller.model.displayName) }.accessibilityLabel("Current model")
+            Button { controller.statisticsVisible.toggle() } label: {
+                RealtimeWebIcon(kind: .statistics).frame(width: 18, height: 18)
+            }
+            .buttonStyle(RealtimeSessionToolStyle(active: controller.statisticsVisible, kind: .statistics))
+            .help(controller.statisticsVisible ? "Hide statistics (collection and logging continue)" : "Show statistics")
+            .accessibilityLabel("Show statistics")
+            .accessibilityValue(controller.statisticsVisible ? "On" : "Off")
+            Button { volumeOpen.toggle() } label: {
+                RealtimeWebIcon(kind: controller.remoteAudioVolume == 0 ? .muted : controller.remoteAudioVolume > 0.5 ? .volume : .volumeLow).frame(width: 18, height: 18)
+            }
+            .buttonStyle(RealtimeSessionToolStyle(active: controller.remoteAudioVolume > 0))
+            .help("Adjust remote playback volume")
+            .accessibilityLabel("Remote volume")
+            .accessibilityValue(controller.remoteAudioVolume == 0 ? "Muted" : "\(Int(controller.remoteAudioVolume * 100))%")
+            .popover(isPresented: $volumeOpen, arrowEdge: .bottom) {
+                VStack(spacing: 12) {
+                    HStack {
+                        Text("Remote volume")
+                        Spacer()
+                        Text(controller.remoteAudioVolume == 0 ? "Muted" : "\(Int(controller.remoteAudioVolume * 100))%")
+                            .foregroundStyle(RealtimePalette.secondary)
+                    }
+                    Slider(value: Binding(
+                        get: { Double(controller.remoteAudioVolume) },
+                        set: { value in Task { await controller.setRemoteAudioVolume(Float(value)) } }
+                    ), in: 0...1, step: 0.01).accessibilityLabel("Remote volume")
+                }
+                .font(RealtimeHeaderTypography.font(size: 12)).padding(14).frame(width: 216)
+                .onExitCommand { volumeOpen = false }
+            }
+            Button { Task { await controller.toggleInterpolation() } } label: {
+                HStack(spacing: 3) {
+                    RealtimeWebIcon(kind: .lightning).frame(width: 15, height: 15)
+                    Text("2x")
+                }
+            }
+            .buttonStyle(RealtimeSessionToolStyle(active: controller.interpolationEnabled, kind: .interpolation))
+            .disabled(controller.isBusy)
+            .accessibilityLabel("Frame interpolation")
+            .accessibilityValue(controller.interpolationEnabled ? "On" : "Off")
+            .help(controller.interpolationSwitching ? "Switching frame interpolation…" :
+                    controller.interpolationEnabled ? "2× frame interpolation is on. Click to turn off" : "Frame interpolation is off. Click to turn on")
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                RealtimeHeaderPill { Text(elapsed(at: context.date)).monospacedDigit() }
+            }
+            Button { Task { await controller.close() } } label: {
+                HStack(spacing: 7) { Text("■"); Text("Stop Session") }
+            }
+            .buttonStyle(RealtimeHeaderButtonStyle(height: 36, horizontalPadding: 16, destructive: true))
+            .disabled(controller.isBusy)
+            .help("Stop Session")
+        }
+        .task {
+            while !Task.isCancelled {
+                await controller.refreshInterpolationState()
+                try? await Task.sleep(for: .milliseconds(250))
+            }
         }
     }
 
-    /// 会话计时从摄像头创建成功开始，结束后归零。
+    /// 会话计时从生成连接成功开始，结束后归零。
     private func elapsed(at date: Date) -> String {
         let seconds = max(0, Int(date.timeIntervalSince(controller.sessionStartedAt ?? date)))
         return String(format: "%02d:%02d", seconds / 60, seconds % 60)
     }
-
-    private func errorToast(_ message: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red)
-            Text(message).font(.system(size: 12)).lineLimit(3).textSelection(.enabled)
-            Spacer(minLength: 10)
-            Button { controller.dismissError() } label: { Image(systemName: "xmark") }
-                .buttonStyle(.plain)
-                .accessibilityLabel("关闭错误提示")
-        }
-        .padding(15)
-        .frame(maxWidth: 580)
-        .background(.white, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(RealtimePalette.border))
-        .shadow(color: .black.opacity(0.1), radius: 18, y: 6)
-    }
 }
 
-/// 双屏与模式编辑区独立于启动页，切换模式时不重新绑定视频轨道。
+/// 双屏与分类列表保持挂载，切换模式时保留各自滚动位置。
 struct RealtimeSessionWorkspace: View {
     @ObservedObject var controller: RealtimeSessionController
     @State private var importPresented = false
     @State private var uploadMode = RealtimeExampleMode.charx
 
     var body: some View {
-        VStack(spacing: 26) {
+        VStack(spacing: 0) {
             HStack(spacing: 24) {
-                RealtimeVideoPanel(
-                    title: "Local", track: controller.localStream?.videoTrack,
-                    placeholder: "等待摄像头画面…"
-                )
+                RealtimeVideoPanel(title: "Local", track: controller.localStream?.videoTrack, placeholder: "",
+                                   statistics: controller.statisticsVisible ? controller.localStatisticsPanels : [])
                 RealtimeVideoPanel(
                     title: "Result", track: controller.remoteStream?.videoTrack,
-                    placeholder: controller.isBusy ? "正在准备生成画面…" : "选择参考图，开始实时生成",
-                    isWaiting: controller.isBusy, showsWatermark: true
+                    placeholder: controller.state.connectionState == .generating && controller.remoteStream != nil ? "" :
+                        [.connected, .generating].contains(controller.state.connectionState) ? "Generating…" : "Waiting for connection…",
+                    showsWatermark: true,
+                    statistics: controller.statisticsVisible ? controller.remoteStatisticsPanels : []
                 )
             }
-            modeTabs
-            ZStack {
-                if controller.activeMode == .free {
-                    promptEditor
-                } else {
-                    referenceList(for: controller.activeMode)
-                        .id(controller.activeMode)
+            modeTabs.padding(.top, 34).padding(.bottom, 28)
+            ZStack(alignment: .top) {
+                promptEditor.opacity(controller.activeMode == .free ? 1 : 0)
+                    .allowsHitTesting(controller.activeMode == .free).accessibilityHidden(controller.activeMode != .free)
+                    .disabled(controller.activeMode != .free)
+                ForEach(RealtimeExampleMode.allCases.filter { $0 != .free }) { mode in
+                    referenceList(for: mode)
+                        .opacity(controller.activeMode == mode ? 1 : 0)
+                        .allowsHitTesting(controller.activeMode == mode).accessibilityHidden(controller.activeMode != mode)
+                        .disabled(controller.activeMode != mode)
                 }
             }
-            .frame(height: 204)
+            .frame(height: 190, alignment: .top)
         }
         .fileImporter(isPresented: $importPresented, allowedContentTypes: [.image]) { result in
             if case let .success(url) = result {
@@ -344,131 +384,108 @@ struct RealtimeSessionWorkspace: View {
     }
 
     private var modeTabs: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 2) {
             ForEach(RealtimeExampleMode.allCases) { mode in
-                Button { controller.activeMode = mode } label: {
-                    Text(mode.title)
-                        .font(.system(size: 12, weight: controller.activeMode == mode ? .semibold : .medium))
-                        .foregroundStyle(controller.activeMode == mode ? RealtimePalette.text : RealtimePalette.secondary)
-                        .padding(.horizontal, 22)
-                        .frame(height: 35)
-                        .background {
-                            if controller.activeMode == mode {
-                                Capsule().fill(.white).shadow(color: .black.opacity(0.09), radius: 4, y: 1)
-                            }
-                        }
-                        .contentShape(Capsule())
-                }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(controller.activeMode == mode ? .isSelected : [])
+                Button { controller.activeMode = mode } label: { Text(mode.title) }
+                    .buttonStyle(RealtimeModeTabStyle(isSelected: controller.activeMode == mode))
+                    .accessibilityAddTraits(controller.activeMode == mode ? .isSelected : [])
             }
         }
         .padding(4)
-        .background(RealtimePalette.surface, in: Capsule())
+        .background(Color(red: 120.0 / 255, green: 120.0 / 255, blue: 128.0 / 255).opacity(0.1), in: Capsule())
         .disabled(controller.isBusy)
     }
 
     private func referenceList(for mode: RealtimeExampleMode) -> some View {
-        ScrollView {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 86, maximum: 100), spacing: 14)], spacing: 15) {
-                uploadButton
-                ForEach(controller.uploadedReferences.filter { $0.mode == mode } + mode.presets) { reference in
-                    RealtimeReferenceButton(
-                        reference: reference, isSelected: controller.selectedReferenceID == reference.id
-                    ) {
-                        Task { await controller.selectReference(reference) }
+        GeometryReader { geometry in
+            ScrollViewReader { proxy in
+                ScrollView {
+                    RealtimeReferenceGrid {
+                        uploadButton.id("upload")
+                        ForEach(controller.uploadedReferences.filter { $0.mode == mode } + mode.presets) { reference in
+                            RealtimeReferenceButton(reference: reference, isSelected: controller.selectedReferenceID == reference.id,
+                                                    action: { Task { await controller.selectReference(reference) } },
+                                                    loadsThumbnail: controller.activeMode == mode)
+                            .disabled(reference.uploadState == .uploading)
+                        }
                     }
+                    .frame(maxWidth: .infinity)
+                }
+                .scrollIndicators(.hidden)
+                .onChange(of: controller.uploadedReferences.first { $0.mode == mode }?.id) { _ in
+                    proxy.scrollTo("upload", anchor: .top)
                 }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 2)
         }
-        .scrollIndicators(.hidden)
         .disabled(!controller.canGenerate)
-        .opacity(controller.hasAPIKey ? 1 : 0.45)
-        .overlay(alignment: .bottom) {
-            if !controller.hasAPIKey {
-                Text("本地预览中；结束会话并填写 API Key 后可体验生成。")
-                    .font(.system(size: 11))
-                    .foregroundStyle(RealtimePalette.secondary)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(.white.opacity(0.95), in: Capsule())
-            }
-        }
+        .opacity(controller.canGenerate ? 1 : 0.35)
     }
 
     private var uploadButton: some View {
         Button { presentImporter() } label: {
-            VStack(spacing: 7) {
+            VStack(spacing: 6) {
                 ZStack {
-                    Circle().fill(RealtimePalette.surface)
-                    Circle().strokeBorder(RealtimePalette.border, style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
-                    if let progress = controller.uploadProgress {
-                        ProgressView(value: progress).progressViewStyle(.circular).controlSize(.small)
-                    } else {
-                        Image(systemName: "plus")
-                            .font(.system(size: 23, weight: .light))
-                            .foregroundStyle(RealtimePalette.secondary)
-                    }
-                }
-                .frame(width: 66, height: 66)
-                Text("Upload").font(.system(size: 10)).foregroundStyle(RealtimePalette.secondary)
-            }
-            .frame(width: 86)
-            .contentShape(Rectangle())
+                    Circle().fill(Color(red: 250.0 / 255, green: 251.0 / 255, blue: 252.0 / 255))
+                    Circle().strokeBorder(Color(red: 203.0 / 255, green: 210.0 / 255, blue: 220.0 / 255),
+                                          style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
+                    Text("＋").font(RealtimeHeaderTypography.font(size: 24))
+                }.frame(width: 64, height: 64)
+                Text("Upload").font(RealtimeHeaderTypography.font(size: 11)).frame(height: 14)
+            }.foregroundStyle(RealtimePalette.secondary).frame(width: 76)
         }
-        .buttonStyle(.plain)
-        .help("上传自己的参考图")
-        .accessibilityLabel("上传参考图")
+        .buttonStyle(RealtimeUnstyledButtonStyle())
+        .help("Upload your own reference image")
+        .accessibilityLabel("Upload reference image")
     }
 
     private var promptEditor: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 8) {
             ZStack(alignment: .topLeading) {
-                if controller.prompt.isEmpty {
-                    Text("描述你希望画面如何变化…")
-                        .foregroundStyle(RealtimePalette.secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 8)
-                        .allowsHitTesting(false)
-                }
                 TextEditor(text: $controller.prompt)
                     .scrollContentBackground(.hidden)
-                    .accessibilityLabel("生成描述")
+                    .accessibilityLabel("Describe how you want the video to change")
+                if controller.prompt.isEmpty {
+                    Text("Describe how you want the video to change")
+                        .foregroundStyle(RealtimePalette.secondary).padding(.horizontal, 5).padding(.top, 1)
+                        .allowsHitTesting(false)
+                }
             }
-            .font(.system(size: 13))
-            .frame(height: 94)
-            HStack(spacing: 12) {
+            .font(RealtimeHeaderTypography.font(size: 15))
+            .padding(.horizontal, 8).padding(.vertical, 6).frame(height: 84)
+            HStack(spacing: 10) {
+                Spacer()
                 if let reference = controller.freeReference {
-                    RealtimeThumbnail(url: reference.thumbnailURL)
-                        .frame(width: 35, height: 35)
-                        .clipShape(RoundedRectangle(cornerRadius: 7))
-                    Text(reference.name).font(.system(size: 11)).lineLimit(1)
-                    Button { controller.removeFreeReference() } label: { Image(systemName: "xmark.circle.fill") }
-                        .buttonStyle(.plain)
-                        .help("移除参考图")
-                        .disabled(controller.isBusy)
+                    RealtimeReferenceThumbnail(reference: reference, loadsThumbnail: controller.activeMode == .free)
+                        .frame(width: 44, height: 44)
+                        .overlay(alignment: .topTrailing) {
+                            Button { controller.removeFreeReference() } label: {
+                                Text("×").font(RealtimeHeaderTypography.font(size: 14, weight: .medium))
+                                    .foregroundStyle(.white).frame(width: 18, height: 18)
+                                    .background(.black.opacity(0.72), in: Circle())
+                            }
+                            .buttonStyle(.plain).offset(x: 5, y: -5)
+                            .help("Remove reference").accessibilityLabel("Remove reference").disabled(controller.isBusy)
+                        }
+                        .help(reference.uploadError ?? reference.name)
                 } else {
-                    Button { presentImporter() } label: { Label("参考图", systemImage: "photo.badge.plus") }
-                        .buttonStyle(RealtimeActionButtonStyle())
+                    Button { presentImporter() } label: { RealtimeWebIcon(kind: .plus).frame(width: 22, height: 22) }
+                        .buttonStyle(RealtimePromptButtonStyle())
+                        .help("Upload your own reference image").accessibilityLabel("Upload reference image")
                         .disabled(!controller.canGenerate)
                 }
-                Spacer()
-                if controller.isBusy { ProgressView().controlSize(.small) }
-                Text("⌘ ↵").font(.system(size: 11)).foregroundStyle(RealtimePalette.secondary)
                 Button { Task { await controller.submitPrompt() } } label: {
-                    Label("生成", systemImage: "arrow.up")
+                    RealtimeWebIcon(kind: .arrow).frame(width: 20, height: 20)
                 }
-                .buttonStyle(RealtimeActionButtonStyle(appearance: .primary))
-                .keyboardShortcut(.return, modifiers: .command)
-                .disabled(!controller.canGenerate)
+                .buttonStyle(RealtimePromptButtonStyle(primary: true))
+                .accessibilityLabel("Submit prompt")
+                .help(controller.hasAPIKey ? "" : "Generation requires an API Key")
+                .disabled(!controller.canGenerate || controller.referenceUploading)
             }
         }
-        .padding(17)
-        .background(RealtimePalette.surface, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(RealtimePalette.border))
-        .frame(maxWidth: 860)
+        .padding(12)
+        .background(RealtimePalette.surface, in: RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(RealtimePalette.border))
+        .frame(maxWidth: 880).padding(.top, 4)
     }
 
     /// 记录上传所属模式，不使用异步返回时的当前页签。

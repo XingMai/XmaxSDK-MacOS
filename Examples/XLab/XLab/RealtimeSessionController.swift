@@ -4,22 +4,32 @@
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
+import CoreGraphics
 import Foundation
+import ImageIO
 import XmaxSDK
 
 /// 管理示例的会话生命周期、模式选择与参考图上传。
 @MainActor
 final class RealtimeSessionController: ObservableObject {
 
-    // 用户配置
-    @Published var apiKey = ""
+    // 用户配置：与 Web 的 localStorage 一致，保存在当前用户的应用设置中。
+    @Published var apiKey = UserDefaults.standard.string(forKey: "xmax.xlab.apiKey") ?? "" {
+        didSet { UserDefaults.standard.set(apiKey, forKey: "xmax.xlab.apiKey") }
+    }
     @Published var prompt = ""
-    @Published var selectedDeviceID = ""
     @Published var model = RealtimeModel.x2_1_1_preview_cn
-    @Published var activeMode = RealtimeExampleMode.charx
+    @Published var useMicrophone = false
+    @Published var statisticsVisible = true
+    @Published var activeMode = RealtimeExampleMode.charx {
+        didSet {
+            selectionIntent = UUID()
+            errorMessage = nil
+        }
+    }
 
     // 显示状态
-    @Published private(set) var devices: [CameraDevice] = []
+    @Published private(set) var sessionActive = false
     @Published private(set) var localStream: RealtimeMediaStream?
     @Published private(set) var remoteStream: RealtimeMediaStream?
     @Published private(set) var state = RealtimeState(connectionState: .idle)
@@ -28,223 +38,354 @@ final class RealtimeSessionController: ObservableObject {
     @Published private(set) var sessionStartedAt: Date?
     @Published private(set) var selectedReferenceID: String?
     @Published private(set) var uploadedReferences: [RealtimeReference] = []
-    @Published private(set) var uploadProgress: Double?
+    @Published private(set) var uplinkStatistics: UplinkVideoStatistics?
+    @Published private(set) var downlinkStatistics: DownlinkVideoStatistics?
+    @Published private(set) var networkQuality: RealtimeNetworkQuality?
+    @Published private(set) var interpolationEnabled = false
+    @Published private(set) var interpolationSwitching = false
+    @Published private(set) var remoteAudioVolume: Float = 0
 
     // SDK 资源与操作归属
     private var client: XmaxClient?
     private var manager: (any XmaxRealtimeManaging)?
     private var lifecycleID = UUID()
+    private var selectionIntent = UUID()
     private var pendingInitialReference: RealtimeReference?
+    private var application: Task<Void, Never>?
+    private let makeManager: (XmaxClient, RealtimeConfiguration) -> any XmaxRealtimeManaging
+    private let uploadImage: (XmaxClient, Data, String, XmaxStorageProgressHandler?) async throws -> URL
 
-    var hasAPIKey: Bool {
-        !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    init(
+        makeManager: @escaping (XmaxClient, RealtimeConfiguration) -> any XmaxRealtimeManaging = {
+            $0.createRealtimeManager(options: $1)
+        },
+        uploadImage: @escaping (XmaxClient, Data, String, XmaxStorageProgressHandler?) async throws -> URL = {
+            client, data, name, progress in
+            let storage = try client.createStorageManager()
+            return try await storage.uploadImage(data, fileName: name, contentType: "image/jpeg", progress: progress).url
+        }
+    ) {
+        self.makeManager = makeManager
+        self.uploadImage = uploadImage
     }
 
-    var canGenerate: Bool {
-        hasAPIKey && !isBusy && localStream != nil &&
-            [.ready, .connected, .generating].contains(state.connectionState)
+    var hasAPIKey: Bool { !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    var canGenerate: Bool { hasAPIKey && !isBusy && sessionActive }
+    var freeReference: RealtimeReference? { uploadedReferences.first { $0.mode == .free } }
+    var referenceUploading: Bool {
+        uploadedReferences.contains { $0.mode == activeMode && $0.uploadState == .uploading }
     }
 
-    var freeReference: RealtimeReference? {
-        uploadedReferences.last { $0.mode == .free }
-    }
-
-    /// 查询设备，不启动摄像头或建立服务端会话。
-    func refreshDevices() async {
-        let client = XmaxClient(configuration: XmaxConfiguration(apiKey: ""))
-        let discovery = client.createRealtimeManager(options: RealtimeConfiguration(model: model))
-        devices = await discovery.listCameraDevices()
-        await discovery.close()
-    }
-
-    /// 开启摄像头；一键生成模式在有效帧和预览绑定就绪后提交首个预设。
-    func startPreview(autoGenerate: Bool = false) async {
+    /// 启动中保持启动页；本地预览先在页面背景挂载，满足 SDK 的媒体就绪条件。
+    func start() async {
         guard !isBusy, localStream == nil else { return }
-        guard !autoGenerate || hasAPIKey else {
-            errorMessage = "请先点击右上角的钥匙，填写 API Key。"
+        guard hasAPIKey else {
+            errorMessage = "API Key is required — click the key button in the top-right corner to enter it"
             return
         }
         isBusy = true
         errorMessage = nil
-        defer { isBusy = false }
         let operation = UUID()
         lifecycleID = operation
+        activeMode = .charx
+        selectedReferenceID = nil
+        uplinkStatistics = nil
+        downlinkStatistics = nil
+        networkQuality = nil
         let client = XmaxClient(configuration: XmaxConfiguration(apiKey: apiKey))
-        let manager = client.createRealtimeManager(options: RealtimeConfiguration(model: model))
+        let manager = makeManager(client, RealtimeConfiguration(
+            model: model, isFrameInterpolationEnabled: interpolationEnabled
+        ))
         self.client = client
         self.manager = manager
-        selectedReferenceID = nil
-        activeMode = .charx
+        await manager.setUplinkVideoStatisticsListener { [weak self] statistics in
+            guard let self, self.lifecycleID == operation else { return }
+            self.uplinkStatistics = statistics
+        }
+        await manager.setDownlinkVideoStatisticsListener { [weak self] statistics in
+            guard let self, self.lifecycleID == operation else { return }
+            self.downlinkStatistics = statistics
+        }
+        await manager.setNetworkQualityListener { [weak self] quality in
+            guard let self, self.lifecycleID == operation else { return }
+            self.networkQuality = quality
+        }
         await manager.setStateListener { [weak self] state in
             guard let self, self.lifecycleID == operation else { return }
             self.state = state
+            if [.connected, .generating].contains(state.connectionState), !self.sessionActive {
+                self.sessionActive = true
+                self.sessionStartedAt = Date()
+            }
+            if ![.connected, .generating].contains(state.connectionState) { self.remoteStream = nil }
             if case let .failure(error) = state.reason {
                 self.errorMessage = error.message
-                self.pendingInitialReference = nil
-            }
-            if state.connectionState == .ready || state.connectionState == .idle {
-                self.remoteStream = nil
-            }
-            if state.connectionState == .idle {
-                self.localStream = nil
-                self.sessionStartedAt = nil
+                if !self.sessionActive {
+                    let failedManager = self.manager
+                    self.pendingInitialReference = nil
+                    self.resetSession()
+                    Task { await failedManager?.close() }
+                }
             }
             if state.connectionState == .ready {
                 Task { [weak self] in await self?.startPendingGeneration() }
             }
         }
-        pendingInitialReference = autoGenerate ? RealtimeExampleMode.charx.presets.first : nil
+        pendingInitialReference = RealtimeExampleMode.charx.presets.first
         do {
-            let stream = try await manager.createLocalCameraStream(
-                deviceID: selectedDeviceID.isEmpty ? nil : selectedDeviceID
-            )
+            let stream = try await manager.createLocalCameraStream(useMicrophone: useMicrophone)
             guard lifecycleID == operation else { await manager.close(); return }
             localStream = stream
-            sessionStartedAt = Date()
+            try await manager.setRemoteAudioVolume(remoteAudioVolume)
+            await startPendingGeneration()
         } catch {
             guard lifecycleID == operation else { return }
             errorMessage = error.localizedDescription
-            pendingInitialReference = nil
+            resetSession()
             await manager.close()
-            self.manager = nil
-            self.client = nil
         }
     }
 
-    /// 选择预设即更新生成；切换模式页签本身不提交请求。
+    /// 只消费一次初始预设；生成连接成功前不切换页面，失败则释放摄像头。
+    private func startPendingGeneration() async {
+        guard state.connectionState == .ready, localStream != nil,
+              let reference = pendingInitialReference else { return }
+        pendingInitialReference = nil
+        let operation = lifecycleID
+        do {
+            selectedReferenceID = reference.id
+            try await generate(reference: reference)
+        } catch {
+            guard lifecycleID == operation else { return }
+            errorMessage = error.localizedDescription
+            if !sessionActive {
+                let manager = manager
+                resetSession()
+                await manager?.close()
+            }
+        }
+        if lifecycleID == operation { isBusy = false }
+    }
+
+    /// 条件更新不锁住整个页面；连续选择串行应用，只保留最新的待处理选择。
     func selectReference(_ reference: RealtimeReference) async {
-        guard canGenerate else { return }
-        isBusy = true
-        errorMessage = nil
-        defer { isBusy = false }
-        do {
-            try await generate(
-                context: RealtimeContext(prompt: reference.mode == .free ? prompt : reference.mode.prompt,
-                                         referencePath: reference.referencePath),
-                mode: reference.mode,
-                selectedReferenceID: reference.id
-            )
-        } catch {
-            errorMessage = error.localizedDescription
+        guard canGenerate, reference.uploadState != .uploading else { return }
+        let intent = UUID()
+        selectionIntent = intent
+        if reference.uploadState == .error {
+            await upload(reference: reference, intent: intent)
+        } else {
+            await enqueue(reference: reference, intent: intent)
         }
     }
 
-    /// 使用自由输入页的文本和可选上传参考图开始或更新生成。
+    /// 自由输入与选图复用生成队列，切换页签本身不重新生成。
     func submitPrompt() async {
-        guard canGenerate else { return }
-        guard !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || freeReference != nil else {
-            errorMessage = "请先输入生成描述或上传一张参考图。"
-            return
-        }
-        isBusy = true
-        errorMessage = nil
-        defer { isBusy = false }
-        do {
-            try await generate(
-                context: RealtimeContext(prompt: prompt, referencePath: freeReference?.referencePath),
-                mode: .free,
-                selectedReferenceID: freeReference?.id
-            )
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+        guard canGenerate, !referenceUploading else { return }
+        let reference = RealtimeReference(
+            id: freeReference?.id ?? UUID().uuidString, mode: .free, name: "",
+            thumbnailURL: freeReference?.thumbnailURL ?? URL(fileURLWithPath: "/"),
+            referencePath: freeReference?.referencePath ?? "", prompt: prompt
+        )
+        let intent = UUID()
+        selectionIntent = intent
+        await enqueue(reference: reference, intent: intent)
     }
 
-    /// 上传用户通过文件选择器指定的参考图，并复用普通选图的生成语义。
+    /// 本地文件立即插入列表首位；上传进度和重试状态属于条目，不锁定其他控件。
     func uploadReference(at fileURL: URL, mode: RealtimeExampleMode) async {
-        guard canGenerate, let client else { return }
+        guard canGenerate else { return }
         let scoped = fileURL.startAccessingSecurityScopedResource()
         defer { if scoped { fileURL.stopAccessingSecurityScopedResource() } }
-        let operation = lifecycleID
-        isBusy = true
-        uploadProgress = 0
-        errorMessage = nil
-        defer { isBusy = false; uploadProgress = nil }
         do {
-            let storage = try client.createStorageManager()
-            let file = try await storage.uploadImage(at: fileURL, contentType: nil) { [weak self] progress in
+            let data = try Data(contentsOf: fileURL)
+            guard !data.isEmpty else {
+                throw CocoaError(.fileReadCorruptFile)
+            }
+            let reference = RealtimeReference(
+                id: UUID().uuidString, mode: mode, name: fileURL.lastPathComponent,
+                thumbnailURL: fileURL, referencePath: "", thumbnailData: data,
+                prompt: mode == .free ? prompt : mode.prompt
+            )
+            uploadedReferences.insert(reference, at: 0)
+            let intent = UUID()
+            selectionIntent = intent
+            await upload(reference: reference, intent: intent)
+        } catch { errorMessage = error.localizedDescription }
+    }
+
+    private func upload(reference: RealtimeReference, intent: UUID) async {
+        guard let client, let data = reference.thumbnailData else { return }
+        let operation = lifecycleID
+        patchReference(reference.id) { $0.uploadState = .uploading; $0.uploadError = nil; $0.uploadProgress = 0 }
+        errorMessage = nil
+        do {
+            let jpeg = try await Task.detached { try Self.jpegData(data) }.value
+            let uploadedURL = try await uploadImage(
+                client, jpeg, (reference.name as NSString).deletingPathExtension + ".jpg"
+            ) { [weak self] progress in
                 let fraction = progress.fractionCompleted
                 Task { @MainActor in
-                    guard let self, self.lifecycleID == operation else { return }
-                    self.uploadProgress = fraction
+                    guard let self else { return }
+                    self.patchReference(reference.id) { $0.uploadProgress = fraction }
                 }
             }
+            patchReference(reference.id) {
+                $0.referencePath = uploadedURL.absoluteString
+                $0.uploadState = .ready
+                $0.uploadProgress = 1
+            }
             guard lifecycleID == operation else { return }
-            let reference = RealtimeReference(
-                id: UUID().uuidString, mode: mode,
-                name: fileURL.deletingPathExtension().lastPathComponent,
-                thumbnailURL: file.url, referencePath: file.url.absoluteString
-            )
-            if mode == .free { uploadedReferences.removeAll { $0.mode == .free } }
-            uploadedReferences.append(reference)
-            uploadProgress = nil
-            try await generate(
-                context: RealtimeContext(prompt: mode == .free ? prompt : mode.prompt, referencePath: reference.referencePath),
-                mode: mode,
-                selectedReferenceID: reference.id
-            )
+            if let ready = uploadedReferences.first(where: { $0.id == reference.id }) {
+                await enqueue(reference: ready, intent: intent)
+            }
         } catch {
+            patchReference(reference.id) { $0.uploadState = .error; $0.uploadError = error.localizedDescription }
             guard lifecycleID == operation else { return }
-            errorMessage = error.localizedDescription
+            if selectionIntent == intent { errorMessage = error.localizedDescription }
         }
     }
 
-    /// 移除自由输入页的参考图，下一次提交时生效。
+    private func patchReference(_ id: String, update: (inout RealtimeReference) -> Void) {
+        guard let index = uploadedReferences.firstIndex(where: { $0.id == id }) else { return }
+        update(&uploadedReferences[index])
+    }
+
+    private func enqueue(reference: RealtimeReference, intent: UUID) async {
+        let previous = application
+        let operation = lifecycleID
+        let task = Task { [weak self] in
+            await previous?.value
+            guard let self, self.lifecycleID == operation, self.selectionIntent == intent else { return }
+            self.errorMessage = nil
+            self.selectedReferenceID = reference.mode == .free && reference.referencePath.isEmpty ? nil : reference.id
+            if reference.mode == .free { self.prompt = reference.prompt ?? self.prompt }
+            do { try await self.generate(reference: reference) }
+            catch {
+                if self.lifecycleID == operation, self.selectionIntent == intent {
+                    self.errorMessage = error.localizedDescription
+                }
+            }
+        }
+        application = task
+        await task.value
+    }
+
+    private func generate(reference: RealtimeReference) async throws {
+        guard let manager, let localStream else { return }
+        let operation = lifecycleID
+        let remote = try await manager.startGeneration(
+            localStream: localStream,
+            context: RealtimeContext(prompt: reference.prompt ?? reference.mode.prompt,
+                                     referencePath: reference.referencePath.isEmpty ? nil : reference.referencePath),
+            faceRestoration: reference.mode.faceRestoration
+        )
+        guard lifecycleID == operation else { return }
+        remoteStream = remote
+    }
+
     func removeFreeReference() {
-        guard !isBusy else { return }
-        if selectedReferenceID == freeReference?.id { selectedReferenceID = nil }
-        uploadedReferences.removeAll { $0.mode == .free }
+        guard !isBusy, let reference = freeReference else { return }
+        selectionIntent = UUID()
+        if selectedReferenceID == reference.id { selectedReferenceID = nil }
+        uploadedReferences.removeAll { $0.id == reference.id }
+    }
+
+    /// 同步 SDK 插帧开关及故障降级，不以逐帧状态驱动按钮。
+    func refreshInterpolationState() async {
+        let operation = lifecycleID
+        guard let manager else { return }
+        let enabled = await manager.isFrameInterpolationEnabled
+        if lifecycleID == operation { interpolationEnabled = enabled }
+    }
+
+    func toggleInterpolation() async {
+        guard sessionActive, !isBusy, let manager else { return }
+        let operation = lifecycleID
+        isBusy = true
+        interpolationSwitching = true
+        errorMessage = nil
+        do { try await manager.setFrameInterpolationEnabled(!interpolationEnabled) }
+        catch { if lifecycleID == operation { errorMessage = error.localizedDescription } }
+        guard lifecycleID == operation else { return }
+        await refreshInterpolationState()
+        isBusy = false
+        interpolationSwitching = false
+    }
+
+    func setRemoteAudioVolume(_ volume: Float) async {
+        guard let manager else { return }
+        let operation = lifecycleID
+        do {
+            try await manager.setRemoteAudioVolume(volume)
+            if lifecycleID == operation { remoteAudioVolume = volume }
+        } catch { if lifecycleID == operation { errorMessage = error.localizedDescription } }
     }
 
     func dismissError() { errorMessage = nil }
 
-    /// 结束会话并返回启动页，释放摄像头与 RTC 资源。
+    /// 与 Web 一致，先返回启动页，再在后台完成 SDK 资源释放。
     func close() async {
         guard !isBusy else { return }
-        isBusy = true
-        pendingInitialReference = nil
-        defer { isBusy = false }
-        await manager?.close()
-        lifecycleID = UUID()
-        manager = nil
-        client = nil
-        localStream = nil
-        remoteStream = nil
-        sessionStartedAt = nil
-        selectedReferenceID = nil
+        let manager = manager
+        resetSession()
         errorMessage = nil
+        await manager?.close()
     }
 
-    /// 界面移除后撤销操作归属并释放资源。
     func viewDidDisappear() {
-        lifecycleID = UUID()
-        pendingInitialReference = nil
         let manager = manager
-        self.manager = nil
-        client = nil
+        resetSession()
         Task { await manager?.close() }
     }
 
-    /// 只消费一次自动生成请求，避免 ready 状态恢复后重复提交。
-    private func startPendingGeneration() async {
-        guard canGenerate, let reference = pendingInitialReference else { return }
+    private func resetSession() {
+        lifecycleID = UUID()
+        selectionIntent = UUID()
         pendingInitialReference = nil
-        await selectReference(reference)
+        application = nil
+        manager = nil
+        client = nil
+        sessionActive = false
+        isBusy = false
+        interpolationSwitching = false
+        localStream = nil
+        remoteStream = nil
+        state = RealtimeState(connectionState: .idle)
+        sessionStartedAt = nil
+        selectedReferenceID = nil
+        uplinkStatistics = nil
+        downlinkStatistics = nil
+        networkQuality = nil
     }
 
-    /// 所有条件更新共用入口，换装模式沿用 Web 的人脸还原设置。
-    private func generate(
-        context: RealtimeContext,
-        mode: RealtimeExampleMode,
-        selectedReferenceID: String?
-    ) async throws {
-        guard let manager, let localStream else { return }
-        let operation = lifecycleID
-        let remote = try await manager.startGeneration(
-            localStream: localStream, context: context, faceRestoration: mode.faceRestoration
-        )
-        guard lifecycleID == operation else { return }
-        remoteStream = remote
-        self.selectedReferenceID = selectedReferenceID
+    /// 与 Web 一致保留原始尺寸，以白底 JPEG 0.9 上传，避免透明图片变黑。
+    nonisolated private static func jpegData(_ data: Data) throws -> Data {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = properties[kCGImagePropertyPixelWidth] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight] as? Int,
+              let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                  kCGImageSourceCreateThumbnailFromImageAlways: true,
+                  kCGImageSourceCreateThumbnailWithTransform: true,
+                  kCGImageSourceThumbnailMaxPixelSize: max(width, height)
+              ] as CFDictionary),
+              let context = CGContext(data: nil, width: image.width, height: image.height,
+                                      bitsPerComponent: 8, bytesPerRow: 0,
+                                      space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else {
+            throw NSError(domain: "XLab", code: 1, userInfo: [NSLocalizedDescriptionKey:
+                "Unable to decode reference image; please choose a supported image file"])
+        }
+        context.setFillColor(CGColor(gray: 1, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        let output = NSMutableData()
+        guard let flattened = context.makeImage(),
+              let destination = CGImageDestinationCreateWithData(output, "public.jpeg" as CFString, 1, nil) else {
+            throw CocoaError(.fileWriteUnknown)
+        }
+        CGImageDestinationAddImage(destination, flattened, [kCGImageDestinationLossyCompressionQuality: 0.9] as CFDictionary)
+        guard CGImageDestinationFinalize(destination) else { throw CocoaError(.fileWriteUnknown) }
+        return output as Data
     }
 }

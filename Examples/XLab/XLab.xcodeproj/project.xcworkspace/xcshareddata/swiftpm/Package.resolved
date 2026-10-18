@@ -1,5 +1,5 @@
 {
-  "originHash" : "1e758bb560cb6afff0fe7c42617829c93bfaeff09a9bd8a4c4c5e75116da615b",
+  "originHash" : "b25ecd39eb5ccdd24993422e8532aa80683bac35d269dd48612d709b67f09751",
   "pins" : [
     {
       "identity" : "agorainfra_macos",
@@ -17,6 +17,15 @@
       "state" : {
         "revision" : "7f82061cb6fd5d975c4f75ffb9e22cf0bbe6fdaf",
         "version" : "4.6.2"
+      }
+    },
+    {
+      "identity" : "kingfisher",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/onevcat/Kingfisher.git",
+      "state" : {
+        "revision" : "ac632bd26a1c00f139ff62fd01806f21cf67325e",
+        "version" : "8.10.0"
       }
     }
   ],
