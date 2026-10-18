@@ -169,7 +169,7 @@ struct RealtimeView: View {
                 .padding(.bottom, min(40, max(26, viewportWidth * 0.011 + 17)))
             ZStack {
                 RealtimeCheckerboard()
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
                     RealtimeStartButton(isLoading: controller.isBusy, viewportWidth: viewportWidth) {
                         let microphoneEnabled = useMicrophone
                         Task { await controller.start(useMicrophone: microphoneEnabled) }
