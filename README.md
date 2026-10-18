@@ -81,8 +81,10 @@ A Swift package can reference the local checkout:
 .package(path: "/path/to/XmaxSDK")
 ```
 
-SwiftPM resolves Agora RTC from its official package. COS is supplied as macOS
-dynamic XCFrameworks in `Vendor/`; Xcode handles linking, embedding, and signing.
+SwiftPM resolves Agora RTC from its official package. COS is downloaded as macOS
+dynamic XCFrameworks from the [COS dependency release](https://github.com/XingMai/XmaxSDK-MacOS/releases/tag/cos-6.5.7-spm.1),
+with SHA-256 checksums pinned in `Package.swift`. Xcode handles linking, embedding,
+and signing.
 Consumers do not need CocoaPods or a separate COS build when using SwiftPM.
 
 ### CocoaPods
@@ -374,10 +376,11 @@ uses the side-by-side layout described above.
 | **Agora RTC SDK for macOS** | `4.6.2` (`RtcBasic`) | Realtime video transport and optional microphone audio. |
 | **Tencent Cloud COS SDK** | `6.5.7` | Object storage uploads and downloads. |
 
-SwiftPM packages Xmax-built dynamic COS frameworks; CocoaPods uses official source
-dependencies. The COS build origin and redistribution notices are documented in
-[`Vendor/README.md`](./Vendor/README.md) and
-[`Vendor/COS-6.5.7-NOTICES.txt`](./Vendor/COS-6.5.7-NOTICES.txt).
+SwiftPM downloads Xmax-built dynamic COS frameworks; CocoaPods uses official source
+dependencies. The COS build origin and distribution are documented in the
+[installation guide](./Materials/installation.md#swift-package-manager).
+[Redistribution notices](./Resources/COS/COS-6.5.7-NOTICES.txt) are also included in
+the framework resources and the COS dependency release.
 Retain the third-party licenses and privacy manifests when redistributing dependencies.
 
 <br>

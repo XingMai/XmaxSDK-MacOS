@@ -26,16 +26,21 @@ use `.package(path: "/path/to/XmaxSDK")`.
   [official macOS package](https://github.com/AgoraIO/AgoraRtcEngine_macOS), using
   the `RtcBasic` product.
 - COS `6.5.7` is packaged as Xmax-built dynamic XCFrameworks for
-  `QCloudCore/WithoutMTA` and `QCloudCOSXML/Transfer` in [`Vendor`](../Vendor).
-  These are macOS binaries, separate from the iOS frameworks.
+  `QCloudCore/WithoutMTA` and `QCloudCOSXML/Transfer`, downloaded from the
+  [COS dependency release](https://github.com/XingMai/XmaxSDK-MacOS/releases/tag/cos-6.5.7-spm.1).
+  `Package.swift` pins each archive URL and SHA-256 checksum. These are macOS
+  binaries, separate from the iOS frameworks.
 - Both COS frameworks contain native macOS `arm64` and `x86_64` slices. Xcode
   handles linking, embedding, and signing the dynamic dependencies.
 - Keep the bundled licenses, notices, resources, and privacy manifests when
-  redistributing the frameworks. See the [COS packaging notes](../Vendor/README.md).
+  redistributing the frameworks. See the
+  [redistribution notices](../Resources/COS/COS-6.5.7-NOTICES.txt).
 
-The `Vendor` directory is part of the current Swift package distribution. Removing
-it would break the local binary targets in `Package.swift`. The iOS package uses
-separate GitHub Release assets for COS; those assets cannot be reused for macOS.
+The frameworks are built from Tencent's [unmodified 6.5.7 source](https://github.com/tencentyun/qcloud-sdk-ios/tree/6.5.7),
+without optional analytics components. This is Xmax's binary packaging, not an
+official Tencent Swift package. The source repository does not need to contain
+the COS binaries; SwiftPM downloads and verifies the archives during dependency
+resolution, following the same distribution approach as the iOS SDK.
 
 ## CocoaPods
 
@@ -47,7 +52,7 @@ pod install --repo-update
 
 Open the generated `.xcworkspace`. CocoaPods builds the same `Sources/XmaxSDK`
 using official Agora `4.6.2` and COS `6.5.7` dependencies; it does not link the
-SwiftPM frameworks in `Vendor`. The SDK pod includes `XmaxSDK_COS.bundle` to retain
+SwiftPM Release assets. The SDK pod includes `XmaxSDK_COS.bundle` to retain
 the COS privacy manifest.
 
 Use one package manager for the SDK and its dependencies in an application target.
