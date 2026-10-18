@@ -19,7 +19,6 @@ final class RealtimeSessionController: ObservableObject {
     }
     @Published var prompt = ""
     @Published var model = RealtimeModel.x2_1_1_preview_cn
-    @Published var useMicrophone = false
     @Published var statisticsVisible = true
     @Published var activeMode = RealtimeExampleMode.charx {
         didSet {
@@ -78,7 +77,7 @@ final class RealtimeSessionController: ObservableObject {
     }
 
     /// Keeps the landing page during startup and mounts the local preview in the background to satisfy SDK readiness.
-    func start() async {
+    func start(useMicrophone: Bool = false) async {
         guard !isBusy, localStream == nil else { return }
         guard hasAPIKey else {
             errorMessage = "API Key is required — click the key button in the top-right corner to enter it"

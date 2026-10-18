@@ -16,6 +16,7 @@ struct RealtimeView: View {
     @State private var keyEditorOpen = false
     @State private var modelPickerOpen = false
     @State private var wechatOpen = false
+    @State private var useMicrophone = false
     @FocusState private var keyFieldFocused: Bool
 
     var body: some View {
@@ -168,31 +169,13 @@ struct RealtimeView: View {
                 .padding(.bottom, min(40, max(26, viewportWidth * 0.011 + 17)))
             ZStack {
                 RealtimeCheckerboard()
-                VStack(spacing: 20) {
+                VStack(spacing: 8) {
                     RealtimeStartButton(isLoading: controller.isBusy, viewportWidth: viewportWidth) {
-                        Task { await controller.start() }
+                        let microphoneEnabled = useMicrophone
+                        Task { await controller.start(useMicrophone: microphoneEnabled) }
                     }
-                    Button { controller.useMicrophone.toggle() } label: {
-                        HStack(spacing: 8) {
-                            RealtimeWebIcon(kind: .microphone).frame(width: 14, height: 14)
-                            Text("Microphone")
-                            Capsule().fill(controller.useMicrophone ? RealtimePalette.accent : .white.opacity(0.18))
-                                .frame(width: 30, height: 18)
-                                .overlay(alignment: .leading) {
-                                    Circle().fill(.white).frame(width: 14, height: 14)
-                                        .offset(x: controller.useMicrophone ? 14 : 2)
-                                }
-                        }
-                        .font(RealtimeHeaderTypography.font(size: smallSize))
-                        .foregroundStyle(.white.opacity(controller.useMicrophone ? 1 : 0.55))
-                        .padding(.leading, 14).padding(.trailing, 7).padding(.vertical, 6)
-                        .background(.black.opacity(0.28), in: Capsule())
-                        .overlay(Capsule().strokeBorder(.white.opacity(controller.useMicrophone ? 0.3 : 0.16)))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Microphone")
-                    .accessibilityValue(controller.useMicrophone ? "On" : "Off")
-                    .animation(.easeInOut(duration: 0.15), value: controller.useMicrophone)
+                    RealtimeMicrophoneToggle(isOn: $useMicrophone, fontSize: smallSize)
+                        .disabled(controller.isBusy)
                 }
                 VStack {
                     Spacer()

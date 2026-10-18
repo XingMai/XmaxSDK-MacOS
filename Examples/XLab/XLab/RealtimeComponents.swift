@@ -395,6 +395,65 @@ struct RealtimeSpinner: View {
     }
 }
 
+/// Animates the microphone control independently of session controller updates.
+struct RealtimeMicrophoneToggle: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Binding var isOn: Bool
+    let fontSize: CGFloat
+
+    var body: some View {
+        Button {
+            isOn.toggle()
+        } label: {
+            HStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    RealtimeWebIcon(kind: .microphone).frame(width: 14, height: 14)
+                    Text("Microphone")
+                }
+                .foregroundStyle(.white.opacity(isOn ? 1 : 0.55))
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: isOn)
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(isOn ? RealtimePalette.accent : .white.opacity(0.18))
+                        .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: isOn)
+                    Circle()
+                        .fill(.white)
+                        .frame(width: 14, height: 14)
+                        .offset(x: isOn ? 14 : 2)
+                        .animation(
+                            reduceMotion ? nil : .spring(response: 0.22, dampingFraction: 1),
+                            value: isOn
+                        )
+                }
+                .frame(width: 30, height: 18)
+            }
+            .font(RealtimeHeaderTypography.font(size: fontSize))
+            .padding(.leading, 14).padding(.trailing, 7).padding(.vertical, 6)
+            .background(.black.opacity(0.28), in: Capsule())
+            .overlay {
+                Capsule().strokeBorder(.white.opacity(isOn ? 0.3 : 0.16))
+                    .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: isOn)
+            }
+            .contentShape(Capsule())
+        }
+        .buttonStyle(RealtimeMicrophoneButtonStyle())
+        .fixedSize()
+        .accessibilityRepresentation {
+            Toggle("Microphone", isOn: $isOn).toggleStyle(.switch)
+        }
+    }
+}
+
+/// Adds pressed feedback without the native plain button's content fading.
+private struct RealtimeMicrophoneButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.overlay {
+            Capsule().fill(.white.opacity(configuration.isPressed ? 0.07 : 0))
+                .allowsHitTesting(false)
+        }
+    }
+}
+
 /// The start button preserves its blue color, shadow, and opacity while disabled during loading.
 struct RealtimeStartButton: View {
     let isLoading: Bool
