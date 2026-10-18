@@ -124,6 +124,28 @@ public protocol XmaxRealtimeManaging: Sendable {
     /// - Throws: An error if realtime is still connected, a conflicting operation exists, or this operation is cancelled.
     func stopLocalCameraStream() async throws
 
+    /// Binds a caller-owned video source and returns its local stream.
+    ///
+    /// The source owns capture, permissions, conversion, and optional preview. The SDK
+    /// validates the final format and passes it to `source.start(sink:)`. Binding completion
+    /// enters `ready` without waiting for preview or a frame. Supply frames as soon as the
+    /// sink requests them, including while generation is starting.
+    ///
+    /// - Parameters:
+    ///   - source: The caller-owned video source.
+    ///   - videoFormat: The desired input format; nil uses source dimensions and the model frame rate.
+    /// - Returns: The local stream used for connection, generation, and optional SDK-hosted preview.
+    /// - Throws: An error on conflicting media, invalid format, failed binding, or cancellation.
+    func createExternalVideoStream(
+        source: any RealtimeExternalVideoSource,
+        videoFormat: RealtimeVideoFormat?
+    ) async throws -> RealtimeMediaStream
+
+    /// Unbinds external input after disconnection; caller-owned capture resources remain caller-managed.
+    ///
+    /// - Throws: An error if still connected, another operation conflicts, or the operation is cancelled.
+    func stopExternalVideoStream() async throws
+
     /// Switches the active camera device.
     ///
     /// During generation, the SDK stops generation, switches cameras, and resumes with cached conditions.

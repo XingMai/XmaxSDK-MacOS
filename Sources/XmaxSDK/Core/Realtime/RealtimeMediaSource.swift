@@ -15,6 +15,9 @@ public enum RealtimeMediaSource: String, CaseIterable, Sendable {
     /// Camera
     case camera
 
+    /// Caller-owned video input
+    case external
+
     /// Video
     case video
 

@@ -81,6 +81,7 @@ actor XmaxRealtimeManager: XmaxRealtimeManaging {
             videoFrameListener: { frame in
                 try streamController.pushLocalVideoFrame(frame)
             },
+            requestingFrames: { streamController.hasGenerationTask },
             errorListener: { errorHandler.forward($0, target: .all) },
             interactionListener: { taskID, points in
                 try await streamController.sendTracks(
@@ -388,6 +389,38 @@ actor XmaxRealtimeManager: XmaxRealtimeManaging {
             )
             token.setFailureScope(.all)
             await mediaController.stopLocalCameraStream()
+            try token.ensureCurrent()
+            errorHandler.invalidatePendingFailures()
+            let hasLocalMedia = await mediaController.currentTrack != nil
+            try await coordinator.commit(
+                RealtimeState(connectionState: hasLocalMedia ? .ready : .idle), token: token
+            )
+        }
+    }
+
+    /// Binds external video input with model-validated dimensions and optional caller preview.
+    func createExternalVideoStream(
+        source: any RealtimeExternalVideoSource,
+        videoFormat: RealtimeVideoFormat?
+    ) async throws -> RealtimeMediaStream {
+        try await createLocalMediaStream(source: .external) { [self] token in
+            let stream = try await mediaController.createExternalVideoStream(
+                source: source, videoFormat: videoFormat
+            )
+            try token.ensureCurrent()
+            return stream
+        }
+    }
+
+    /// Unbinds external input after connection cleanup, preserving caller capture ownership.
+    func stopExternalVideoStream() async throws {
+        try await coordinator.run(kind: .media) { [self] token in
+            try await ensureLocalMediaCanChange(
+                message: "Disconnect realtime before stopping the external video stream"
+            )
+            guard await mediaController.isExternalVideo else { return }
+            token.setFailureScope(.all)
+            await mediaController.stopExternalVideoStream()
             try token.ensureCurrent()
             errorHandler.invalidatePendingFailures()
             let hasLocalMedia = await mediaController.currentTrack != nil

@@ -27,13 +27,13 @@ final class MediaService: MediaServicing, Sendable {
         self.model = model
     }
 
-    /// Calculates local frame dimensions and validates camera resolution buckets.
+    /// Calculates local frame dimensions and validates camera and external video resolution buckets.
     ///
     /// - Parameters:
     ///   - size: Requested camera dimensions or oriented integer-pixel image or video dimensions.
-    ///   - source: The media source; cameras must exactly match configured model resolution buckets.
+    ///   - source: The media source; camera and external video inputs must match configured resolution buckets.
     /// - Returns: Dimensions aligned to four pixels without upscaling or exceeding model area limits, preferring exact aspect ratio.
-    /// - Throws: An error on invalid dimensions, unmatched camera resolution buckets, or no valid output dimensions.
+    /// - Throws: An error on invalid dimensions, unmatched input resolution buckets, or no valid output dimensions.
     func resolveMediaSize(_ size: CGSize, source: RealtimeMediaSource) throws -> CGSize {
         guard let width = Self.integralDimension(size.width),
               let height = Self.integralDimension(size.height) else {
@@ -41,11 +41,11 @@ final class MediaService: MediaServicing, Sendable {
         }
 
         let buckets = model.resolutionBuckets
-        if source == .camera, !buckets.isEmpty, !buckets.contains(size) {
+        if source == .camera || source == .external, !buckets.isEmpty, !buckets.contains(size) {
             let supportedSizes = buckets.map { "\(Int($0.width))×\(Int($0.height))" }.joined(separator: ", ")
             throw XmaxError(
                 code: .invalidConfiguration,
-                message: "Model \(model.rawValue) does not support camera resolution " +
+                message: "Model \(model.rawValue) does not support \(source.rawValue) resolution " +
                     "\(width)×\(height). Supported resolutions: \(supportedSizes)"
             )
         }

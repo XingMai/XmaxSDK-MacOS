@@ -25,6 +25,9 @@ protocol MediaControlling: Actor, InteractionControlling {
     /// The current local video format.
     var currentVideoFormat: RealtimeVideoFormat? { get }
 
+    /// Whether the current local source is caller-owned external video.
+    var isExternalVideo: Bool { get }
+
     /// Whether to preserve media aspect ratio with a separate generation canvas; false for cameras.
     var usesContainPadding: Bool { get }
 
@@ -50,6 +53,15 @@ protocol MediaControlling: Actor, InteractionControlling {
         deviceID: String?,
         useMicrophone: Bool
     ) async throws -> RealtimeMediaStream
+
+    /// Binds caller-owned video input without acquiring camera permissions or capture resources.
+    func createExternalVideoStream(
+        source: any RealtimeExternalVideoSource,
+        videoFormat: RealtimeVideoFormat?
+    ) async throws -> RealtimeMediaStream
+
+    /// Unbinds external video input and releases its SDK resources.
+    func stopExternalVideoStream() async
 
     /// Starts internal audio capture for a microphone-enabled camera stream; other sources are unaffected.
     ///

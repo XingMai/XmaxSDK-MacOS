@@ -19,6 +19,7 @@ actor MediaController: MediaControlling {
 
     /// Local media components
     private let cameraController: any CameraControlling
+    private let externalController: (any ExternalVideoControlling)?
     private let interactionController: any InteractionControlling
 
     /// Local media resources
@@ -34,6 +35,7 @@ actor MediaController: MediaControlling {
     ///   - rtcManager: The RTC engine and media adapter.
     ///   - mediaService: The media service providing model dimension rules.
     ///   - videoFrameListener: The callback receiving local video frames.
+    ///   - requestingFrames: Whether generation currently requires external input frames.
     ///   - errorListener: The callback receiving media runtime errors.
     ///   - interactionListener: The callback receiving video pixel interaction coordinates.
     @MainActor
@@ -41,6 +43,7 @@ actor MediaController: MediaControlling {
         rtcManager: any RtcManaging,
         mediaService: any MediaServicing = MediaService(),
         videoFrameListener: @escaping MediaVideoFrameListener,
+        requestingFrames: @escaping @Sendable () -> Bool,
         errorListener: @escaping XmaxErrorListener,
         interactionListener: @escaping InteractionListener
     ) {
@@ -48,6 +51,13 @@ actor MediaController: MediaControlling {
         cameraController = CameraController(
             rtcManager: rtcManager,
             mediaService: mediaService,
+            videoFrameListener: videoFrameListener,
+            errorListener: errorListener
+        )
+        externalController = ExternalVideoController(
+            rtcManager: rtcManager,
+            mediaService: mediaService,
+            requestingFrames: requestingFrames,
             videoFrameListener: videoFrameListener,
             errorListener: errorListener
         )
@@ -61,14 +71,17 @@ actor MediaController: MediaControlling {
     /// - Parameters:
     ///   - rtcManager: The RTC engine and media adapter.
     ///   - cameraController: The camera media controller.
+    ///   - externalController: The external video input controller.
     ///   - interactionListener: The callback receiving video pixel interaction coordinates.
     init(
         rtcManager: any RtcManaging,
         cameraController: any CameraControlling,
+        externalController: (any ExternalVideoControlling)? = nil,
         interactionListener: @escaping InteractionListener = { _, _ in }
     ) {
         self.rtcManager = rtcManager
         self.cameraController = cameraController
+        self.externalController = externalController
         interactionController = InteractionController(
             listener: interactionListener
         )
@@ -92,6 +105,10 @@ actor MediaController: MediaControlling {
     /// The local video format, or nil without an active track.
     var currentVideoFormat: RealtimeVideoFormat? {
         currentTrack?.videoFormat
+    }
+
+    var isExternalVideo: Bool {
+        activeSource?.kind == .external
     }
 
     var usesContainPadding: Bool {
@@ -165,6 +182,24 @@ actor MediaController: MediaControlling {
         }
     }
 
+    /// Binds caller-owned video input through the same ownership and RTC lifecycle as camera input.
+    func createExternalVideoStream(
+        source: any RealtimeExternalVideoSource,
+        videoFormat: RealtimeVideoFormat?
+    ) async throws -> RealtimeMediaStream {
+        guard let externalController else {
+            throw XmaxError(code: .invalidConfiguration, message: "External video input is unavailable")
+        }
+        return try await createSource(kind: .external) {
+            try await externalController.create(source: source, videoFormat: videoFormat)
+        }
+    }
+
+    /// Stops external frame delivery without taking ownership of caller capture resources.
+    func stopExternalVideoStream() async {
+        await stopSource(ifKindIs: .external)
+    }
+
     /// Starts internal audio capture for a microphone-enabled camera stream; other sources are unaffected.
     ///
     /// - Throws: An error on cancellation or RTC audio capture startup failure.
@@ -229,6 +264,7 @@ private extension MediaController {
     /// Distinguishes the owned local media source.
     enum LocalMediaKind: Sendable {
         case camera
+        case external
     }
 
     /// Identifies the active media source and its kind.
@@ -393,6 +429,8 @@ private extension MediaController {
         switch kind {
         case .camera:
             await cameraController.stopLocalCameraStream()
+        case .external:
+            await externalController?.stop()
         }
     }
 
@@ -404,6 +442,8 @@ private extension MediaController {
         switch kind {
         case .camera:
             cameraController.currentTrack
+        case .external:
+            externalController?.currentTrack
         }
     }
 

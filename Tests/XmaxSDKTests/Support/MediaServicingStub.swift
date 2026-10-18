@@ -47,7 +47,8 @@ final class MediaServicingStub: MediaServicing, @unchecked Sendable {
             if let resolutionError {
                 throw resolutionError
             }
-            return source == .camera ? resolvedSize : try MediaService(model: model).resolveMediaSize(size, source: source)
+            return source == .camera || source == .external
+                ? resolvedSize : try MediaService(model: model).resolveMediaSize(size, source: source)
         }
     }
 

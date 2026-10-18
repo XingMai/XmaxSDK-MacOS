@@ -2,7 +2,7 @@
 
 原生 macOS 实时生成 SDK。沿用 iOS SDK 的 Core、Service、Stream、Media、Render、Foundation 分层及 Swift 并发、依赖注入、统一错误和日志设计。
 
-当前版本 `1.0.0` 优先支持摄像头视频输入：设备枚举与切换、NV12 采集、RTC 上行、生成条件更新、远端帧回调，以及 AppKit / SwiftUI 本地预览和结果显示。保留独立存储服务，可用于上传参考图；图片和文件视频作为本地输入、鼠标轨迹交互暂未开放。麦克风默认关闭；保留 iOS 的可选 RTC 麦克风链路。插帧默认关闭，其复用实现需 macOS 26 及支持的硬件。
+当前版本 `1.0.0` 支持 SDK 摄像头采集，以及接入方自行采集或处理的外部视频输入：设备枚举与切换、NV12 采集、外部 NV12 / BGRA 供帧、RTC 上行、生成条件更新、远端帧回调，以及 AppKit / SwiftUI 本地预览和结果显示。保留独立存储服务，可用于上传参考图；图片和文件视频作为 SDK 自有本地输入、鼠标轨迹交互暂未开放。麦克风默认关闭；保留 iOS 的可选 RTC 麦克风链路。外部输入首期仅提供视频。插帧默认关闭，其复用实现需 macOS 26 及支持的硬件。
 
 ## 环境要求
 
@@ -93,13 +93,30 @@ let remoteStream = try await manager.startGeneration(
 
 ```swift
 _ = try await manager.switchCamera(to: deviceID)
-await manager.disconnect()  // 保留本地摄像头预览
-await manager.close()       // 释放摄像头、会话和 RTC 引擎
+await manager.disconnect()  // Retains the local camera preview.
+await manager.close()       // Releases capture, session, and RTC resources.
 ```
 
 移除视频视图只解除显示绑定。宿主应用应在对应业务生命周期结束时调用 `close()`。活动摄像头拔出后会报告媒体错误并清理当前生命周期，应用可重新枚举设备并启动预览。
 
 SDK 的 HTTP 平台字段、运行信息和生成信令统一使用 `macos`。
+
+## 外部视频输入
+
+沿用 Android SDK 的 `RealtimeExternalVideoSource` / `RealtimeExternalFrameSink` 设计：接入方维护摄像头或解码器，SDK 只管理供帧绑定、会话和生成。接入方实现源的 `videoFormat`、`start(sink:)`、`stop()`，再调用：
+
+```swift
+let localStream = try await manager.createExternalVideoStream(
+    source: source,
+    videoFormat: RealtimeVideoFormat(width: 1920, height: 1024, fps: 30)
+)
+```
+
+绑定成功即可进入 `ready`，不要求挂载 SDK 本地预览或等待输入首帧。生成启动和运行期间，`sink.isRequestingFrames` 为 `true` 时持续供帧；为 `false` 时可以跳过转换和提交，自有预览可继续运行。它不是限帧器。`sink.videoFormat` 是最终输入规格，源负责旋转、镜像、裁剪和缩放，提交尺寸完全匹配的 `420v` NV12 或 BGRA `CVPixelBuffer`，以及严格递增的单调微秒时间戳。SDK 同步复制像素，提交返回后可复用缓冲区。
+
+预览可由接入方独立显示，或通过可选的 `attachPreview(to:contentMode:)` / `detachPreview(from:)` 挂载到 SDK 容器。`disconnect()` 保留外部源绑定；断开后 `stopExternalVideoStream()` 或 `close()` 解绑，旧 sink 的迟到帧和错误被丢弃。摄像头及解码器的最终释放仍由接入方负责。首期不支持外部音频或在线替换外部源。
+
+完整示例和线程、缓冲区约定见 [External video integration](Examples/ExternalVideo/README.md)。
 
 ## 示例与验证
 

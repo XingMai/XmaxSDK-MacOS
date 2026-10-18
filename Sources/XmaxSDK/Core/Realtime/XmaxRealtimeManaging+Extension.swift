@@ -1,7 +1,17 @@
 import Foundation
 
-/// Provides common defaults for camera stream creation and generation calls.
+/// Provides common defaults for local stream creation and generation calls.
 public extension XmaxRealtimeManaging {
+    /// Binds external video using source dimensions and the model's default frame rate.
+    ///
+    /// - Parameter source: The caller-owned video source.
+    /// - Returns: The bound local video stream.
+    /// - Throws: An error on invalid media state, unsupported dimensions, or binding failure.
+    func createExternalVideoStream(
+        source: any RealtimeExternalVideoSource
+    ) async throws -> RealtimeMediaStream {
+        try await createExternalVideoStream(source: source, videoFormat: nil)
+    }
 
     /// Creates a camera stream with the specified format and no microphone.
     ///

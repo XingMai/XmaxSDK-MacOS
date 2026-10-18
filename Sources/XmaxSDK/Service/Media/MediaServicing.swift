@@ -17,13 +17,13 @@ public protocol MediaServicing: Sendable {
     /// The realtime model used by the media rules.
     var model: RealtimeModel { get }
 
-    /// Calculates local frame dimensions and validates camera resolution buckets.
+    /// Calculates local frame dimensions and validates camera and external video resolution buckets.
     ///
     /// - Parameters:
     ///   - size: Requested camera dimensions or oriented integer-pixel image or video dimensions.
-    ///   - source: The media source; cameras must exactly match configured model resolution buckets.
+    ///   - source: The media source; camera and external video inputs must match configured resolution buckets.
     /// - Returns: Dimensions aligned to four pixels without upscaling or exceeding model area limits, preferring exact aspect ratio.
-    /// - Throws: An error on invalid dimensions, unmatched camera resolution buckets, or no valid output dimensions.
+    /// - Throws: An error on invalid dimensions, unmatched input resolution buckets, or no valid output dimensions.
     func resolveMediaSize(_ size: CGSize, source: RealtimeMediaSource) throws -> CGSize
 
     /// Calculates final return dimensions from tier limits and optional interpolation constraints.
