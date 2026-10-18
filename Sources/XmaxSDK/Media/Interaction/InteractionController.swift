@@ -1,7 +1,7 @@
 //
 //  InteractionController.swift
 //  XmaxSDK
-//  Repo: https://github.com/XingMai/XmaxSDK-macOS
+//  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
 //  Author: 翁跃庭 (Yueting Weng)
 //  GitHub: https://github.com/WengYuehTing

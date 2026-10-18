@@ -1,7 +1,7 @@
 //
 //  XmaxSDKInfo.swift
 //  XmaxSDK
-//  Repo: https://github.com/XingMai/XmaxSDK-macOS
+//  Repo: https://github.com/XingMai/XmaxSDK-MacOS
 //
 //  Author: 翁跃庭 (Yueting Weng)
 //  GitHub: https://github.com/WengYuehTing
@@ -14,5 +14,5 @@ public enum XmaxSDKInfo {
 
     // 版本信息
     /// 当前 SDK 的语义化版本号。
-    public static let version = "0.1.0"
+    public static let version = "1.0.0"
 }

@@ -4,6 +4,8 @@ require 'xcodeproj'
 require 'pathname'
 
 root = Pathname.new(__dir__).parent
+version = root.join('XmaxSDK.podspec').read[/spec\.version\s*=\s*['"]([^'"]+)['"]/, 1]
+abort 'Could not resolve the SDK version.' unless version
 [
   ['Examples/XLab', 'XLab', true],
   ['.cicd/consumer/CocoaPodsConsumer', 'CocoaPodsConsumer', false]
@@ -27,7 +29,7 @@ root = Pathname.new(__dir__).parent
     settings['CODE_SIGN_STYLE'] = 'Manual'
     settings['CODE_SIGN_IDENTITY'] = '-'
     settings['ENABLE_HARDENED_RUNTIME'] = 'YES'
-    settings['MARKETING_VERSION'] = '0.1.0'
+    settings['MARKETING_VERSION'] = version
     settings['CURRENT_PROJECT_VERSION'] = '1'
     if name == 'XLab'
       settings['CODE_SIGN_ENTITLEMENTS'] = 'XLab/XLab.entitlements'

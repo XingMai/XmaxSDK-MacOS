@@ -2,7 +2,7 @@
 
 原生 macOS 实时生成 SDK。沿用 iOS SDK 的 Core、Service、Stream、Media、Render、Foundation 分层及 Swift 并发、依赖注入、统一错误和日志设计。
 
-当前版本 `0.1.0` 优先支持摄像头视频输入：设备枚举与切换、NV12 采集、RTC 上行、生成条件更新、远端帧回调，以及 AppKit / SwiftUI 本地预览和结果显示。保留独立存储服务，可用于上传参考图；图片和文件视频作为本地输入、鼠标轨迹交互暂未开放。麦克风默认关闭；保留 iOS 的可选 RTC 麦克风链路。插帧默认关闭，其复用实现需 macOS 26 及支持的硬件。
+当前版本 `1.0.0` 优先支持摄像头视频输入：设备枚举与切换、NV12 采集、RTC 上行、生成条件更新、远端帧回调，以及 AppKit / SwiftUI 本地预览和结果显示。保留独立存储服务，可用于上传参考图；图片和文件视频作为本地输入、鼠标轨迹交互暂未开放。麦克风默认关闭；保留 iOS 的可选 RTC 麦克风链路。插帧默认关闭，其复用实现需 macOS 26 及支持的硬件。
 
 ## 环境要求
 
@@ -116,8 +116,10 @@ COS 的构建来源、版本和许可证见 `Vendor/README.md`，重新打包见
 
 ## 分支管理
 
-沿用 iOS 仓库流程：`main` 保存发布基线，`develop` 保存验证通过的集成基线，日常开发位于 `feature/yueting-v<version>`。当前开发分支为 `feature/yueting-v0.1.0`。
+沿用 iOS 仓库流程：`main` 保存发布基线，`develop` 保存验证通过的集成基线，日常开发位于 `feature/yueting-v<version>`。首个版本分支为 `feature/yueting-v1.0.0`。
 
 提交信息采用 Conventional Commits，例如 `feat:`、`fix:`、`refactor:`、`docs:` 和 `chore:`。版本分支完成验证后，使用 fast-forward 同步 `develop` 和 `main`，再在 `main` 创建不带 `v` 的版本标签；发布完成后从该提交创建下一个版本分支。
 
 与 iOS 一样，`.cicd/` 是不提交的本地验证与发版工具目录。`Vendor/` 内的两个 COS XCFramework 是 SwiftPM 的直接依赖，需要纳入版本管理。
+
+本地发版入口与 iOS 一致：`ci-prepare.sh <version>` 同步版本与锁文件，`ci-merge.sh` 验证后原子快进主分支，`cd-github-release.sh <version>` 从版本标签归档并发布，成功后创建下一 patch 版本分支。发布归档使用版本管理中的 `Configurations/FrameworkArchive/Podfile.lock`；macOS 的 arm64 / x86_64 位于同一个平台变体中。
