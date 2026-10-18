@@ -161,8 +161,8 @@ We introduce XmaxSDK, a native macOS SDK designed for real-time interactive vide
 
 ## Installation
 
-XmaxSDK supports [**Swift Package Manager**](#swift-package-manager) and
-[**CocoaPods**](#cocoapods).
+XmaxSDK supports [**Swift Package Manager**](#swift-package-manager),
+[**CocoaPods**](#cocoapods), and [**manual integration**](#manual).
 
 ### Swift Package Manager
 
@@ -172,8 +172,6 @@ and add the **XmaxSDK** product to your application target:
 ```text
 https://github.com/XingMai/XmaxSDK-MacOS.git
 ```
-
-Until version `1.0.0` is released, select the `feature/yueting-v1.0.0` branch.
 
 ### CocoaPods
 
@@ -189,7 +187,7 @@ use_frameworks! :linkage => :static
 target 'YourApp' do
   pod 'XmaxSDK',
       :git => 'https://github.com/XingMai/XmaxSDK-MacOS.git',
-      :branch => 'feature/yueting-v1.0.0'
+      :tag => '1.0.0'
 end
 
 post_install do |installer|
@@ -209,8 +207,10 @@ pod install --repo-update
 
 ### Manual
 
-A macOS SDK binary release is not available yet. Use Swift Package Manager or
-CocoaPods to integrate the SDK from source.
+Download
+[`XmaxSDK-1.0.0.xcframework.zip`](https://github.com/XingMai/XmaxSDK-MacOS/releases/download/1.0.0/XmaxSDK-1.0.0.xcframework.zip),
+then follow the [manual integration guide](./Materials/installation.md#manual-integration)
+to add the required dependencies and configure your Xcode target.
 
 <br>
 
