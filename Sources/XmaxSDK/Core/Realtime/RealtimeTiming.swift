@@ -19,42 +19,91 @@ final class RealtimeTiming: @unchecked Sendable {
 
     // 启动耗时记录
     private var state = State()
+    private var isMeasuring = false
+    private let now: @Sendable () -> UInt64
+
+    // 主线程观察
+    private var listener: RealtimeLaunchTimingListener?
+    private var listenerID = UUID()
+    private var revision: UInt64 = 0
+    private var deliveredRevision: UInt64 = 0
+
+    /// 创建使用单调时钟的启动记录器。
+    ///
+    /// - Parameter now: 返回纳秒时间的时钟，测试可注入确定性的时间序列。
+    init(now: @escaping @Sendable () -> UInt64 = { DispatchTime.now().uptimeNanoseconds }) {
+        self.now = now
+    }
+
+    /// 设置观察者并投递当前快照；替换或清除时使已排队的旧回调失效。
+    ///
+    /// - Parameter listener: 主线程回调；传入 `nil` 时清除观察者。
+    func setListener(_ listener: RealtimeLaunchTimingListener?) {
+        lock.withLock {
+            self.listener = listener
+            listenerID = UUID()
+            publishLocked()
+        }
+    }
 
     /// 开始一次启动耗时记录，并清空上次的阶段时间。
     func begin() {
         lock.withLock {
-            state = State(startedAt: Self.now)
+            state = State(startedAt: now())
+            isMeasuring = true
+            publishLocked()
         }
     }
 
     /// 记录服务端会话创建的开始时间。
     func beginSessionCreation() {
-        lock.withLock { state.sessionStartedAt = Self.now }
+        lock.withLock {
+            guard isMeasuring else { return }
+            state.sessionStartedAt = now()
+        }
     }
 
     /// 记录服务端会话创建的完成时间。
     func finishSessionCreation() {
-        lock.withLock { state.sessionFinishedAt = Self.now }
+        lock.withLock {
+            guard isMeasuring else { return }
+            state.sessionFinishedAt = now()
+            publishLocked()
+        }
     }
 
     /// 记录 RTC 进房的开始时间。
     func beginRoomJoin() {
-        lock.withLock { state.roomJoinStartedAt = Self.now }
+        lock.withLock {
+            guard isMeasuring else { return }
+            state.roomJoinStartedAt = now()
+        }
     }
 
     /// 记录 RTC 进房的完成时间。
     func finishRoomJoin() {
-        lock.withLock { state.roomJoinFinishedAt = Self.now }
+        lock.withLock {
+            guard isMeasuring else { return }
+            state.roomJoinFinishedAt = now()
+            publishLocked()
+        }
     }
 
     /// 记录本地流发布的开始时间。
     func beginLocalPublication() {
-        lock.withLock { state.publicationStartedAt = Self.now }
+        lock.withLock {
+            guard isMeasuring else { return }
+            state.publicationStartedAt = now()
+        }
     }
 
     /// 记录本地流发布的完成时间。
     func finishLocalPublication() {
-        lock.withLock { state.publicationFinishedAt = Self.now }
+        lock.withLock {
+            guard isMeasuring else { return }
+            state.publicationFinishedAt = now()
+            publishLocked()
+        }
     }
 
     /// 记录生成请求发送的开始时间，并重置该任务的首帧时间。
@@ -62,8 +111,9 @@ final class RealtimeTiming: @unchecked Sendable {
     /// - Parameter taskID: 本次生成任务的标识。
     func beginSignal(taskID: String) {
         lock.withLock {
+            guard isMeasuring else { return }
             state.taskID = taskID
-            state.signalStartedAt = Self.now
+            state.signalStartedAt = now()
             state.firstFrameAt = nil
         }
     }
@@ -73,8 +123,9 @@ final class RealtimeTiming: @unchecked Sendable {
     /// - Parameter taskID: 结果帧所属的任务标识；非当前任务的通知被忽略。
     func finishFirstFrame(taskID: String) {
         lock.withLock {
-            guard state.taskID == taskID else { return }
-            state.firstFrameAt = Self.now
+            guard isMeasuring, state.taskID == taskID, state.firstFrameAt == nil else { return }
+            state.firstFrameAt = now()
+            publishLocked()
         }
     }
 
@@ -83,11 +134,13 @@ final class RealtimeTiming: @unchecked Sendable {
     /// - Parameter taskID: 已完成启动的生成任务标识；非当前任务的通知被忽略。
     func finish(taskID: String) {
         let snapshot = lock.withLock { () -> State? in
-            guard state.taskID == taskID,
-                  state.startedAt != nil else {
+            guard isMeasuring, state.taskID == taskID,
+                  state.startedAt != nil, state.firstFrameAt != nil else {
                 return nil
             }
-            state.readyAt = Self.now
+            state.readyAt = now()
+            isMeasuring = false
+            publishLocked()
             return state
         }
         guard let snapshot else { return }
@@ -106,8 +159,10 @@ final class RealtimeTiming: @unchecked Sendable {
         guard xmaxError.code != .cancelled else { return }
 
         let snapshot = lock.withLock { () -> State? in
-            guard state.startedAt != nil else { return nil }
-            state.failureAt = Self.now
+            guard isMeasuring, state.startedAt != nil else { return nil }
+            state.failureAt = now()
+            isMeasuring = false
+            publishLocked()
             return state
         }
         guard let snapshot else { return }
@@ -121,7 +176,7 @@ final class RealtimeTiming: @unchecked Sendable {
 
 extension RealtimeTiming {
     /// 保存一次启动的阶段时间与任务标识，所有时间均为单调时钟纳秒值。
-    struct State {
+    struct State: Sendable {
 
         // 启动起点
         var startedAt: UInt64?
@@ -148,6 +203,25 @@ extension RealtimeTiming {
 
         // 生成任务
         var taskID: String?
+    }
+
+    /// 将与 iOS 日志共用的时间点转换为已完成阶段的毫秒快照。
+    ///
+    /// - Parameter state: 单次启动记录；尚未开始时返回空快照。
+    /// - Returns: 四阶段和完整启动耗时，未完成阶段保持 `nil`。
+    static func snapshot(_ state: State) -> RealtimeLaunchTiming {
+        guard state.startedAt != nil else { return RealtimeLaunchTiming() }
+        func milliseconds(_ start: UInt64?, _ end: UInt64?) -> Double? {
+            guard let start, let end, end >= start else { return nil }
+            return Double(end - start) / 1_000_000
+        }
+        return RealtimeLaunchTiming(
+            sessionMs: milliseconds(state.sessionStartedAt, state.sessionFinishedAt),
+            rtcJoinMs: milliseconds(state.roomJoinStartedAt, state.roomJoinFinishedAt),
+            publishMs: milliseconds(state.publicationStartedAt, state.publicationFinishedAt),
+            firstFrameMs: milliseconds(state.signalStartedAt, state.firstFrameAt),
+            totalMs: state.firstFrameAt == nil ? nil : milliseconds(state.startedAt, state.readyAt)
+        )
     }
 
     /// 生成启动成功的耗时汇总文本。
@@ -195,9 +269,23 @@ extension RealtimeTiming {
 
 private extension RealtimeTiming {
 
-    // 计时基准
-    /// 当前单调时钟时间，单位为纳秒。
-    static var now: UInt64 { DispatchTime.now().uptimeNanoseconds }
+    /// 在持锁期间排队投递不可变快照，不在锁内执行宿主回调。
+    func publishLocked() {
+        guard let listener else { return }
+        let snapshot = Self.snapshot(state)
+        let listenerID = listenerID
+        revision += 1
+        let revision = revision
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            let isCurrent = self.lock.withLock {
+                guard self.listenerID == listenerID, revision > self.deliveredRevision else { return false }
+                self.deliveredRevision = revision
+                return true
+            }
+            if isCurrent { listener(snapshot) }
+        }
+    }
 
     /// 按启动顺序生成会话创建、RTC 进房、本地发布和首帧到达的耗时行。
     ///

@@ -221,6 +221,13 @@ actor XmaxRealtimeManager: XmaxRealtimeManaging {
         await coordinator.setStateListener(listener)
     }
 
+    /// 设置生成启动耗时监听器，与性能日志复用同一份计时记录。
+    ///
+    /// - Parameter listener: 主线程快照回调；传入 `nil` 时清除监听器。
+    func setLaunchTimingListener(_ listener: RealtimeLaunchTimingListener?) {
+        timing.setListener(listener)
+    }
+
     /// 设置远端最终视频帧监听器。
     ///
     /// 监听器接收完成可选插帧处理、即将用于画面显示的视频帧。回调由 SDK
@@ -567,7 +574,8 @@ actor XmaxRealtimeManager: XmaxRealtimeManaging {
             let hasConnection = await connectionManager.currentSessionID != ""
             try token.ensureCurrent()
             let measuresStartup = initialState.connectionState != .connecting &&
-                initialState.connectionState != .disconnecting
+                initialState.connectionState != .disconnecting &&
+                initialState.connectionState != .generating
             if measuresStartup {
                 timing.begin()
             }

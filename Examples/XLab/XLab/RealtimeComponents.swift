@@ -574,13 +574,13 @@ extension RealtimeSessionController {
     var localStatisticsPanels: [RealtimeStatisticsGroup] {
         [
             .init(id: "Launch timing", rows: [
-                .init(id: "Camera access", help: "Not exposed by the macOS SDK"),
-                .init(id: "Create session", help: "Not exposed by the macOS SDK"),
-                .init(id: "RTC join", help: "Not exposed by the macOS SDK"),
-                .init(id: "Publish local stream", help: "Not exposed by the macOS SDK"),
-                .init(id: "First frame", help: "Not exposed by the macOS SDK"),
-                .init(id: "Render warmup", help: "Not exposed by the macOS SDK"),
-                .init(id: "Total startup", help: "Not exposed by the macOS SDK", total: true)
+                .init(id: "Create session", value: milliseconds(launchTiming.sessionMs)),
+                .init(id: "RTC join", value: milliseconds(launchTiming.rtcJoinMs)),
+                .init(id: "Publish local stream", value: milliseconds(launchTiming.publishMs)),
+                .init(id: "First frame", value: milliseconds(launchTiming.firstFrameMs),
+                      help: "From generation signal submission to the first display-ready result frame"),
+                .init(id: "Total startup", value: milliseconds(launchTiming.totalMs),
+                      help: "From generation startup to completion; excludes camera preparation and additional render waiting", total: true)
             ]),
             .init(id: "Uplink video statistics", rows: [
                 .init(id: "Uplink resolution", value: resolution(uplinkStatistics?.width, uplinkStatistics?.height)),
@@ -613,6 +613,9 @@ extension RealtimeSessionController {
         ]
     }
 
+    private func milliseconds(_ value: Double?) -> String {
+        value.map { String(format: "%.1f ms", $0) } ?? "—"
+    }
     private func metric(_ value: Int?, _ unit: String) -> String { value.map { "\($0) \(unit)" } ?? "—" }
     private func resolution(_ width: Int?, _ height: Int?) -> String {
         guard let width, let height else { return "—" }

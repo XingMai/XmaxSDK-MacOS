@@ -38,6 +38,7 @@ final class RealtimeSessionController: ObservableObject {
     @Published private(set) var sessionStartedAt: Date?
     @Published private(set) var selectedReferenceID: String?
     @Published private(set) var uploadedReferences: [RealtimeReference] = []
+    @Published private(set) var launchTiming = RealtimeLaunchTiming()
     @Published private(set) var uplinkStatistics: UplinkVideoStatistics?
     @Published private(set) var downlinkStatistics: DownlinkVideoStatistics?
     @Published private(set) var networkQuality: RealtimeNetworkQuality?
@@ -89,6 +90,7 @@ final class RealtimeSessionController: ObservableObject {
         lifecycleID = operation
         activeMode = .charx
         selectedReferenceID = nil
+        launchTiming = RealtimeLaunchTiming()
         uplinkStatistics = nil
         downlinkStatistics = nil
         networkQuality = nil
@@ -98,6 +100,10 @@ final class RealtimeSessionController: ObservableObject {
         ))
         self.client = client
         self.manager = manager
+        await manager.setLaunchTimingListener { [weak self] timing in
+            guard let self, self.lifecycleID == operation else { return }
+            self.launchTiming = timing
+        }
         await manager.setUplinkVideoStatisticsListener { [weak self] statistics in
             guard let self, self.lifecycleID == operation else { return }
             self.uplinkStatistics = statistics
@@ -354,6 +360,7 @@ final class RealtimeSessionController: ObservableObject {
         state = RealtimeState(connectionState: .idle)
         sessionStartedAt = nil
         selectedReferenceID = nil
+        launchTiming = RealtimeLaunchTiming()
         uplinkStatistics = nil
         downlinkStatistics = nil
         networkQuality = nil

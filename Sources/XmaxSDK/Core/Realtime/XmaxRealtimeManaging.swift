@@ -44,6 +44,11 @@ public protocol XmaxRealtimeManaging: Sendable {
         _ listener: RealtimeStateListener?
     ) async
 
+    /// 设置生成启动耗时监听器，与 iOS 性能日志使用相同的四阶段及总耗时口径。
+    ///
+    /// - Parameter listener: 主线程快照回调；传入 `nil` 时清除监听器。
+    func setLaunchTimingListener(_ listener: RealtimeLaunchTimingListener?) async
+
     /// 设置远端最终视频帧监听器。
     ///
     /// 监听器接收完成可选插帧处理、即将用于画面显示的视频帧。回调由 SDK
