@@ -1,39 +1,107 @@
-# XmaxSDK for macOS
+<p align="center">
+  <img src="./Materials/images/brand/xmax-sdk.png" alt="XmaxSDK — Realtime Interactive Video Generation" width="880">
+</p>
 
-原生 macOS 实时生成 SDK。沿用 iOS SDK 的 Core、Service、Stream、Media、Render、Foundation 分层及 Swift 并发、依赖注入、统一错误和日志设计。
+<p align="center">
+  <a href="https://developer.apple.com/macos/"><img src="https://img.shields.io/badge/macOS-13.0%2B-007AFF" alt="macOS 13.0+"></a>
+  <a href="https://www.swift.org/"><img src="https://img.shields.io/badge/Swift-6-F05138" alt="Swift 6"></a>
+  <a href="https://platform.xmaxai.com/"><img src="https://img.shields.io/badge/Realtime-AI-FF9500" alt="Realtime AI"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-4C9A2A" alt="MIT License"></a>
+</p>
 
-当前版本 `1.0.0` 支持 SDK 摄像头采集，以及接入方自行采集或处理的外部视频输入：设备枚举与切换、NV12 采集、外部 NV12 / BGRA 供帧、RTC 上行、生成条件更新、远端帧回调，以及 AppKit / SwiftUI 本地预览和结果显示。保留独立存储服务，可用于上传参考图；图片和文件视频作为 SDK 自有本地输入、鼠标轨迹交互暂未开放。麦克风默认关闭；保留 iOS 的可选 RTC 麦克风链路。外部输入首期仅提供视频。插帧默认关闭，其复用实现需 macOS 26 及支持的硬件。
+XmaxSDK is a native macOS SDK for real-time interactive video generation with
+Xmax models. It connects camera capture, RTC streaming, generation, and on-device
+rendering in one pipeline, with AppKit and SwiftUI components for displaying
+local previews and generated video.
 
-## 环境要求
+Use the built-in camera pipeline, or keep your own capture and processing pipeline
+and supply video frames through the external video source API.
 
-- macOS 13.0 或更高版本。
-- Xcode 26+，Swift 6.2+ 工具链，Swift 6 语言模式。
-- 提供 arm64 和 x86_64 依赖；Intel 运行需在对应硬件上验收。
-- 真实生成需要有效的 Xmax API Key；本地预览不需要 API Key。
+<br>
 
-## Swift Package Manager
+## What you can build with XmaxSDK
 
-当前工程尚未发布到远程仓库。开发时在 Xcode 中选择 **File → Add Package Dependencies → Add Local**，选中本目录，并将 **XmaxSDK** 产品加入应用 target。
+| Realtime Use Case | Description | Generation Conditions |
+| --- | --- | --- |
+| **Character Swapping** | Replace a person in a live camera feed with a reference character. | Prompt: `视频中角色替换成参考图中角色`. Use a clear reference image of the desired character. |
+| **Virtual Try-On** | Apply a reference outfit to a person in a live feed. | Prompt: `视频中人物衣服替换成参考图中衣服`. Use an image of the target outfit; enable `faceRestoration` to preserve the original face. |
+| **Video Restyling** | Transform a live scene into a reference visual style. | Prompt: `视频风格变为参考图指定的风格`. Use an image showing the desired style. |
+| **Free Prompt** | Direct the transformation with your own prompt and optional reference image. | Pass a `RealtimeContext` when starting generation or updating an active session. |
 
-命令行包可以使用本地路径依赖：
+The current macOS SDK supports camera input and caller-owned external video input.
+Static images and local video files are not exposed as built-in realtime inputs.
+Reference images are generation conditions, separate from the input video stream.
+
+<br>
+
+## Why XmaxSDK?
+
+| Realtime pipeline | Native integration | Flexible capture |
+| --- | --- | --- |
+| Capture, stream, generate, and display video; update generation conditions without creating a new session. | Use Swift concurrency, AppKit or SwiftUI views, and listeners for state, network quality, and performance. | Enumerate and switch cameras, or supply processed NV12 / BGRA frames from your own video source. |
+
+<br>
+
+## Prerequisites
+
+- macOS 13.0 or later
+- Xcode 26 or later with a Swift 6.2+ compiler, using Swift 6 language mode
+- An Xmax API key for remote generation
+- A camera for the built-in capture pipeline, or an external video source
+
+The packaged dependencies include Apple silicon (`arm64`) and Intel (`x86_64`)
+macOS binaries. Frame interpolation is optional, disabled by default, and requires
+macOS 26 or later and supported hardware.
+
+Provide your API key at runtime. Local camera preview does not require an API key.
+
+<br>
+
+## Installation
+
+XmaxSDK supports [**Swift Package Manager**](#swift-package-manager) and
+[**CocoaPods**](#cocoapods), using the same SDK sources.
+Version `1.0.0` is currently under development; the local checkout instructions
+below do not require a published release or version tag.
+
+### Swift Package Manager
+
+For the current checkout, in Xcode choose **File → Add Package Dependencies → Add
+Local**, select the `XmaxSDK` directory, and add the **XmaxSDK** product to your
+application target.
+
+A Swift package can use the same checkout:
 
 ```swift
 .package(path: "/path/to/XmaxSDK")
 ```
 
-SDK 从源码编译，Agora 使用官方 `AgoraRtcEngine_macOS` Swift Package 的 `RtcBasic 4.6.2`，COS 使用仓库内 `Vendor/` 下的 macOS 动态 XCFramework。将 SDK 发布到 Git 仓库时须包含这两个 XCFramework；接入方不需要 CocoaPods 或自行构建 COS。
+Once the source is available in the remote repository, add it through **File → Add
+Package Dependencies** using the repository URL and select a branch or published
+version containing the SDK:
 
-Agora macOS 4.6.4 目前没有对应的 CocoaPods 发布规格，因此 SwiftPM 和 CocoaPods 统一固定到 4.6.2。COS 的两个模块统一固定为 6.5.7。
+```text
+https://github.com/XingMai/XmaxSDK-MacOS.git
+```
 
-## CocoaPods
+SwiftPM resolves Agora RTC from its official package. COS is supplied as macOS
+dynamic XCFrameworks in `Vendor/`; Xcode handles linking, embedding, and signing.
+Consumers do not need CocoaPods or a separate COS build when using SwiftPM.
+
+### CocoaPods
+
+Add the following to your application's `Podfile`, pointing `:path` to your local
+SDK checkout:
 
 ```ruby
 source 'https://cdn.cocoapods.org/'
+
 platform :osx, '13.0'
+
 use_frameworks! :linkage => :static
 
 target 'YourApp' do
-  pod 'XmaxSDK', path: '/path/to/XmaxSDK'
+  pod 'XmaxSDK', :path => '/path/to/XmaxSDK'
 end
 
 post_install do |installer|
@@ -45,104 +113,276 @@ post_install do |installer|
 end
 ```
 
-CocoaPods 使用与 SwiftPM 相同的 `Sources/XmaxSDK`，通过正式 Pod 获取 Agora 与 COS，并通过 `XmaxSDK_COS.bundle` 保留上游 COS 隐私清单。Podspec 中的远程仓库地址为拟发布地址，当前请使用本地 path 接入。不要在同一个应用 target 中重复通过 SwiftPM、CocoaPods 或手动方式添加同一依赖。
+Install the dependencies and open the generated `.xcworkspace`:
 
-## 权限
+```bash
+pod install --repo-update
+```
 
-应用的 Info.plist 需要 `NSCameraUsageDescription`；使用麦克风时再配置 `NSMicrophoneUsageDescription`。
+CocoaPods obtains Agora and COS from their official Pods. The podspec includes
+the COS privacy manifest through `XmaxSDK_COS.bundle`. Add the SDK through one
+package manager per application target to avoid duplicate dependencies.
 
-启用 App Sandbox / Hardened Runtime 时，应为应用开启 Camera、网络及所需的 Audio Input 权限。XLab 已包含对应 entitlement 和用途说明，SDK 不代替宿主应用配置权限。
+<br>
 
-## 摄像头与生成
+## Quick Start
 
-在 MainActor 上创建客户端与实时 Manager：
+### Configure permissions
+
+Add a camera usage description to your application's `Info.plist`:
+
+```xml
+<key>NSCameraUsageDescription</key>
+<string>This app uses the camera for real-time video input.</string>
+```
+
+If you enable microphone input, also add:
+
+```xml
+<key>NSMicrophoneUsageDescription</key>
+<string>This app uses the microphone for real-time audio input.</string>
+```
+
+Customize these messages for your application. The SDK requests camera permission
+when creating the camera stream. Microphone input is disabled by default; pass
+`useMicrophone: true` to request it when creating the stream.
+
+For sandboxed applications, enable **Camera** and **Outgoing Connections (Client)**
+in the application target's App Sandbox capabilities, plus **Audio Input** if using
+the microphone. Configure the corresponding resource permissions when using
+Hardened Runtime. The [XLab entitlements](./Examples/XLab/XLab/XLab.entitlements)
+provide an example; permissions belong to the host application.
+
+<br>
+
+### Create and display a camera stream
+
+Run the following in a `@MainActor` async context. Retain the client, realtime
+manager, streams, and video views for the lifetime of your screen.
 
 ```swift
-let client = XmaxClient(configuration: XmaxConfiguration(apiKey: apiKey))
-let manager = client.createRealtimeManager(
+import AppKit
+import XmaxSDK
+
+let client = XmaxClient(
+    configuration: XmaxConfiguration(apiKey: "YOUR_XMAX_API_KEY")
+)
+
+let realtime = client.createRealtimeManager(
     options: RealtimeConfiguration(model: .x2_1_1_preview_cn)
 )
-let devices = await manager.listCameraDevices()
-let localStream = try await manager.createLocalCameraStream(deviceID: nil)
-```
 
-`nil` 选择系统默认设备；传入具体设备 ID 时，设备失效会返回错误，不自动切换到其他设备。默认输出为模型支持的 `1920 × 1024 @ 30fps`，实际采集格式由设备能力选择并转换为 NV12。
+await realtime.setStateListener { state in
+    print("State: \(state.connectionState.rawValue)")
+    if case .failure(let error) = state.reason {
+        print("Error: \(error.code.rawValue) \(error.message)")
+    }
+}
 
-将返回的轨道交给 SwiftUI：
-
-```swift
-XmaxRealtimeVideo(
-    localTrack: localStream.videoTrack,
-    remoteTrack: remoteStream?.videoTrack,
+let localStream = try await realtime.createLocalCameraStream()
+let localView = XmaxVideoView(
+    track: localStream.videoTrack,
     videoContentMode: .fit
 )
+let resultView = XmaxVideoView(videoContentMode: .fit)
 ```
 
-也可使用 `XmaxVideoView` / `XmaxRealtimeVideoView` 直接接入 AppKit。沿用 iOS 就绪语义：有效帧已到达、预览已绑定后进入 `ready`。窗口缩放不改变上行规格或断开生成。
+Add `localView` and `resultView` to your window, with the local preview on the left
+and generation results on the right. Camera input becomes `ready` after a valid
+frame arrives **and the local preview view is bound in a window**. Observe this
+through `setStateListener` before starting generation.
 
-监听 `ready` 后开始生成，并将返回的远端轨道交给视频视图：
+The default camera output is `1920 × 1024 @ 30 fps`. To select a device, call
+`listCameraDevices()` and pass its identifier to `createLocalCameraStream(deviceID:)`.
+Omitting the identifier selects the system default camera.
+
+<br>
+
+### Start and update generation
+
+After the camera has entered `ready`, start generation using the local stream and
+bind the returned remote track to your result view. Launch this from your screen's
+state handling or a user action after readiness; creating the stream alone does
+not complete preview binding.
 
 ```swift
-let remoteStream = try await manager.startGeneration(
+let remoteStream = try await realtime.startGeneration(
     localStream: localStream,
+    context: RealtimeContext(
+        prompt: "视频中角色替换成参考图中角色",
+        referencePath: "https://platform.xmaxai.com/images/source/charx/chatx_image1.jpg"
+    )
+)
+
+resultView.track = remoteStream.videoTrack
+```
+
+Update conditions during an active session without recreating the camera stream:
+
+```swift
+try await realtime.startGeneration(
     context: RealtimeContext(prompt: "让画面呈现电影质感")
 )
 ```
 
-生成中再次调用 `startGeneration(context:)` 更新条件。`RealtimeContext.referencePath` 接受已经上传的参考图路径，存储入口与 iOS 保持一致。
+For your own reference images, create a storage manager with
+`try client.createStorageManager()`, upload the image, and use the returned URL's
+`absoluteString` as `RealtimeContext.referencePath`.
+Handle errors thrown by async operations with `do/catch`.
+
+<br>
+
+### Using SwiftUI
+
+Store local and remote tracks in observable state and bind them to separate
+`XmaxVideo` views for a side-by-side layout:
 
 ```swift
-_ = try await manager.switchCamera(to: deviceID)
-await manager.disconnect()  // Retains the local camera preview.
-await manager.close()       // Releases capture, session, and RTC resources.
+import SwiftUI
+import XmaxSDK
+
+struct GenerationVideoView: View {
+    let localTrack: RealtimeVideoTrack?
+    let remoteTrack: RealtimeVideoTrack?
+
+    var body: some View {
+        HStack(spacing: 12) {
+            XmaxVideo(track: localTrack, videoContentMode: .fit)
+            XmaxVideo(track: remoteTrack, videoContentMode: .fit)
+        }
+    }
+}
 ```
 
-移除视频视图只解除显示绑定。宿主应用应在对应业务生命周期结束时调用 `close()`。活动摄像头拔出后会报告媒体错误并清理当前生命周期，应用可重新枚举设备并启动预览。
+For a single video surface that transitions from local preview to generated
+output after the first remote frame arrives, use `XmaxRealtimeVideo` in SwiftUI
+or `XmaxRealtimeVideoView` in AppKit.
+See [XLab](#example-project) for a complete SwiftUI implementation of the
+side-by-side camera and result layout.
 
-SDK 的 HTTP 平台字段、运行信息和生成信令统一使用 `macos`。
+<br>
 
-## 外部视频输入
+### Listen for events
 
-沿用 Android SDK 的 `RealtimeExternalVideoSource` / `RealtimeExternalFrameSink` 设计：接入方维护摄像头或解码器，SDK 只管理供帧绑定、会话和生成。接入方实现源的 `videoFormat`、`start(sink:)`、`stop()`，再调用：
+Register listeners before creating the input stream or starting generation.
+
+| Listener | Purpose |
+| --- | --- |
+| `setStateListener` | Observe connection and generation state, readiness, and termination reasons. |
+| `setLaunchTimingListener` | Receive session creation, RTC join, local publication, first remote frame, and total startup durations. |
+| `setRemoteVideoFrameListener` | Receive generated frames for custom processing. |
+| `setUplinkVideoStatisticsListener` | Observe local publication resolution, frame rate, and bitrate. |
+| `setDownlinkVideoStatisticsListener` | Observe received video statistics. |
+| `setNetworkQualityListener` | Monitor uplink and downlink network quality. |
+| `setPerformanceAlarmListener` | Observe device performance limitations and recovery. |
+
+Workflow-ending failures are also available through `state.reason` after cleanup.
+Keep remote frame callbacks lightweight and move expensive work to your own queue.
+
+<br>
+
+### External video input
+
+If your application owns camera capture, decoding, or preprocessing, implement
+`RealtimeExternalVideoSource` and bind it instead of creating an SDK camera stream:
 
 ```swift
-let localStream = try await manager.createExternalVideoStream(
+let localStream = try await realtime.createExternalVideoStream(
     source: source,
     videoFormat: RealtimeVideoFormat(width: 1920, height: 1024, fps: 30)
 )
 ```
 
-绑定成功即可进入 `ready`，不要求挂载 SDK 本地预览或等待输入首帧。生成启动和运行期间，`sink.isRequestingFrames` 为 `true` 时持续供帧；为 `false` 时可以跳过转换和提交，自有预览可继续运行。它不是限帧器。`sink.videoFormat` 是最终输入规格，源负责旋转、镜像、裁剪和缩放，提交尺寸完全匹配的 `420v` NV12 或 BGRA `CVPixelBuffer`，以及严格递增的单调微秒时间戳。SDK 同步复制像素，提交返回后可复用缓冲区。
+The source receives a `RealtimeExternalFrameSink` in `start(sink:)`. When
+`sink.isRequestingFrames` is `true`, continuously supply video-range NV12 (`420v`)
+or BGRA (`32BGRA`) pixel buffers matching `sink.videoFormat`, with strictly
+increasing, nonnegative monotonic timestamps in microseconds. The SDK copies
+pixels synchronously; buffers may be reused after `pushVideo` returns.
 
-预览可由接入方独立显示，或通过可选的 `attachPreview(to:contentMode:)` / `detachPreview(from:)` 挂载到 SDK 容器。`disconnect()` 保留外部源绑定；断开后 `stopExternalVideoStream()` 或 `close()` 解绑，旧 sink 的迟到帧和错误被丢弃。摄像头及解码器的最终释放仍由接入方负责。首期不支持外部音频或在线替换外部源。
+External input becomes `ready` when binding succeeds, without waiting for preview
+attachment or an input frame. Supply frames as soon as requested, including while
+`startGeneration` is still awaiting startup. Your source owns permissions, frame
+pacing, rotation, mirroring, resizing, and capture cleanup. External audio is not
+supported in this version.
 
-完整示例和线程、缓冲区约定见 [External video integration](Examples/ExternalVideo/README.md)。
+See the [external video integration guide](./Examples/ExternalVideo/README.md)
+for a complete source adapter, optional preview hosting, and threading contracts.
 
-## 示例与验证
+<br>
 
-打开 `Examples/XLab/XLab.xcodeproj`。示例通过本地 Swift Package 接入 SDK，采用与 Web X-Lab 一致的浅色启动页与会话页：顶栏设置模型和 API Key，舞台内可开关麦克风，点击 Start Camera 后启动默认摄像头并使用首个角色预设生成；连接成功后进入会话页。
+### Resource Cleanup
 
-会话中左侧为 Local 摄像头画面，右侧为 Result 生成结果，两路独立显示、不互相叠加。下方提供角色替换、虚拟试衣、风格迁移、自由输入四个模式，使用与 Web 相同的参考图资源；切换模式不自动生成，点击预设或上传参考图后才更新生成条件。自由输入通过箭头按钮提交；虚拟试衣开启原始人脸还原。上传条目立即显示本地缩略图，带独立进度与失败重试；切换分类保留滚动位置且取消旧选择的自动应用。Stop Session 立即返回启动页并在后台释放资源。API Key 与 Web 一致保存在本机应用设置中，更换凭证需先结束会话。
+- **`disconnect()` — Stop Remote Generation**
 
-会话顶栏提供统计显隐、远端音量与 2× 插帧开关。统计默认显示，隐藏仅影响界面，不停止 SDK 指标采集。上下行分辨率、RTC 帧率、码率、丢包、网络质量与 RTC 端到端时延接入 SDK 的真实回调；启动耗时与 iOS 性能日志一致，展示创建会话、RTC 进房、发布本地流、首帧到达及完整启动耗时，不包含摄像头准备和额外渲染等待；总耗时包含阶段间编排，不必等于四项之和。尚未公开的 RTT 和播放缓冲延迟显示 `—`。示例不接入录制与下载。图片通过 Kingfisher 8.10.0 加载、降采样与缓存，依赖仅声明在 XLab 的 Xcode 工程中，不进入 SDK 的 SwiftPM 或 CocoaPods 依赖。预设列表通过 COS 下载时处理请求 160px、质量 80 的 WebP 缩略图，避免先下载原图再本地缩小；生成用的 `reference_path` 保留原图。
+  Ends the remote session while retaining the local camera preview or external
+  source binding. Start another session using the same local stream when needed:
 
-与 Web 尚有两项交互差异：结果画面的鼠标轨迹交互未接通；参考图列表支持原生滚轮和触控板滚动，尚未实现 Web 的按住拖动滚动。模型选择、API Key 编辑和文件选择使用 macOS 原生弹层。
+  ```swift
+  await realtime.disconnect()
+  ```
 
-```bash
-swift test
-bash .cicd/verify.sh
-```
+- **`close()` — Full Teardown & Release**
 
-单元测试使用 Stub 和本地 URLProtocol，覆盖会话、RTC、生成、质量控制、设备选择、切换失败、预览就绪及清理。验证脚本还构建 SwiftPM XLab 和 CocoaPods 最小消费端，并检查 App 中的动态依赖与隐私清单。测试不会访问真实摄像头或调用真实生成服务。
+  Ends generation, stops SDK-owned camera capture, unbinds any external source,
+  and releases session and RTC resources. Call this when leaving the screen:
 
-COS 的构建来源、版本和许可证见 `Vendor/README.md`，重新打包见 `.cicd/build-cos-swiftpm.sh`。
+  ```swift
+  await realtime.close()
+  ```
 
-## 分支管理
+Call `close()` directly when ending the workflow; there is no need to call
+`disconnect()` first. Removing a video view only detaches rendering. Caller-owned
+capture resources remain the application's responsibility.
 
-沿用 iOS 仓库流程：`main` 保存发布基线，`develop` 保存验证通过的集成基线，日常开发位于 `feature/yueting-v<version>`。首个版本分支为 `feature/yueting-v1.0.0`。
+<br>
 
-提交信息采用 Conventional Commits，例如 `feat:`、`fix:`、`refactor:`、`docs:` 和 `chore:`。版本分支完成验证后，使用 fast-forward 同步 `develop` 和 `main`，再在 `main` 创建不带 `v` 的版本标签；发布完成后从该提交创建下一个版本分支。
+## Example Project
 
-与 iOS 一样，`.cicd/` 是不提交的本地验证与发版工具目录。`Vendor/` 内的两个 COS XCFramework 是 SwiftPM 的直接依赖，需要纳入版本管理。
+Open [`Examples/XLab/XLab.xcodeproj`](./Examples/XLab/XLab.xcodeproj) in Xcode,
+select the **XLab** scheme, and run it on your Mac. The example uses the SDK through
+a local Swift package reference.
 
-本地发版入口与 iOS 一致：`ci-prepare.sh <version>` 同步版本与锁文件，`ci-merge.sh` 验证后原子快进主分支，`cd-github-release.sh <version>` 从版本标签归档并发布，成功后创建下一 patch 版本分支。发布归档使用版本管理中的 `Configurations/FrameworkArchive/Podfile.lock`；macOS 的 arm64 / x86_64 位于同一个平台变体中。
+XLab follows the Web X-Lab interaction and visual style, with a local camera view
+on the left and generated results on the right. It demonstrates:
+
+- Camera startup with optional microphone input
+- Character Swapping, Virtual Try-On, Video Restyling, and Free Prompt
+- Reference image presets, local uploads, upload progress, and retry
+- Model selection and a locally persisted API key using `UserDefaults`
+- Live stream statistics and the five startup timing metrics
+- Remote audio volume and optional frame interpolation
+
+Kingfisher is an **example-only dependency** for reference image loading and
+caching. Preset thumbnails request 160 px WebP images through COS image processing;
+generation continues to use the original reference image URLs.
+
+<br>
+
+## Dependencies
+
+| Dependency | Version | Purpose |
+| --- | --- | --- |
+| **Agora RTC SDK for macOS** | `4.6.2` (`RtcBasic`) | Realtime video transport and optional microphone audio. |
+| **Tencent Cloud COS SDK** | `6.5.7` | Object storage uploads and downloads. |
+
+SwiftPM packages Xmax-built dynamic COS frameworks; CocoaPods uses official source
+dependencies. The COS build origin and redistribution notices are documented in
+[`Vendor/README.md`](./Vendor/README.md) and
+[`Vendor/COS-6.5.7-NOTICES.txt`](./Vendor/COS-6.5.7-NOTICES.txt).
+Retain the third-party licenses and privacy manifests when redistributing dependencies.
+
+<br>
+
+## Contact us
+
+For bug reports and feature requests, open a
+[GitHub Issue](https://github.com/XingMai/XmaxSDK-MacOS/issues).
+For integration assistance, contact [sdk@xmax.ai](mailto:sdk@xmax.ai).
+
+<br>
+
+## License
+
+XmaxSDK is available under the terms of the [MIT License](./LICENSE).
+
+Copyright (c) 2026 XMAX.AI PTE. LTD.
