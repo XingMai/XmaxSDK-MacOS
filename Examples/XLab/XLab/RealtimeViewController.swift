@@ -46,10 +46,10 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
     private let keyButton = RealtimeButton(icon: .key)
     private let currentModel = RealtimeButton()
     private let statisticsButton = RealtimeButton(icon: .statistics, style: .statistics)
-    private let volumeButton = RealtimeButton(icon: .muted)
+    private let volumeButton = RealtimeButton(icon: .muted, style: .volume)
     private let interpolationButton = RealtimeButton("2x", icon: .lightning, style: .interpolation)
     private let elapsed = RealtimeButton("00:00")
-    private let stopButton = RealtimeButton("■  Stop Session", style: .destructive)
+    private let stopButton = RealtimeButton("Stop Session", icon: .stop, style: .destructive)
     private let keyField = NSTextField()
     private let volumeSlider = NSSlider(value: 0, minValue: 0, maxValue: 1, target: nil, action: nil)
     private let volumeValue = realtimeLabel("Muted", size: 12, color: RealtimePalette.secondary)
@@ -148,7 +148,20 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         [logo, homeControls, sessionControls].forEach(header.addSubview)
         [modelButton, keyButton].forEach(homeControls.addSubview)
         [currentModel, statisticsButton, volumeButton, interpolationButton, elapsed, stopButton].forEach(sessionControls.addSubview)
+        modelButton.font = RealtimeHeaderTypography.font(size: 12)
+        modelButton.leadingPadding = 18; modelButton.trailingPadding = 30
         modelButton.chevron = true
+        keyButton.font = RealtimeHeaderTypography.font(size: 12)
+        keyButton.iconSize = 14
+        currentModel.font = RealtimeHeaderTypography.font(size: 13, weight: .medium)
+        elapsed.font = RealtimeHeaderTypography.font(size: 13, weight: .medium, monospacedDigits: true)
+        for button in [statisticsButton, volumeButton, interpolationButton, stopButton] {
+            button.font = RealtimeHeaderTypography.font(size: 13, weight: .semibold)
+        }
+        interpolationButton.iconSize = 15; interpolationButton.iconSpacing = 3
+        interpolationButton.leadingPadding = 12; interpolationButton.trailingPadding = 15
+        stopButton.iconSize = 12; stopButton.iconSpacing = 7
+        stopButton.leadingPadding = 16; stopButton.trailingPadding = 16
         modelButton.onClick = { [weak self] in self?.showModels() }
         keyButton.toolTip = "API Key"; keyButton.setAccessibilityLabel("API Key")
         keyButton.onClick = { [weak self] in self?.showKeyEditor() }
@@ -182,7 +195,12 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         microphonePill.layer?.borderWidth = 1
         microphonePill.layer?.borderColor = NSColor.white.withAlphaComponent(0.12).cgColor
         microphoneIcon.passive = true
+        microphoneIcon.iconSize = 14
+        microphoneIcon.foregroundColor = .white.withAlphaComponent(0.55)
+        microphonePill.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.28).cgColor
+        microphonePill.layer?.borderColor = NSColor.white.withAlphaComponent(0.16).cgColor
         microphoneSwitch.controlSize = .small
+        microphoneSwitch.target = self; microphoneSwitch.action = #selector(microphoneChanged)
         microphoneSwitch.setAccessibilityLabel("Microphone")
         startButton.onClick = { [weak self] in
             guard let self else { return }
@@ -200,6 +218,8 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         for mode in RealtimeExampleMode.allCases {
             let button = RealtimeButton(mode.title, style: .tab)
             button.font = RealtimeHeaderTypography.font(size: 13.5, weight: .medium)
+            button.tracking = 0.135
+            button.leadingPadding = 22; button.trailingPadding = 22
             button.onClick = { [weak self] in self?.controller.activeMode = mode }
             tabs.addSubview(button); tabButtons[mode] = button
             if mode != .free {
@@ -235,12 +255,14 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         removeReference.toolTip = "Remove reference"
         removeReference.setAccessibilityLabel("Remove reference")
         removeReference.onClick = { [weak self] in self?.controller.removeFreeReference() }
+        submitButton.iconSize = 20
         submitButton.setAccessibilityLabel("Submit prompt")
         submitButton.onClick = { [weak self] in Task { [weak self] in await self?.controller.submitPrompt() } }
     }
 
     private func configureFooter() {
         [wechat, social, website, contact, platform].forEach(footer.addSubview)
+        wechat.iconSize = 20; social.iconSize = 18; website.iconSize = 20
         wechat.setAccessibilityLabel("WeChat"); social.setAccessibilityLabel("X"); website.setAccessibilityLabel("Website")
         wechat.onClick = { [weak self] in self?.showWeChat() }
         social.onClick = { NSWorkspace.shared.open(URL(string: "https://x.com/XmaxAIOfficial")!) }
@@ -266,7 +288,8 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         let active = controller.sessionActive
         let pageChanged = displayedSession != active
         let keyTitle = controller.hasAPIKey ? controller.apiKey : ""
-        let needsPageLayout = pageChanged || keyButton.title != keyTitle || displayedError != controller.errorMessage
+        let needsPageLayout = pageChanged || keyButton.title != keyTitle ||
+            modelButton.title != controller.model.displayName || displayedError != controller.errorMessage
         modelButton.title = controller.model.displayName
         modelButton.isEnabled = !controller.isBusy
         currentModel.title = controller.model.displayName
@@ -279,6 +302,7 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         statisticsButton.toolTip = controller.statisticsVisible ? "Hide statistics (collection and logging continue)" : "Show statistics"
         statisticsButton.setAccessibilityValue(controller.statisticsVisible ? "On" : "Off")
         volumeButton.icon = controller.remoteAudioVolume == 0 ? .muted : controller.remoteAudioVolume > 0.5 ? .volume : .volumeLow
+        volumeButton.selected = controller.remoteAudioVolume > 0
         volumeButton.isEnabled = !controller.isClosing
         volumeButton.setAccessibilityValue(controller.remoteAudioVolume == 0 ? "Muted" : "\(Int(controller.remoteAudioVolume * 100))%")
         volumeSlider.isEnabled = !controller.isClosing
@@ -289,7 +313,7 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         interpolationButton.isEnabled = !controller.isBusy
         interpolationButton.toolTip = controller.interpolationSwitching ? "Switching frame interpolation…" : controller.interpolationEnabled ? "2× frame interpolation is on. Click to turn off" : "Frame interpolation is off. Click to turn on"
         interpolationButton.setAccessibilityValue(controller.interpolationSwitching ? "Switching" : controller.interpolationEnabled ? "On" : "Off")
-        stopButton.title = controller.isClosing ? "Stopping…" : "■  Stop Session"
+        stopButton.title = controller.isClosing ? "Stopping…" : "Stop Session"
         stopButton.loading = controller.isClosing
         stopButton.isEnabled = !controller.isClosing
         updateElapsed()
@@ -351,7 +375,11 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
     private func updateElapsed() {
         let seconds = max(0, Int(Date().timeIntervalSince(controller.sessionStartedAt ?? Date())))
         let title = String(format: "%02d:%02d", seconds / 60, seconds % 60)
-        if elapsed.title != title { elapsed.title = title }
+        if elapsed.title != title {
+            let previousWidth = elapsed.preferredWidth
+            elapsed.title = title
+            if previousWidth != elapsed.preferredWidth { view.needsLayout = true }
+        }
     }
 
     private func animateEntry(_ page: NSView) {
@@ -394,10 +422,17 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         let stageHeight = stageWidth * 1024 / 1920
         let titleSize = min(45, max(27, width * 0.01 + 18))
         let titleGap = min(40, max(26, width * 0.011 + 17))
-        let landingHeight = titleSize + 12 + titleGap + stageHeight + 38
-        let headerHeight: CGFloat = 84
+        let titleFont = RealtimeHeaderTypography.font(size: titleSize, weight: .medium)
+        let titleHeight = ceil(RealtimeHeaderTypography.size(titleLabel.stringValue, font: titleFont).height)
+        copyright.font = RealtimeHeaderTypography.font(size: min(14, max(11.5, width * 0.0028 + 9)))
+        let copyrightHeight = ceil(RealtimeHeaderTypography.size(copyright.stringValue, font: copyright.font!).height)
+        let landingHeight = titleHeight + titleGap + stageHeight + 16 + copyrightHeight
+        let logoHeight = min(52, max(34, width * 0.008 + 24))
+        let controlHeight = controller.sessionActive ? 36 : min(48, max(35, width * 0.0055 + 26))
+        let headerHeight = max(logoHeight, controlHeight) + 8 + 24
+        let footerHeight: CGFloat = 56 + 24
         let active = controller.sessionActive
-        let minimumHeight = active ? 16 + headerHeight + workspaceHeight + 48 : 16 + headerHeight + 30 + landingHeight + 30 + 82 + 48
+        let minimumHeight = active ? 16 + headerHeight + workspaceHeight + 48 : 16 + headerHeight + 30 + landingHeight + 30 + footerHeight + 48
         let documentHeight = max(height, minimumHeight)
         document.frame = NSRect(x: 0, y: 0, width: width, height: documentHeight)
         let surplus = max(0, documentHeight - minimumHeight)
@@ -409,18 +444,20 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
             .foregroundColor: RealtimePalette.text, .kern: -titleSize * 0.03,
             .paragraphStyle: { let style = NSMutableParagraphStyle(); style.alignment = .center; return style }()
         ])
-        titleLabel.frame = NSRect(x: 0, y: 0, width: contentWidth, height: titleSize + 12)
-        checkerboard.frame = NSRect(x: (contentWidth - stageWidth) / 2, y: titleSize + 12 + titleGap, width: stageWidth, height: stageHeight)
+        titleLabel.frame = NSRect(x: 0, y: 0, width: contentWidth, height: titleHeight)
+        checkerboard.frame = NSRect(x: (contentWidth - stageWidth) / 2, y: titleHeight + titleGap, width: stageWidth, height: stageHeight)
         layoutLanding(viewportWidth: width)
-        copyright.frame = NSRect(x: 0, y: checkerboard.frame.maxY + 16, width: contentWidth, height: 20)
+        copyright.frame = NSRect(x: 0, y: checkerboard.frame.maxY + 16, width: contentWidth, height: copyrightHeight)
         workspace.frame = NSRect(x: 28, y: header.frame.maxY, width: contentWidth, height: workspaceHeight)
         localPanel.frame = NSRect(x: 0, y: 0, width: panelWidth, height: panelHeight)
         resultPanel.frame = NSRect(x: panelWidth + 24, y: 0, width: panelWidth, height: panelHeight)
-        tabs.frame = NSRect(x: (contentWidth - 574) / 2, y: panelHeight + 34, width: 574, height: 42)
+        let tabWidths = RealtimeExampleMode.allCases.map { tabButtons[$0]!.preferredWidth }
+        let tabWidth = tabWidths.reduce(0, +) + 2 * CGFloat(tabWidths.count - 1) + 8
+        tabs.frame = NSRect(x: (contentWidth - tabWidth) / 2, y: panelHeight + 34, width: tabWidth, height: 42)
         var x: CGFloat = 4
-        for mode in RealtimeExampleMode.allCases {
-            let itemWidth: CGFloat = mode == .charx ? 155 : mode == .clothx ? 144 : mode == .vibex ? 137 : 124
-            tabButtons[mode]?.frame = NSRect(x: x, y: 4, width: itemWidth, height: 34); x += itemWidth + 2
+        for (mode, itemWidth) in zip(RealtimeExampleMode.allCases, tabWidths) {
+            tabButtons[mode]?.frame = NSRect(x: x, y: 4, width: itemWidth, height: 34)
+            x += itemWidth + 2
         }
         let listY = tabs.frame.maxY + 28
         for list in lists.values { list.frame = NSRect(x: 0, y: listY, width: contentWidth, height: 190) }
@@ -432,44 +469,58 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         freeReference.frame = NSRect(x: promptWidth - 110, y: 104, width: 44, height: 44)
         removeReference.frame = NSRect(x: promptWidth - 79, y: 96, width: 22, height: 22)
         submitButton.frame = NSRect(x: promptWidth - 56, y: 104, width: 44, height: 44)
-        footer.frame = NSRect(x: 28, y: documentHeight - 74, width: contentWidth, height: 26)
-        wechat.frame = NSRect(x: 0, y: 0, width: 24, height: 24)
-        social.frame = NSRect(x: 42, y: 0, width: 24, height: 24)
-        website.frame = NSRect(x: 84, y: 0, width: 24, height: 24)
-        contact.frame = NSRect(x: contentWidth - 210, y: 0, width: 98, height: 26)
-        platform.frame = NSRect(x: contentWidth - 100, y: 0, width: 100, height: 26)
+        footer.frame = NSRect(x: 28, y: documentHeight - 48 - footerHeight, width: contentWidth, height: footerHeight)
+        wechat.frame = NSRect(x: 0, y: 56, width: 24, height: 24)
+        social.frame = NSRect(x: 42, y: 56, width: 24, height: 24)
+        website.frame = NSRect(x: 84, y: 56, width: 24, height: 24)
+        contact.frame = NSRect(x: contentWidth - 210, y: 56, width: 98, height: 26)
+        platform.frame = NSRect(x: contentWidth - 100, y: 56, width: 100, height: 26)
         layoutToast()
     }
 
     private func layoutHeader(viewportWidth width: CGFloat) {
         let logoHeight = min(52, max(34, width * 0.008 + 24))
         let controlHeight = min(48, max(35, width * 0.0055 + 26))
-        logo.frame = NSRect(x: 0, y: 8, width: logoHeight * 552 / 172, height: logoHeight)
-        let keyWidth = controller.hasAPIKey ? min(310, max(60, (controller.apiKey as NSString).size(withAttributes: [.font: keyButton.font!]).width + 52)) : controlHeight
-        let homeWidth = 190 + 12 + keyWidth
-        homeControls.frame = NSRect(x: header.bounds.width - homeWidth, y: 8, width: homeWidth, height: controlHeight)
-        modelButton.frame = NSRect(x: 0, y: 0, width: 190, height: controlHeight)
-        keyButton.frame = NSRect(x: 202, y: 0, width: keyWidth, height: controlHeight)
-        sessionControls.frame = NSRect(x: header.bounds.width - 702, y: 8, width: 702, height: 36)
-        let controls: [(RealtimeButton, CGFloat)] = [(currentModel, 180), (statisticsButton, 36), (volumeButton, 36), (interpolationButton, 66), (elapsed, 74), (stopButton, 150)]
+        let rowHeight = header.bounds.height - 8 - 24
+        logo.frame = NSRect(x: 0, y: 8 + (rowHeight - logoHeight) / 2, width: logoHeight * 552 / 172, height: logoHeight)
+        let keyWidth = controller.hasAPIKey ? min(270 + 14 + 8 + 28, keyButton.preferredWidth) : controlHeight
+        let modelWidth = modelButton.preferredWidth
+        let homeWidth = modelWidth + 12 + keyWidth
+        homeControls.frame = NSRect(x: header.bounds.width - homeWidth, y: 8 + (rowHeight - controlHeight) / 2, width: homeWidth, height: controlHeight)
+        modelButton.frame = NSRect(x: 0, y: 0, width: modelWidth, height: controlHeight)
+        keyButton.frame = NSRect(x: modelWidth + 12, y: 0, width: keyWidth, height: controlHeight)
+        let stopWidth = ceil(RealtimeHeaderTypography.size("Stop Session", font: stopButton.font!).width) + 12 + 7 + 32
+        let controls: [(RealtimeButton, CGFloat)] = [
+            (currentModel, currentModel.preferredWidth), (statisticsButton, 36), (volumeButton, 36),
+            (interpolationButton, interpolationButton.preferredWidth), (elapsed, elapsed.preferredWidth), (stopButton, stopWidth)
+        ]
+        let sessionWidth = controls.reduce(CGFloat(0)) { $0 + $1.1 } + CGFloat(controls.count - 1) * 12
+        sessionControls.frame = NSRect(x: header.bounds.width - sessionWidth, y: 8 + (rowHeight - 36) / 2, width: sessionWidth, height: 36)
         var x: CGFloat = 0
-        for (button, size) in controls { button.frame = NSRect(x: x, y: 0, width: size, height: 36); x += size + 12 }
+        for (button, size) in controls {
+            button.frame = NSRect(x: x, y: 0, width: size, height: 36)
+            x += size + 12
+        }
     }
 
     private func layoutLanding(viewportWidth width: CGFloat) {
         let fontSize = min(18, max(15, width * 0.003 + 12))
         let smallSize = min(15, max(12, width * 0.0028 + 9.5))
-        let buttonHeight = fontSize + 6 + min(16, max(12, width * 0.0028 + 9)) * 2
-        let buttonWidth = min(270, max(220, width * 0.04 + 180))
-        let groupHeight = buttonHeight + 12 + 32
-        startButton.frame = NSRect(x: (checkerboard.bounds.width - buttonWidth) / 2, y: (checkerboard.bounds.height - groupHeight) / 2, width: buttonWidth, height: buttonHeight)
         startButton.font = RealtimeHeaderTypography.font(size: fontSize, weight: .semibold)
-        microphonePill.frame = NSRect(x: checkerboard.bounds.midX - 84, y: startButton.frame.maxY + 12, width: 168, height: 32)
-        microphoneIcon.frame = NSRect(x: 9, y: 5, width: 19, height: 22)
+        startButton.iconSize = 20; startButton.iconSpacing = 10
+        startButton.leadingPadding = min(40, max(25, width * 0.0075 + 18))
+        startButton.trailingPadding = startButton.leadingPadding
+        let buttonHeight = max(20, ceil(RealtimeHeaderTypography.size(startButton.title, font: startButton.font!).height)) + min(16, max(12, width * 0.0028 + 9)) * 2
+        let buttonWidth = startButton.preferredWidth
+        let groupHeight = buttonHeight + 12 + 30
+        startButton.frame = NSRect(x: (checkerboard.bounds.width - buttonWidth) / 2, y: (checkerboard.bounds.height - groupHeight) / 2, width: buttonWidth, height: buttonHeight)
         microphoneLabel.font = RealtimeHeaderTypography.font(size: smallSize)
-        microphoneLabel.frame = NSRect(x: 32, y: 7, width: 87, height: 20)
-        microphoneSwitch.frame = NSRect(x: 126, y: 4, width: 36, height: 24)
-        terms.frame = NSRect(x: 20, y: checkerboard.bounds.height - 55, width: checkerboard.bounds.width - 40, height: 40)
+        let microphoneText = RealtimeHeaderTypography.size("Microphone", font: microphoneLabel.font!)
+        let microphoneWidth = 14 + 14 + 8 + ceil(microphoneText.width) + 8 + 30 + 7
+        microphonePill.frame = NSRect(x: (checkerboard.bounds.width - microphoneWidth) / 2, y: startButton.frame.maxY + 12, width: microphoneWidth, height: 30)
+        microphoneIcon.frame = NSRect(x: 14, y: 8, width: 14, height: 14)
+        microphoneLabel.frame = NSRect(x: 34, y: (30 - microphoneText.height) / 2, width: ceil(microphoneText.width) + 4, height: microphoneText.height)
+        microphoneSwitch.frame = NSRect(x: microphoneWidth - 37, y: 6, width: 30, height: 18)
         let text = "By clicking Start, you agree to our Terms of Use and Privacy Policy."
         let paragraph = NSMutableParagraphStyle(); paragraph.alignment = .center
         let attributed = NSMutableAttributedString(string: text, attributes: [
@@ -478,6 +529,9 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         ])
         attributed.addAttribute(.link, value: "https://platform.xmaxai.com/docs/resources/terms", range: (text as NSString).range(of: "Terms of Use"))
         attributed.addAttribute(.link, value: "https://platform.xmaxai.com/docs/resources/privacy", range: (text as NSString).range(of: "Privacy Policy"))
+        let termsWidth = checkerboard.bounds.width - 40
+        let termsHeight = ceil(attributed.boundingRect(with: NSSize(width: termsWidth, height: 100), options: [.usesLineFragmentOrigin, .usesFontLeading]).height)
+        terms.frame = NSRect(x: 20, y: checkerboard.bounds.height - 30 - termsHeight, width: termsWidth, height: termsHeight)
         if !terms.attributedString().isEqual(to: attributed) { terms.textStorage?.setAttributedString(attributed) }
     }
 
@@ -534,6 +588,15 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         volumeSlider.frame = NSRect(x: 14, y: 46, width: 216, height: 24)
         [label, volumeValue, volumeSlider].forEach(content.addSubview)
         presentPopover(content: content, from: volumeButton)
+    }
+
+    @objc private func microphoneChanged() {
+        let enabled = microphoneSwitch.state == .on
+        let color = NSColor.white.withAlphaComponent(enabled ? 1 : 0.55)
+        microphoneLabel.textColor = color
+        microphoneIcon.foregroundColor = color
+        microphoneIcon.needsDisplay = true
+        microphonePill.layer?.borderColor = NSColor.white.withAlphaComponent(enabled ? 0.3 : 0.16).cgColor
     }
 
     @objc private func volumeChanged() {

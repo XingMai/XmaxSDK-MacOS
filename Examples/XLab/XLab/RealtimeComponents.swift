@@ -28,15 +28,28 @@ enum RealtimeHeaderTypography {
         }
     }()
 
-    static func font(size: CGFloat, weight: NSFont.Weight = .regular) -> NSFont {
+    static func font(size: CGFloat, weight: NSFont.Weight = .regular, monospacedDigits: Bool = false) -> NSFont {
         _ = registered
-        guard let font = NSFont(name: "DMSans9pt-Regular", size: size) else {
+        guard let base = NSFont(name: "DMSans9pt-Regular", size: size) else {
             return .systemFont(ofSize: size, weight: weight)
         }
-        let descriptor = font.fontDescriptor.addingAttributes([
-            .traits: [NSFontDescriptor.TraitKey.weight: weight.rawValue]
-        ])
-        return NSFont(descriptor: descriptor, size: size) ?? font
+        // The bundled font has a variable weight axis; NSFont trait matching leaves it at 400.
+        let value = weight == .semibold ? 600 : weight == .medium ? 500 : weight == .bold ? 700 : 400
+        var attributes: [CFString: Any] = [
+            kCTFontVariationAttribute: [NSNumber(value: 0x77676874): NSNumber(value: value)]
+        ]
+        if monospacedDigits {
+            attributes[kCTFontFeatureSettingsAttribute] = [[
+                kCTFontFeatureTypeIdentifierKey: kNumberSpacingType,
+                kCTFontFeatureSelectorIdentifierKey: kMonospacedNumbersSelector
+            ]]
+        }
+        return CTFontCreateCopyWithAttributes(base, size, nil,
+            CTFontDescriptorCreateWithAttributes(attributes as CFDictionary)) as NSFont
+    }
+
+    static func size(_ text: String, font: NSFont, tracking: CGFloat = 0) -> NSSize {
+        (text as NSString).size(withAttributes: [.font: font, .kern: tracking])
     }
 }
 
@@ -115,11 +128,17 @@ final class RealtimeSpinner: RealtimeCanvas {
 
 /// Native buttons retain their identity, loading animation, keyboard focus, and target action.
 final class RealtimeButton: NSButton {
-    enum Appearance { case pill, primary, destructive, statistics, interpolation, tab, plain }
+    enum Appearance { case pill, primary, destructive, statistics, interpolation, volume, tab, plain }
     var style = Appearance.pill { didSet { needsDisplay = true } }
     var selected = false { didSet { if selected != oldValue { needsDisplay = true } } }
     var icon: RealtimeWebIcon.Kind? { didSet { needsDisplay = true } }
     var chevron = false
+    var leadingPadding: CGFloat = 14
+    var trailingPadding: CGFloat = 14
+    var iconSize: CGFloat = 18
+    var iconSpacing: CGFloat = 8
+    var tracking: CGFloat = 0
+    var foregroundColor: NSColor?
     var loading = false { didSet { updateLoading() } }
     var passive = false
     var onClick: (() -> Void)?
@@ -142,6 +161,7 @@ final class RealtimeButton: NSButton {
         isBordered = false
         setButtonType(.momentaryPushIn)
         font = RealtimeHeaderTypography.font(size: 13)
+        if style == .plain { leadingPadding = 0; trailingPadding = 0 }
         target = self
         self.action = #selector(invoke)
         wantsLayer = true
@@ -164,13 +184,16 @@ final class RealtimeButton: NSButton {
     override func mouseExited(with event: NSEvent) { hovered = false; needsDisplay = true }
 
     private var foreground: NSColor {
+        if let foregroundColor { return foregroundColor }
         if style == .primary { return .white }
         if style == .destructive { return NSColor(srgbRed: 220 / 255, green: 38 / 255, blue: 38 / 255, alpha: 1) }
         if selected && style == .statistics { return RealtimePalette.accent }
         if selected && style == .interpolation { return NSColor(srgbRed: 169 / 255, green: 102 / 255, blue: 8 / 255, alpha: 1) }
-        if passive || style == .plain || style == .statistics || style == .interpolation || (style == .tab && !selected) {
-            return RealtimePalette.secondary
+        if style == .statistics || style == .interpolation || style == .volume {
+            return selected || (hovered && isEnabled) ? RealtimePalette.text :
+                NSColor(srgbRed: 139 / 255, green: 145 / 255, blue: 157 / 255, alpha: 1)
         }
+        if passive || style == .plain || (style == .tab && !selected && !hovered) { return RealtimePalette.secondary }
         return RealtimePalette.text
     }
 
@@ -181,15 +204,22 @@ final class RealtimeButton: NSButton {
         needsLayout = true
     }
 
+    /// Mirrors SwiftUI's intrinsic label width plus the Web component's explicit padding.
+    var preferredWidth: CGFloat {
+        ceil(RealtimeHeaderTypography.size(title, font: font!, tracking: tracking).width +
+             ((icon != nil || loading) ? iconSize + (title.isEmpty ? 0 : iconSpacing) : 0) +
+             leadingPadding + trailingPadding)
+    }
+
     private func contentFrames() -> (NSRect, NSRect) {
-        let size: CGFloat = style == .primary ? 20 : 16
         let hasIcon = icon != nil || loading
-        let textWidth = min(max(0, bounds.width - (hasIcon ? size + 8 : 0) - (chevron ? 34 : 24)),
-                            (title as NSString).size(withAttributes: [.font: font ?? NSFont.systemFont(ofSize: 13)]).width)
-        let total = textWidth + (hasIcon ? size + (title.isEmpty ? 0 : 8) : 0) + (chevron ? 16 : 0)
-        let x = (bounds.width - total) / 2
-        return (NSRect(x: x, y: (bounds.height - size) / 2, width: size, height: size),
-                NSRect(x: x + (hasIcon ? size + (title.isEmpty ? 0 : 8) : 0), y: 0, width: textWidth, height: bounds.height))
+        let iconWidth = hasIcon ? iconSize + (title.isEmpty ? 0 : iconSpacing) : 0
+        let available = max(0, bounds.width - leadingPadding - trailingPadding - iconWidth)
+        let textWidth = min(available, RealtimeHeaderTypography.size(title, font: font!, tracking: tracking).width)
+        let total = iconWidth + textWidth
+        let x = leadingPadding + (bounds.width - leadingPadding - trailingPadding - total) / 2
+        return (NSRect(x: x, y: (bounds.height - iconSize) / 2, width: iconSize, height: iconSize),
+                NSRect(x: x + iconWidth, y: 0, width: textWidth, height: bounds.height))
     }
 
     override func layout() {
@@ -198,12 +228,13 @@ final class RealtimeButton: NSButton {
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        let rect = bounds.insetBy(dx: 1, dy: 1)
+        let rect = bounds.insetBy(dx: 0.5, dy: 0.5)
         let path = NSBezierPath(roundedRect: rect, xRadius: rect.height / 2, yRadius: rect.height / 2)
         let hot = hovered && isEnabled && !passive
         var top = NSColor.white
         var bottom = NSColor(srgbRed: 243 / 255, green: 244 / 255, blue: 246 / 255, alpha: 1)
-        var border = RealtimePalette.border
+        var border = hot ? NSColor(srgbRed: 201 / 255, green: 206 / 255, blue: 214 / 255, alpha: 1) :
+            NSColor(srgbRed: 226 / 255, green: 229 / 255, blue: 234 / 255, alpha: 1)
         switch style {
         case .primary:
             top = hot ? RealtimePalette.accentHover : RealtimePalette.accent
@@ -227,17 +258,22 @@ final class RealtimeButton: NSButton {
         }
         if isHighlighted { bottom = bottom.blended(withFraction: 0.06, of: .black) ?? bottom }
         NSGradient(starting: top, ending: bottom)?.draw(in: path, angle: 90)
+        if style == .pill || style == .volume || style == .destructive || (!selected && (style == .statistics || style == .interpolation)) {
+            let highlight = NSBezierPath(roundedRect: rect.insetBy(dx: 1, dy: 1), xRadius: rect.height / 2 - 1, yRadius: rect.height / 2 - 1)
+            NSColor.white.withAlphaComponent(0.6).setStroke(); highlight.lineWidth = 1; highlight.stroke()
+        }
         border.setStroke(); path.lineWidth = 1; path.stroke()
         layer?.shadowColor = (style == .primary ? RealtimePalette.accent : NSColor.black).cgColor
-        layer?.shadowOpacity = style == .plain || (style == .tab && !selected) ? 0 : style == .primary ? 0.24 : 0.09
-        layer?.shadowRadius = style == .primary ? 12 : 4
-        layer?.shadowOffset = CGSize(width: 0, height: style == .primary ? 6 : 2)
+        let flat = style == .plain || (style == .tab && !selected) || (selected && (style == .statistics || style == .interpolation))
+        layer?.shadowOpacity = flat ? 0 : style == .primary ? 0.35 : style == .tab ? 0.1 : hot ? 0.08 : 0.05
+        layer?.shadowRadius = style == .primary ? 15 : style == .tab ? 4 : hot ? 8 : 6
+        layer?.shadowOffset = CGSize(width: 0, height: style == .primary ? 10 : style == .tab ? 2 : hot ? 6 : 4)
         layer?.shadowPath = CGPath(roundedRect: rect, cornerWidth: rect.height / 2, cornerHeight: rect.height / 2, transform: nil)
         let (iconRect, textRect) = contentFrames()
         if let icon, !loading { RealtimeWebIcon.draw(icon, in: iconRect, color: foreground) }
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineBreakMode = .byTruncatingTail
-        let attributes: [NSAttributedString.Key: Any] = [.font: font ?? NSFont.systemFont(ofSize: 13), .foregroundColor: foreground, .paragraphStyle: paragraph]
+        let attributes: [NSAttributedString.Key: Any] = [.font: font ?? NSFont.systemFont(ofSize: 13), .foregroundColor: foreground, .paragraphStyle: paragraph, .kern: tracking]
         let height = (title as NSString).size(withAttributes: attributes).height
         (title as NSString).draw(in: NSRect(x: textRect.minX, y: (bounds.height - height) / 2, width: textRect.width, height: height), withAttributes: attributes)
         if chevron {
@@ -281,35 +317,65 @@ struct RealtimeStatisticsRow: Identifiable {
 final class RealtimeStatisticsPanel: RealtimeCanvas {
     private var labels: [(NSTextField, NSTextField)] = []
     private var dividers: [NSView] = []
+    private var rows: [RealtimeStatisticsRow]
     let panelHeight: CGFloat
+    private(set) var panelWidth: CGFloat = 0
 
     init(group: RealtimeStatisticsGroup) {
+        rows = group.rows
         panelHeight = 16 + CGFloat(group.rows.count) * 16.5 + CGFloat(group.rows.filter(\.total).count) * 11
         super.init(color: .black.withAlphaComponent(0.6), radius: 10)
         layer?.borderWidth = 1
         layer?.borderColor = NSColor.white.withAlphaComponent(0.12).cgColor
         setAccessibilityLabel(group.id)
-        var y: CGFloat = 8
         for row in group.rows {
             if row.total {
                 let divider = RealtimeCanvas(color: .white.withAlphaComponent(0.18))
-                divider.frame = NSRect(x: 10, y: y + 5, width: 264, height: 1)
-                addSubview(divider); dividers.append(divider); y += 11
+                addSubview(divider); dividers.append(divider)
             }
             let label = realtimeLabel(row.id, size: 11, color: .white.withAlphaComponent(0.9), weight: row.total ? .semibold : .regular)
             let value = realtimeLabel(row.value, size: 11, color: .white.withAlphaComponent(0.9))
             value.font = .monospacedSystemFont(ofSize: 11, weight: row.total ? .semibold : .regular)
             value.alignment = .right
-            label.frame = NSRect(x: 10, y: y, width: 170, height: 16.5)
-            value.frame = NSRect(x: 180, y: y, width: 94, height: 16.5)
             label.toolTip = row.help; value.toolTip = row.help
-            addSubview(label); addSubview(value); labels.append((label, value)); y += 16.5
+            addSubview(label); addSubview(value); labels.append((label, value))
         }
+        update(group)
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
     func update(_ group: RealtimeStatisticsGroup) {
-        for (row, pair) in zip(group.rows, labels) where pair.1.stringValue != row.value { pair.1.stringValue = row.value }
+        rows = group.rows
+        var width: CGFloat = 0
+        for (row, pair) in zip(group.rows, labels) {
+            if pair.1.stringValue != row.value { pair.1.stringValue = row.value }
+            let titleWidth = RealtimeHeaderTypography.size(row.id, font: pair.0.font!).width
+            let valueWidth = max(64, RealtimeHeaderTypography.size(row.value, font: pair.1.font!).width)
+            width = max(width, titleWidth + 16 + valueWidth + 20)
+        }
+        if panelWidth != ceil(width) {
+            panelWidth = ceil(width)
+            needsLayout = true
+            superview?.needsLayout = true
+        }
+    }
+
+    override func layout() {
+        super.layout()
+        var y: CGFloat = 8
+        var dividerIndex = 0
+        for (row, pair) in zip(rows, labels) {
+            if row.total {
+                dividers[dividerIndex].frame = NSRect(x: 10, y: y + 5, width: bounds.width - 20, height: 1)
+                dividerIndex += 1; y += 11
+            }
+            let valueWidth = max(64, ceil(RealtimeHeaderTypography.size(row.value, font: pair.1.font!).width))
+            // Compensate for NSTextField's 2pt cell inset so the visible text matches the Web padding.
+            pair.0.frame = NSRect(x: 8, y: y, width: bounds.width - 20 - valueWidth - 16 + 4, height: 16.5)
+            pair.1.frame = NSRect(x: bounds.width - 10 - valueWidth - 2, y: y, width: valueWidth + 4, height: 16.5)
+            y += 16.5
+        }
     }
 }
 
@@ -319,6 +385,7 @@ final class RealtimeVideoPanel: RealtimeCanvas {
     private let videoContainer = RealtimeCanvas(color: .black)
     private let placeholder = realtimeLabel(size: 14, color: .white.withAlphaComponent(0.55))
     private let caption: NSTextField
+    private let captionBackground = RealtimeCanvas(color: .black.withAlphaComponent(0.35), radius: 8)
     private let watermark = realtimeLabel("✦ Xmax", size: 13, color: .white.withAlphaComponent(0.8), weight: .semibold)
     private var panels: [RealtimeStatisticsPanel] = []
     var mirrored = false { didSet { if oldValue != mirrored { needsLayout = true } } }
@@ -333,7 +400,7 @@ final class RealtimeVideoPanel: RealtimeCanvas {
             let panel = RealtimeStatisticsPanel(group: group)
             panels.append(panel); addSubview(panel)
         }
-        addSubview(caption); addSubview(watermark); watermark.isHidden = !showsWatermark
+        addSubview(captionBackground); captionBackground.addSubview(caption); addSubview(watermark); watermark.isHidden = !showsWatermark
         setAccessibilityLabel(title)
     }
 
@@ -359,10 +426,13 @@ final class RealtimeVideoPanel: RealtimeCanvas {
         videoContainer.layer?.sublayerTransform = transform
         CATransaction.commit()
         placeholder.frame = NSRect(x: 20, y: bounds.midY - 10, width: bounds.width - 40, height: 20)
-        caption.frame = NSRect(x: 22, y: bounds.height - 31, width: 90, height: 19)
-        watermark.frame = NSRect(x: bounds.width - 84, y: 12, width: 68, height: 20)
+        let captionSize = RealtimeHeaderTypography.size(caption.stringValue, font: caption.font!)
+        captionBackground.frame = NSRect(x: 14, y: bounds.height - 12 - captionSize.height - 6, width: ceil(captionSize.width) + 16, height: captionSize.height + 6)
+        caption.frame = NSRect(x: 6, y: 3, width: ceil(captionSize.width) + 4, height: captionSize.height)
+        let watermarkSize = RealtimeHeaderTypography.size(watermark.stringValue, font: watermark.font!)
+        watermark.frame = NSRect(x: bounds.width - 16 - watermarkSize.width - 2, y: 12, width: watermarkSize.width + 4, height: watermarkSize.height)
         var y: CGFloat = 12
-        for panel in panels { panel.frame = NSRect(x: 14, y: y, width: 284, height: panel.panelHeight); y += panel.panelHeight + 8 }
+        for panel in panels { panel.frame = NSRect(x: 14, y: y, width: panel.panelWidth, height: panel.panelHeight); y += panel.panelHeight + 8 }
     }
 }
 extension RealtimeSessionController {
@@ -425,7 +495,7 @@ extension RealtimeSessionController {
 /// Draws the existing Web icon coordinates directly into the AppKit graphics context.
 @MainActor
 enum RealtimeWebIcon {
-    enum Kind { case camera, microphone, statistics, muted, volume, volumeLow, lightning, plus, arrow, globe, socialX, wechat, key }
+    enum Kind { case camera, microphone, statistics, muted, volume, volumeLow, lightning, plus, arrow, globe, socialX, wechat, key, stop }
 
     static func draw(_ kind: Kind, in rect: CGRect, color: NSColor) {
         guard let context = NSGraphicsContext.current?.cgContext else { return }
@@ -436,7 +506,7 @@ enum RealtimeWebIcon {
         context.setFillColor(color.cgColor); context.setStrokeColor(color.cgColor)
         context.setLineWidth(kind == .arrow ? 3 : kind == .plus || kind == .microphone ? 2 : 1.8)
         context.setLineCap(.round); context.setLineJoin(.round)
-        if kind == .lightning || kind == .socialX || kind == .wechat { context.drawPath(using: .eoFill) }
+        if kind == .lightning || kind == .socialX || kind == .wechat || kind == .stop { context.drawPath(using: .eoFill) }
         else { context.strokePath() }
         context.restoreGState()
     }
@@ -450,6 +520,8 @@ enum RealtimeWebIcon {
         }
         func points(_ values: [(CGFloat, CGFloat)]) -> [CGPoint] { values.map { CGPoint(x: $0.0, y: $0.1) } }
         switch kind {
+        case .stop:
+            p.addRect(CGRect(x: 5, y: 5, width: 14, height: 14))
         case .key:
             p.addEllipse(in: CGRect(x: 2, y: 10, width: 11, height: 11))
             line(points([(11.39,11.61),(21,2)]))
