@@ -812,7 +812,7 @@ struct RealtimeReferenceGrid: Layout {
     }
 }
 
-/// Incoming pages fade in and move upward; outgoing pages are removed immediately without overlap.
+/// Newly mounted content fades in and moves upward once for its view identity.
 struct RealtimePageEntry: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var appeared = false

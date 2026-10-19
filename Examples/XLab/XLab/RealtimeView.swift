@@ -25,19 +25,21 @@ struct RealtimeView: View {
                 VStack(spacing: 0) {
                     if controller.sessionActive {
                         Spacer(minLength: 0)
-                        header(viewportWidth: geometry.size.width)
+                    }
+                    header(viewportWidth: geometry.size.width)
+                    if controller.sessionActive {
                         RealtimeSessionWorkspace(controller: controller)
+                            .modifier(RealtimePageEntry())
                         Spacer(minLength: 0)
                     } else {
-                        header(viewportWidth: geometry.size.width)
                         Spacer(minLength: 30)
                         landingPage(viewportWidth: geometry.size.width)
                         Spacer(minLength: 30)
                         footer
                     }
                 }
+                // Keep page identity stable so returning home does not restart the entry animation.
                 .modifier(RealtimePageEntry())
-                .id(controller.sessionActive)
                 .padding(.horizontal, 28)
                 .padding(.top, 16)
                 .padding(.bottom, 48)
