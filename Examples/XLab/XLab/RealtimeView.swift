@@ -31,6 +31,7 @@ struct RealtimeView: View {
                     if controller.sessionActive {
                         RealtimeSessionWorkspace(controller: controller)
                             .modifier(RealtimePageEntry())
+                            .disabled(controller.isClosing)
                         Spacer(minLength: 0)
                     } else {
                         Spacer(minLength: 30)
@@ -307,12 +308,20 @@ struct RealtimeSessionHeaderControls: View {
                 RealtimeHeaderPill { Text(elapsed(at: context.date)).monospacedDigit() }
             }
             Button { Task { await controller.close() } } label: {
-                HStack(spacing: 7) { Text("■"); Text("Stop Session") }
+                HStack(spacing: 7) {
+                    if controller.isClosing {
+                        ProgressView().controlSize(.mini).frame(width: 12, height: 12)
+                    } else {
+                        Text("■").frame(width: 12, height: 12)
+                    }
+                    Text("Stop Session")
+                }
             }
             .buttonStyle(RealtimeHeaderButtonStyle(height: 36, horizontalPadding: 16, destructive: true))
             .disabled(controller.isBusy)
             .help("Stop Session")
         }
+        .disabled(controller.isClosing)
         .task {
             while !Task.isCancelled {
                 await controller.refreshInterpolationState()

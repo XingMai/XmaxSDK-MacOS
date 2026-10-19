@@ -34,6 +34,7 @@ final class RealtimeSessionController: ObservableObject {
     @Published private(set) var state = RealtimeState(connectionState: .idle)
     @Published private(set) var errorMessage: String?
     @Published private(set) var isBusy = false
+    @Published private(set) var isClosing = false
     @Published private(set) var sessionStartedAt: Date?
     @Published private(set) var selectedReferenceID: String?
     @Published private(set) var uploadedReferences: [RealtimeReference] = []
@@ -332,13 +333,23 @@ final class RealtimeSessionController: ObservableObject {
 
     func dismissError() { errorMessage = nil }
 
-    /// Returns to the landing page before releasing SDK resources in the background, matching the Web example.
+    /// Finishes media teardown before starting the landing page animation.
     func close() async {
         guard !isBusy else { return }
-        let manager = manager
-        resetSession()
+        let closingManager = manager
+        let operation = UUID()
+        lifecycleID = operation
+        selectionIntent = UUID()
+        pendingInitialReference = nil
+        application?.cancel()
+        application = nil
+        manager = nil
+        isBusy = true
+        isClosing = true
         errorMessage = nil
-        await manager?.close()
+        await closingManager?.close()
+        guard lifecycleID == operation else { return }
+        resetSession()
     }
 
     func viewDidDisappear() {
@@ -356,6 +367,7 @@ final class RealtimeSessionController: ObservableObject {
         client = nil
         sessionActive = false
         isBusy = false
+        isClosing = false
         interpolationSwitching = false
         localStream = nil
         remoteStream = nil
