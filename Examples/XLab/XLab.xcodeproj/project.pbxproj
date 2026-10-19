@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA0123456789ABCDEF000001 /* RealtimeReferenceViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0123456789ABCDEF000002 /* RealtimeReferenceViews.swift */; };
 		068DD710767D275A362CF1EA /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 9024EE048665F6BE0006CC11 /* Kingfisher */; };
 		1C5ADE15981992EF7502F356 /* RealtimePresets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C90C03ACF0D5C4002662A1D /* RealtimePresets.swift */; };
 		4403B64BCF3910B853B93F8A /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 27270E9D49719B4C4E95860A /* Cocoa.framework */; };
@@ -15,16 +16,17 @@
 		86D6168F5F536B5CA91B403E /* RealtimeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91671F51C16A5AB79EAA0070 /* RealtimeComponents.swift */; };
 		99BBA4FAD54C8C8F19F6053E /* DMSans-OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3CF71668FE3669973C5A9068 /* DMSans-OFL.txt */; };
 		C2ACB832134F712FA61CFE36 /* RealtimeSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77356DA9FD252880FEFF294C /* RealtimeSessionController.swift */; };
-		D702308119484BAA6DC18EE8 /* RealtimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501AAEB78BA4EA3003EC92DB /* RealtimeView.swift */; };
+		D702308119484BAA6DC18EE8 /* RealtimeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501AAEB78BA4EA3003EC92DB /* RealtimeViewController.swift */; };
 		DC67A9F7CE5DD8755A622623 /* XLabApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FA9D53EB98D4B342D2949AD /* XLabApp.swift */; };
 		FF1CE2280780D71DF25F743B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 36E3C4A5FF8289133401A01F /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AA0123456789ABCDEF000002 /* RealtimeReferenceViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeReferenceViews.swift; sourceTree = "<group>"; };
 		27270E9D49719B4C4E95860A /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		36E3C4A5FF8289133401A01F /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3CF71668FE3669973C5A9068 /* DMSans-OFL.txt */ = {isa = PBXFileReference; includeInIndex = 1; path = "DMSans-OFL.txt"; sourceTree = "<group>"; };
-		501AAEB78BA4EA3003EC92DB /* RealtimeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RealtimeView.swift; sourceTree = "<group>"; };
+		501AAEB78BA4EA3003EC92DB /* RealtimeViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RealtimeViewController.swift; sourceTree = "<group>"; };
 		730F7B3828B7F7E3D0BF00E7 /* XLab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XLab.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		77356DA9FD252880FEFF294C /* RealtimeSessionController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RealtimeSessionController.swift; sourceTree = "<group>"; };
 		91671F51C16A5AB79EAA0070 /* RealtimeComponents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RealtimeComponents.swift; sourceTree = "<group>"; };
@@ -59,9 +61,10 @@
 			isa = PBXGroup;
 			children = (
 				77356DA9FD252880FEFF294C /* RealtimeSessionController.swift */,
-				501AAEB78BA4EA3003EC92DB /* RealtimeView.swift */,
+				501AAEB78BA4EA3003EC92DB /* RealtimeViewController.swift */,
 				9FA9D53EB98D4B342D2949AD /* XLabApp.swift */,
 				91671F51C16A5AB79EAA0070 /* RealtimeComponents.swift */,
+				AA0123456789ABCDEF000002 /* RealtimeReferenceViews.swift */,
 				9C90C03ACF0D5C4002662A1D /* RealtimePresets.swift */,
 				36E3C4A5FF8289133401A01F /* Assets.xcassets */,
 				5EA5B963F92535E238BB4D4F /* Fonts */,
@@ -181,9 +184,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				C2ACB832134F712FA61CFE36 /* RealtimeSessionController.swift in Sources */,
-				D702308119484BAA6DC18EE8 /* RealtimeView.swift in Sources */,
+				D702308119484BAA6DC18EE8 /* RealtimeViewController.swift in Sources */,
 				DC67A9F7CE5DD8755A622623 /* XLabApp.swift in Sources */,
 				86D6168F5F536B5CA91B403E /* RealtimeComponents.swift in Sources */,
+				AA0123456789ABCDEF000001 /* RealtimeReferenceViews.swift in Sources */,
 				1C5ADE15981992EF7502F356 /* RealtimePresets.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

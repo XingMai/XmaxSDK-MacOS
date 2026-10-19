@@ -4,6 +4,7 @@
 //  Copyright (c) 2026 XMAX.AI PTE. LTD.
 //
 
+import Combine
 import CoreGraphics
 import Foundation
 import ImageIO
@@ -53,6 +54,7 @@ final class RealtimeSessionController: ObservableObject {
     private var selectionIntent = UUID()
     private var pendingInitialReference: RealtimeReference?
     private var application: Task<Void, Never>?
+    private var closingTask: Task<Void, Never>?
     private let makeManager: (XmaxClient, RealtimeConfiguration) -> any XmaxRealtimeManaging
     private let uploadImage: (XmaxClient, Data, String, XmaxStorageProgressHandler?) async throws -> URL
 
@@ -305,7 +307,7 @@ final class RealtimeSessionController: ObservableObject {
         let operation = lifecycleID
         guard let manager else { return }
         let enabled = await manager.isFrameInterpolationEnabled
-        if lifecycleID == operation { interpolationEnabled = enabled }
+        if lifecycleID == operation, interpolationEnabled != enabled { interpolationEnabled = enabled }
     }
 
     func toggleInterpolation() async {
@@ -348,15 +350,22 @@ final class RealtimeSessionController: ObservableObject {
         isClosing = true
         interpolationSwitching = false
         errorMessage = nil
-        await closingManager?.close()
+        let task = Task<Void, Never> { await closingManager?.close() }
+        closingTask = task
+        await task.value
+        closingTask = nil
         guard lifecycleID == operation else { return }
         resetSession()
     }
 
-    func viewDidDisappear() {
+    /// Releases capture and transport before the AppKit application finishes termination.
+    func shutdown() async {
         let manager = manager
+        let closingTask = closingTask
+        application?.cancel()
         resetSession()
-        Task { await manager?.close() }
+        await closingTask?.value
+        await manager?.close()
     }
 
     private func resetSession() {
