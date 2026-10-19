@@ -18,6 +18,31 @@ final class CameraCaptureManagerTests: XCTestCase {
         }
     }
 
+    func testStudioDisplayRoundedRateUsesExactDeviceDuration() {
+        let duration = CMTime(value: 333333, timescale: 10_000_000)
+        XCTAssertEqual(CameraCaptureManager.captureFrameDuration(frameRate: 30, minimum: duration, maximum: duration), duration)
+    }
+
+    func testRequestedRateWithinDeviceRangeIsPreserved() {
+        let requested = CMTime(value: 1, timescale: 30)
+        XCTAssertEqual(CameraCaptureManager.captureFrameDuration(
+            frameRate: 30, minimum: CMTime(value: 1, timescale: 60), maximum: CMTime(value: 1, timescale: 15)
+        ), requested)
+    }
+
+    func testUnsupportedRateDoesNotFallBackToAnotherFrameRate() {
+        let duration = CMTime(value: 1, timescale: 25)
+        XCTAssertNil(CameraCaptureManager.captureFrameDuration(frameRate: 30, minimum: duration, maximum: duration))
+    }
+
+    func testInvalidFrameRateAndDurationAreRejected() {
+        let duration = CMTime(value: 1, timescale: 30)
+        XCTAssertNil(CameraCaptureManager.captureFrameDuration(frameRate: 0, minimum: duration, maximum: duration))
+        XCTAssertNil(CameraCaptureManager.captureFrameDuration(frameRate: 30, minimum: .invalid, maximum: duration))
+        XCTAssertNil(CameraCaptureManager.captureFrameDuration(frameRate: 30, minimum: .zero, maximum: duration))
+        XCTAssertNil(CameraCaptureManager.captureFrameDuration(frameRate: 30, minimum: duration, maximum: .zero))
+    }
+
     func testBuiltInCameraWithoutReportedPositionUsesFrontMirrorPolicy() {
         XCTAssertEqual(
             CameraCaptureManager.resolvePosition(.unspecified, deviceType: .builtInWideAngleCamera),

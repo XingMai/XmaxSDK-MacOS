@@ -79,6 +79,23 @@ final class CameraCaptureManager: NSObject, CameraCaptureManaging, @unchecked Se
         ).devices
     }
 
+    /// Matches the requested frame rate while accepting small device timing round-off.
+    ///
+    /// - Parameters:
+    ///   - frameRate: The requested nominal frame rate.
+    ///   - minimum: The device's shortest supported frame duration.
+    ///   - maximum: The device's longest supported frame duration.
+    /// - Returns: A supported duration, or nil when the nominal rate is unavailable.
+    static func captureFrameDuration(frameRate: Int, minimum: CMTime, maximum: CMTime) -> CMTime? {
+        guard frameRate > 0, frameRate <= Int(Int32.max),
+              minimum.isNumeric, maximum.isNumeric,
+              minimum > .zero, maximum >= minimum else { return nil }
+        let requested = CMTime(value: 1, timescale: Int32(frameRate))
+        let supported = min(max(requested, minimum), maximum)
+        guard abs(1 / supported.seconds - Double(frameRate)) <= 0.001 else { return nil }
+        return supported
+    }
+
     /// Starts camera capture and outputs upright NV12 frames at the target dimensions.
     ///
     /// - Parameters:
@@ -294,11 +311,11 @@ private extension CameraCaptureManager {
 
         // Prefers 16:9 formats up to 1920×1080, falling back to 4:3 formats up to 1920×1440.
         let selected = device.formats.compactMap { format -> (
-            format: AVCaptureDevice.Format, area: Int64, isWide: Bool
+            format: AVCaptureDevice.Format, area: Int64, isWide: Bool, duration: CMTime
         )? in
-            guard format.videoSupportedFrameRateRanges.contains(where: {
-                $0.minFrameRate <= Double(frameRate) && Double(frameRate) <= $0.maxFrameRate
-            }) else {
+            guard let duration = format.videoSupportedFrameRateRanges.lazy.compactMap({
+                Self.captureFrameDuration(frameRate: self.frameRate, minimum: $0.minFrameDuration, maximum: $0.maxFrameDuration)
+            }).first else {
                 return nil
             }
 
@@ -312,14 +329,14 @@ private extension CameraCaptureManager {
                 return nil
             }
 
-            return (format, longSide * shortSide, isWide)
+            return (format, longSide * shortSide, isWide, duration)
         }.max { lhs, rhs in
             if lhs.isWide != rhs.isWide {
                 return !lhs.isWide
             }
 
             return lhs.area < rhs.area
-        }?.format
+        }
 
         guard let selected else {
             throw Self.cameraError(
@@ -344,10 +361,9 @@ private extension CameraCaptureManager {
             device.unlockForConfiguration()
         }
 
-        device.activeFormat = selected
-        let duration = CMTime(value: 1, timescale: Int32(frameRate))
-        device.activeVideoMinFrameDuration = duration
-        device.activeVideoMaxFrameDuration = duration
+        device.activeFormat = selected.format
+        device.activeVideoMinFrameDuration = selected.duration
+        device.activeVideoMaxFrameDuration = selected.duration
 
         if device.isFocusModeSupported(.continuousAutoFocus) {
             device.focusMode = .continuousAutoFocus
