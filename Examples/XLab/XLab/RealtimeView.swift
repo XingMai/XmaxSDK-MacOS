@@ -27,6 +27,7 @@ struct RealtimeView: View {
                         Spacer(minLength: 0)
                     }
                     header(viewportWidth: geometry.size.width)
+                        .modifier(RealtimePageEntry())
                     if controller.sessionActive {
                         RealtimeSessionWorkspace(controller: controller)
                             .modifier(RealtimePageEntry())
@@ -34,12 +35,12 @@ struct RealtimeView: View {
                     } else {
                         Spacer(minLength: 30)
                         landingPage(viewportWidth: geometry.size.width)
+                            .modifier(RealtimePageEntry())
                         Spacer(minLength: 30)
                         footer
+                            .modifier(RealtimePageEntry())
                     }
                 }
-                // Keep page identity stable so returning home does not restart the entry animation.
-                .modifier(RealtimePageEntry())
                 .padding(.horizontal, 28)
                 .padding(.top, 16)
                 .padding(.bottom, 48)
