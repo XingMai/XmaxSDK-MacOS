@@ -20,7 +20,6 @@ enum RtcManagingCall: Equatable {
     case configureVideoEncoding(VideoEncodingConfiguration)
     case startAudioCapture
     case stopAudioCapture
-    case configureLocalVideoMirror(CameraPosition)
     case useExternalVideoSource
     case startExternalAudioSource
     case stopExternalAudioSource
@@ -48,7 +47,6 @@ final class RtcManagingStub: RtcManaging, @unchecked Sendable {
 
     /// Test configuration
     private let encodingError: (any Error)?
-    private let configureLocalVideoMirrorHandler: (@Sendable (CameraPosition) throws -> Void)?
     private let initializationError: (any Error)?
     private let initializationHandler: (@Sendable () async throws -> Void)?
     private let destroyHandler: (@Sendable () async -> Void)?
@@ -82,7 +80,6 @@ final class RtcManagingStub: RtcManaging, @unchecked Sendable {
         initializationHandler: (@Sendable () async throws -> Void)? = nil,
         destroyHandler: (@Sendable () async -> Void)? = nil,
         encodingError: (any Error)? = nil,
-        configureLocalVideoMirrorHandler: (@Sendable (CameraPosition) throws -> Void)? = nil,
         startAudioCaptureError: (any Error)? = nil,
         stopAudioCaptureError: (any Error)? = nil,
         publishLocalVideoError: (any Error)? = nil,
@@ -102,7 +99,6 @@ final class RtcManagingStub: RtcManaging, @unchecked Sendable {
         self.initializationHandler = initializationHandler
         self.destroyHandler = destroyHandler
         self.encodingError = encodingError
-        self.configureLocalVideoMirrorHandler = configureLocalVideoMirrorHandler
         self.startAudioCaptureError = startAudioCaptureError
         self.stopAudioCaptureError = stopAudioCaptureError
         self.publishLocalVideoError = publishLocalVideoError
@@ -185,13 +181,6 @@ final class RtcManagingStub: RtcManaging, @unchecked Sendable {
         lock.withLock {
             storedCalls.append(.stopExternalAudioSource)
         }
-    }
-
-    func configureLocalVideoMirror(
-        for position: CameraPosition
-    ) throws {
-        lock.withLock { storedCalls.append(.configureLocalVideoMirror(position)) }
-        try configureLocalVideoMirrorHandler?(position)
     }
 
     func pushExternalVideoFrame(_ frame: VideoFrame) throws {

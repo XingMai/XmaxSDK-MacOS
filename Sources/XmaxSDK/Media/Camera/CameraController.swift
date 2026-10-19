@@ -176,7 +176,6 @@ final class CameraController: CameraControlling, @unchecked Sendable {
             }
             try Task.checkCancellation()
             try rtcManager.useExternalVideoSource()
-            try rtcManager.configureLocalVideoMirror(for: device.position)
             let preview = await makePreview(for: track, position: device.position)
             stateLock.withLock {
                 activeTrack = track
@@ -266,20 +265,13 @@ final class CameraController: CameraControlling, @unchecked Sendable {
     /// Switches to the specified camera device while retaining the current video track.
     ///
     /// - Returns: The media stream containing the updated camera track.
-    /// - Throws: An error if no camera stream is active, device switching fails, or mirror configuration fails.
+    /// - Throws: An error if no camera stream is active or device switching fails.
     func switchCamera(to deviceID: String) async throws -> RealtimeMediaStream {
-        guard let track = currentTrack, let previousDevice = track.device else {
+        guard let track = currentTrack else {
             throw XmaxError(code: .rtcError, message: "Local camera preview is not started")
         }
         let device = try resolveDevice(deviceID)
         try await captureManager.switchCamera(to: device.id)
-        do {
-            try rtcManager.configureLocalVideoMirror(for: device.position)
-        } catch {
-            try? await captureManager.switchCamera(to: previousDevice.id)
-            try? rtcManager.configureLocalVideoMirror(for: previousDevice.position)
-            throw error
-        }
         track.updateDevice(device)
         let preview = stateLock.withLock { self.preview }
         await preview?.presenter.setMirrored(device.position == .front)

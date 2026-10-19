@@ -119,7 +119,7 @@ enum RtcVideoConverter {
     /// Converts SDK encoding parameters to Agora configuration.
     ///
     /// - Parameter configuration: Dimensions, frame rate, bitrate bounds, and encoding preferences.
-    /// - Returns: Agora encoding configuration with mirroring initially disabled and adaptive orientation.
+    /// - Returns: Agora encoding configuration with upstream mirroring disabled and adaptive orientation.
     static func makeEncoderConfiguration(_ configuration: VideoEncodingConfiguration) -> AgoraVideoEncoderConfiguration {
         let result = AgoraVideoEncoderConfiguration(
             size: CGSize(width: configuration.width, height: configuration.height),

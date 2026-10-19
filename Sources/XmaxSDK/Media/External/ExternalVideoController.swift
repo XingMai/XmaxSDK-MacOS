@@ -77,7 +77,6 @@ final class ExternalVideoController: ExternalVideoControlling, @unchecked Sendab
         }
         do {
             try rtcManager.useExternalVideoSource()
-            try rtcManager.configureLocalVideoMirror(for: .unspecified)
             VideoRenderRegistry.register(track, binding: VideoRenderBinding(
                 attachHandler: { source.attachPreview(to: $0, contentMode: $1) },
                 detachHandler: { source.detachPreview(from: $0) }

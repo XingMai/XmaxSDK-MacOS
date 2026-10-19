@@ -55,14 +55,6 @@ protocol RtcManaging: Sendable {
     /// - Throws: An error if audio track release fails.
     func stopExternalAudioSource() throws
 
-    /// Updates upstream video mirroring.
-    ///
-    /// - Parameter position: The current camera position.
-    /// - Throws: An error if encoder mirroring configuration fails.
-    func configureLocalVideoMirror(
-        for position: CameraPosition
-    ) throws
-
     /// Pushes an external video frame.
     ///
     /// - Parameter frame: The SDK's neutral video frame.

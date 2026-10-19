@@ -28,12 +28,6 @@ protocol RtcPlatform: AnyObject, Sendable {
     /// - Throws: An error if video source configuration fails.
     func useExternalVideoSource() throws
 
-    /// Updates upstream video mirroring.
-    ///
-    /// - Parameter position: The current camera position.
-    /// - Throws: An error if encoder mirroring configuration fails.
-    func configureLocalVideoMirror(for position: CameraPosition) throws
-
     /// Switches to microphone input and starts capture.
     ///
     /// - Throws: An error on audio source switching or capture failure.

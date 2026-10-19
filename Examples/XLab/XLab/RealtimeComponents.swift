@@ -221,12 +221,15 @@ struct RealtimeVideoPanel: View {
     let track: RealtimeVideoTrack?
     let placeholder: String
     var showsWatermark = false
+    /// Mirrors the view without changing the track or its frame callbacks.
+    var mirrored = false
     var statistics: [RealtimeStatisticsGroup] = []
 
     var body: some View {
         ZStack {
             Color.black
             XmaxVideo(track: track)
+                .scaleEffect(x: mirrored ? -1 : 1, y: 1)
             if !placeholder.isEmpty {
                 Text(placeholder)
                     .font(RealtimeHeaderTypography.font(size: 14))

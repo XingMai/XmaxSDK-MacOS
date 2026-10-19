@@ -5,6 +5,7 @@
 //
 
 import AppKit
+@preconcurrency import AVFoundation
 import XCTest
 @testable import XmaxSDK
 
@@ -36,56 +37,41 @@ final class CameraControllerTests: XCTestCase, @unchecked Sendable {
         XCTAssertNil(controller.currentTrack)
     }
 
-    func testCameraStreamConfiguresUplinkMirrorUsingDevicePosition() async throws {
+    @MainActor
+    func testCameraMirroringIsConfinedToPreviewLayer() async throws {
         for position in [CameraPosition.front, .back, .unspecified] {
             let device = CameraDevice(id: "camera", name: "Camera", isDefault: true, position: position)
             let capture = CameraCaptureManagingStub(devices: [device])
             let rtc = RtcManagingStub()
             let controller = makeController(capture, rtc: rtc)
-            _ = try await controller.createLocalCameraStream(videoFormat: format, deviceID: nil)
-            XCTAssertEqual(rtc.calls, [.useExternalVideoSource, .configureLocalVideoMirror(position)])
+            let stream = try await controller.createLocalCameraStream(videoFormat: format, deviceID: nil)
+            let track = try XCTUnwrap(stream.videoTrack)
+            let view = XmaxVideoView()
+            try VideoRenderRegistry.binding(for: track)?.attach(to: view, contentMode: .fit)
+            let layer = try XCTUnwrap(view.layer?.sublayers?.first { $0 is AVSampleBufferDisplayLayer })
+            XCTAssertEqual(layer.affineTransform().a, position == .front ? -1 : 1)
+            XCTAssertEqual(rtc.calls, [.useExternalVideoSource])
             await controller.stopLocalCameraStream()
         }
     }
 
+    @MainActor
     func testCameraSwitchKeepsTrackIdentityAndUpdatesDevice() async throws {
         let capture = CameraCaptureManagingStub(devices: [builtIn, external])
         let rtc = RtcManagingStub()
         let controller = makeController(capture, rtc: rtc)
         let local = try await controller.createLocalCameraStream(videoFormat: format, deviceID: "builtin")
+        let track = try XCTUnwrap(local.videoTrack)
+        let view = XmaxVideoView()
+        try VideoRenderRegistry.binding(for: track)?.attach(to: view, contentMode: .fit)
+        let layer = try XCTUnwrap(view.layer?.sublayers?.first { $0 is AVSampleBufferDisplayLayer })
+        XCTAssertEqual(layer.affineTransform().a, -1)
         let switched = try await controller.switchCamera(to: "usb")
         XCTAssertTrue(local.videoTrack === switched.videoTrack)
         XCTAssertEqual(switched.videoTrack?.device, external)
+        XCTAssertEqual(layer.affineTransform().a, 1)
         XCTAssertEqual(capture.calls, [.start("builtin"), .switchCamera("usb")])
-        XCTAssertEqual(rtc.calls, [
-            .useExternalVideoSource, .configureLocalVideoMirror(.front),
-            .configureLocalVideoMirror(.back)
-        ])
-        await controller.stopLocalCameraStream()
-    }
-
-    func testMirrorConfigurationFailureRestoresPreviousCameraAndMirror() async throws {
-        let capture = CameraCaptureManagingStub(devices: [builtIn, external])
-        let rtc = RtcManagingStub(configureLocalVideoMirrorHandler: { position in
-            if position == .back {
-                throw XmaxError(code: .rtcError, message: "Mirror configuration failed")
-            }
-        })
-        let controller = makeController(capture, rtc: rtc)
-        let local = try await controller.createLocalCameraStream(videoFormat: format, deviceID: nil)
-        do {
-            _ = try await controller.switchCamera(to: "usb")
-            XCTFail("Expected mirror configuration failure")
-        } catch {
-            XCTAssertEqual((error as? XmaxError)?.code, .rtcError)
-        }
-        XCTAssertTrue(controller.currentTrack === local.videoTrack)
-        XCTAssertEqual(controller.currentTrack?.device, builtIn)
-        XCTAssertEqual(capture.calls, [.start("builtin"), .switchCamera("usb"), .switchCamera("builtin")])
-        XCTAssertEqual(rtc.calls, [
-            .useExternalVideoSource, .configureLocalVideoMirror(.front),
-            .configureLocalVideoMirror(.back), .configureLocalVideoMirror(.front)
-        ])
+        XCTAssertEqual(rtc.calls, [.useExternalVideoSource])
         await controller.stopLocalCameraStream()
     }
 

@@ -54,7 +54,7 @@ final class CameraCaptureManager: NSObject, CameraCaptureManaging, @unchecked Se
     /// - Parameters:
     ///   - position: The camera position reported by the system.
     ///   - deviceType: The device type used to identify built-in cameras.
-    /// - Returns: The camera position shared by preview and upload mirroring.
+    /// - Returns: The camera position used for preview mirroring.
     static func resolvePosition(
         _ position: AVCaptureDevice.Position,
         deviceType: AVCaptureDevice.DeviceType

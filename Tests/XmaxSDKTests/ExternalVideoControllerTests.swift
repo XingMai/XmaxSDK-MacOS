@@ -182,7 +182,7 @@ final class ExternalVideoControllerTests: XCTestCase {
         let stream = try await controller.create(source: source, videoFormat: format)
         XCTAssertEqual(stream.videoTrack?.videoFormat, format)
         XCTAssertEqual(source.sink?.videoFormat, format)
-        XCTAssertEqual(rtc.calls, [.useExternalVideoSource, .configureLocalVideoMirror(.unspecified)])
+        XCTAssertEqual(rtc.calls, [.useExternalVideoSource])
         await controller.stop()
     }
 

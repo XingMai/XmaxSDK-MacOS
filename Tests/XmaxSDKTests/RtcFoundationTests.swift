@@ -34,6 +34,7 @@ final class RtcFoundationTests: XCTestCase {
             XCTAssertEqual(converted.minBitrate, 1500)
             XCTAssertEqual(converted.bitrate, 3000)
             XCTAssertEqual(converted.degradationPreference, expected)
+            XCTAssertEqual(converted.mirrorMode, .disabled)
         }
     }
 

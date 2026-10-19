@@ -23,7 +23,6 @@ final class AgoraRtcPlatform: RtcPlatform, @unchecked Sendable {
     /// Video configuration
     private let videoFrameCache = RtcVideoFrameCache()
     private var videoConfiguration: VideoEncodingConfiguration?
-    private var videoMirrorMode = AgoraVideoMirrorMode.disabled
 
     /// Audio resources
     private(set) var audioTrackID: Int?
@@ -77,18 +76,6 @@ final class AgoraRtcPlatform: RtcPlatform, @unchecked Sendable {
         try lock.withLock {
             videoFrameCache.removeAll()
             engine.setExternalVideoSource(true, useTexture: false, sourceType: .videoFrame)
-            videoMirrorMode = .disabled
-            try reapplyVideoConfiguration()
-        }
-    }
-
-    /// Updates upstream video mirroring.
-    ///
-    /// - Parameter position: The current camera position.
-    /// - Throws: An error if encoder mirroring configuration fails.
-    func configureLocalVideoMirror(for position: CameraPosition) throws {
-        try lock.withLock {
-            videoMirrorMode = position == .front ? .enabled : .disabled
             try reapplyVideoConfiguration()
         }
     }
@@ -191,7 +178,7 @@ final class AgoraRtcPlatform: RtcPlatform, @unchecked Sendable {
         }
     }
 
-    /// Reapplies saved encoding configuration and current mirroring settings.
+    /// Reapplies saved encoding configuration with upstream mirroring disabled.
     ///
     /// - Throws: An error if Agora rejects encoding configuration.
     func reapplyVideoConfiguration() throws {
@@ -218,7 +205,6 @@ final class AgoraRtcPlatform: RtcPlatform, @unchecked Sendable {
     /// - Throws: An error if Agora encoding configuration fails.
     private func applyVideoConfiguration(_ configuration: VideoEncodingConfiguration) throws {
         let rtcConfiguration = RtcVideoConverter.makeEncoderConfiguration(configuration)
-        rtcConfiguration.mirrorMode = videoMirrorMode
         let result: Int32
         if let room, room.isJoined, !room.isClosed {
             result = engine.setVideoEncoderConfigurationEx(

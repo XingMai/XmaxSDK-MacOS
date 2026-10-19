@@ -341,6 +341,7 @@ struct RealtimeSessionWorkspace: View {
                     placeholder: controller.state.connectionState == .generating && controller.remoteStream != nil ? "" :
                         [.connected, .generating].contains(controller.state.connectionState) ? "Generating…" : "Waiting for connection…",
                     showsWatermark: true,
+                    mirrored: controller.localStream?.videoTrack?.position == .front,
                     statistics: controller.statisticsVisible ? controller.remoteStatisticsPanels : []
                 )
             }

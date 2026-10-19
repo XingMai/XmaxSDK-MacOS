@@ -143,14 +143,6 @@ final class RtcManager: RtcManaging, @unchecked Sendable {
         try withEngine { try $0.useExternalVideoSource() }
     }
 
-    /// Updates upstream video mirroring.
-    ///
-    /// - Parameter position: The current camera position.
-    /// - Throws: An error if encoder mirroring configuration fails.
-    func configureLocalVideoMirror(for position: CameraPosition) throws {
-        try withOptionalEngine { try $0.configureLocalVideoMirror(for: position) }
-    }
-
     /// Switches to microphone input and starts capture.
     ///
     /// - Throws: An error on audio source switching or capture failure.

@@ -65,7 +65,7 @@ protocol CameraControlling: Sendable {
     /// Switches to the specified camera device while retaining the current video track.
     ///
     /// - Returns: The media stream containing the updated camera track.
-    /// - Throws: An error if no camera stream is active, device switching fails, or mirror configuration fails.
+    /// - Throws: An error if no camera stream is active or device switching fails.
     func switchCamera(to deviceID: String) async throws -> RealtimeMediaStream
 
 }
