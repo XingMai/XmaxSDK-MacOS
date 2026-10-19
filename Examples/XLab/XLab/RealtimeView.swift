@@ -421,7 +421,8 @@ struct RealtimeSessionWorkspace: View {
             }
         }
         .disabled(!controller.canGenerate)
-        .opacity(controller.canGenerate ? 1 : 0.35)
+        // Interpolation temporarily locks generation without fading the loaded reference images.
+        .opacity(controller.canGenerate || controller.interpolationSwitching ? 1 : 0.35)
     }
 
     private var uploadButton: some View {
