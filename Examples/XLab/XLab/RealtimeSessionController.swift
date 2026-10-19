@@ -335,7 +335,7 @@ final class RealtimeSessionController: ObservableObject {
 
     /// Finishes media teardown before starting the landing page animation.
     func close() async {
-        guard !isBusy else { return }
+        guard sessionActive, !isClosing else { return }
         let closingManager = manager
         let operation = UUID()
         lifecycleID = operation
@@ -346,6 +346,7 @@ final class RealtimeSessionController: ObservableObject {
         manager = nil
         isBusy = true
         isClosing = true
+        interpolationSwitching = false
         errorMessage = nil
         await closingManager?.close()
         guard lifecycleID == operation else { return }

@@ -273,6 +273,7 @@ struct RealtimeSessionHeaderControls: View {
                 RealtimeWebIcon(kind: controller.remoteAudioVolume == 0 ? .muted : controller.remoteAudioVolume > 0.5 ? .volume : .volumeLow).frame(width: 18, height: 18)
             }
             .buttonStyle(RealtimeSessionToolStyle(active: controller.remoteAudioVolume > 0))
+            .disabled(controller.isClosing)
             .help("Adjust remote playback volume")
             .accessibilityLabel("Remote volume")
             .accessibilityValue(controller.remoteAudioVolume == 0 ? "Muted" : "\(Int(controller.remoteAudioVolume * 100))%")
@@ -288,20 +289,26 @@ struct RealtimeSessionHeaderControls: View {
                         get: { Double(controller.remoteAudioVolume) },
                         set: { value in Task { await controller.setRemoteAudioVolume(Float(value)) } }
                     ), in: 0...1, step: 0.01).accessibilityLabel("Remote volume")
+                        .disabled(controller.isClosing)
                 }
                 .font(RealtimeHeaderTypography.font(size: 12)).padding(14).frame(width: 216)
                 .onExitCommand { volumeOpen = false }
             }
             Button { Task { await controller.toggleInterpolation() } } label: {
                 HStack(spacing: 3) {
-                    RealtimeWebIcon(kind: .lightning).frame(width: 15, height: 15)
+                    if controller.interpolationSwitching {
+                        RealtimeSpinner(size: 15, color: RealtimePalette.secondary)
+                    } else {
+                        RealtimeWebIcon(kind: .lightning).frame(width: 15, height: 15)
+                    }
                     Text("2x")
                 }
             }
-            .buttonStyle(RealtimeSessionToolStyle(active: controller.interpolationEnabled, kind: .interpolation))
+            .buttonStyle(RealtimeSessionToolStyle(active: controller.interpolationEnabled, kind: .interpolation,
+                                                 isLoading: controller.interpolationSwitching))
             .disabled(controller.isBusy)
             .accessibilityLabel("Frame interpolation")
-            .accessibilityValue(controller.interpolationEnabled ? "On" : "Off")
+            .accessibilityValue(controller.interpolationSwitching ? "Switching" : controller.interpolationEnabled ? "On" : "Off")
             .help(controller.interpolationSwitching ? "Switching frame interpolation…" :
                     controller.interpolationEnabled ? "2× frame interpolation is on. Click to turn off" : "Frame interpolation is off. Click to turn on")
             TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -310,18 +317,18 @@ struct RealtimeSessionHeaderControls: View {
             Button { Task { await controller.close() } } label: {
                 HStack(spacing: 7) {
                     if controller.isClosing {
-                        ProgressView().controlSize(.mini).frame(width: 12, height: 12)
+                        RealtimeSpinner(size: 12, color: Color(red: 220.0 / 255, green: 38.0 / 255, blue: 38.0 / 255))
                     } else {
                         Text("■").frame(width: 12, height: 12)
                     }
-                    Text("Stop Session")
+                    Text(controller.isClosing ? "Stopping…" : "Stop Session")
                 }
             }
-            .buttonStyle(RealtimeHeaderButtonStyle(height: 36, horizontalPadding: 16, destructive: true))
-            .disabled(controller.isBusy)
+            .buttonStyle(RealtimeHeaderButtonStyle(height: 36, horizontalPadding: 16, destructive: true,
+                                                   isLoading: controller.isClosing))
+            .disabled(controller.isClosing)
             .help("Stop Session")
         }
-        .disabled(controller.isClosing)
         .task {
             while !Task.isCancelled {
                 await controller.refreshInterpolationState()

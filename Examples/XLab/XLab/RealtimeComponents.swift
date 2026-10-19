@@ -87,12 +87,13 @@ struct RealtimeHeaderButtonStyle: ButtonStyle {
     var iconOnly = false
     var destructive = false
     var muted = false
+    var isLoading = false
 
     func makeBody(configuration: Configuration) -> some View {
         RealtimeHeaderButtonBody(
             configuration: configuration, height: height,
             horizontalPadding: horizontalPadding, iconOnly: iconOnly,
-            destructive: destructive, muted: muted
+            destructive: destructive, muted: muted, isLoading: isLoading
         )
     }
 }
@@ -104,6 +105,7 @@ private struct RealtimeHeaderButtonBody: View {
     let iconOnly: Bool
     let destructive: Bool
     let muted: Bool
+    let isLoading: Bool
     @Environment(\.isEnabled) private var isEnabled
     @State private var isHovered = false
 
@@ -116,7 +118,7 @@ private struct RealtimeHeaderButtonBody: View {
             .frame(width: iconOnly ? height : nil, height: height)
             .background(RealtimeHeaderPillSurface(destructive: destructive, hovered: isHovered && isEnabled))
             .contentShape(Capsule())
-            .opacity(isEnabled ? 1 : 0.5)
+            .opacity(isEnabled || isLoading ? 1 : 0.5)
             .onHover { isHovered = $0 }
             .animation(.easeInOut(duration: 0.15), value: isHovered)
     }
@@ -381,12 +383,13 @@ struct RealtimeThumbnail: View {
 /// The Web 18pt white loading ring completes a turn in 0.8 seconds and stays still with reduced motion.
 struct RealtimeSpinner: View {
     var size: CGFloat = 18
+    var color: Color = .white
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var spinning = false
 
     var body: some View {
-        Circle().stroke(.white.opacity(0.35), lineWidth: 2)
-            .overlay(Circle().trim(from: 0, to: 0.25).stroke(.white, lineWidth: 2))
+        Circle().stroke(color.opacity(0.35), lineWidth: 2)
+            .overlay(Circle().trim(from: 0, to: 0.25).stroke(color, lineWidth: 2))
             .frame(width: size - 2, height: size - 2)
             .rotationEffect(.degrees(spinning ? 360 : 0))
             .frame(width: size, height: size)
@@ -491,9 +494,10 @@ struct RealtimeSessionToolStyle: ButtonStyle {
     enum Kind { case volume, statistics, interpolation }
     var active = false
     var kind = Kind.volume
+    var isLoading = false
 
     func makeBody(configuration: Configuration) -> some View {
-        RealtimeSessionToolBody(configuration: configuration, active: active, kind: kind)
+        RealtimeSessionToolBody(configuration: configuration, active: active, kind: kind, isLoading: isLoading)
     }
 }
 
@@ -501,6 +505,7 @@ private struct RealtimeSessionToolBody: View {
     let configuration: ButtonStyleConfiguration
     let active: Bool
     let kind: RealtimeSessionToolStyle.Kind
+    let isLoading: Bool
     @Environment(\.isEnabled) private var isEnabled
     @State private var hovered = false
 
@@ -522,7 +527,7 @@ private struct RealtimeSessionToolBody: View {
                         .overlay(Capsule().strokeBorder(Color(red: 240.0 / 255, green: 207.0 / 255, blue: 136.0 / 255)))
                 } else { RealtimeHeaderPillSurface(hovered: hovered && isEnabled) }
             }
-            .opacity(isEnabled ? 1 : 0.5)
+            .opacity(isEnabled || isLoading ? 1 : 0.5)
             .contentShape(Capsule())
             .onHover { hovered = $0 }
     }
