@@ -187,7 +187,7 @@ use_frameworks! :linkage => :static
 target 'YourApp' do
   pod 'XmaxSDK',
       :git => 'https://github.com/XingMai/XmaxSDK-MacOS.git',
-      :tag => '1.0.0'
+      :tag => '1.0.1'
 end
 
 post_install do |installer|
@@ -208,7 +208,7 @@ pod install --repo-update
 ### Manual
 
 Download
-[`XmaxSDK-1.0.0.xcframework.zip`](https://github.com/XingMai/XmaxSDK-MacOS/releases/download/1.0.0/XmaxSDK-1.0.0.xcframework.zip),
+[`XmaxSDK-1.0.1.xcframework.zip`](https://github.com/XingMai/XmaxSDK-MacOS/releases/download/1.0.1/XmaxSDK-1.0.1.xcframework.zip),
 then follow the [manual integration guide](./Materials/installation.md#manual-integration)
 to add the required dependencies and configure your Xcode target.
 
