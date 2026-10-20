@@ -335,7 +335,7 @@ final class RealtimeSessionController: ObservableObject {
 
     func dismissError() { errorMessage = nil }
 
-    /// Finishes media teardown before starting the landing page animation.
+    /// Returns to the landing page immediately while preventing a restart until media teardown finishes.
     func close() async {
         guard sessionActive, !isClosing else { return }
         let closingManager = manager
@@ -350,6 +350,8 @@ final class RealtimeSessionController: ObservableObject {
         isClosing = true
         interpolationSwitching = false
         errorMessage = nil
+        // Keep the hidden video bindings alive until teardown finishes; only the visible page changes now.
+        sessionActive = false
         let task = Task<Void, Never> { await closingManager?.close() }
         closingTask = task
         await task.value

@@ -300,7 +300,7 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         modelButton.isEnabled = !controller.isBusy
         currentModel.title = controller.model.displayName
         keyButton.title = keyTitle
-        startButton.title = controller.isBusy ? "Starting…" : "Start Camera"
+        startButton.title = controller.isClosing ? "Stopping…" : controller.isBusy ? "Starting…" : "Start Camera"
         startButton.loading = controller.isBusy
         startButton.isEnabled = !controller.isBusy
         microphoneSwitch.isEnabled = !controller.isBusy
