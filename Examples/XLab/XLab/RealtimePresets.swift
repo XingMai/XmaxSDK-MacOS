@@ -131,7 +131,7 @@ struct RealtimeReference: Identifiable, Sendable {
         image: String,
         reference: String
     ) -> Self {
-        let base = "https://platform.xmaxai.com/images/source/\(mode.rawValue)"
+        let base = "https://cdn.22duck.cn/images/source/\(mode.rawValue)"
         let thumbnail = "\(base)/\(image)?presetVersion=\(version)&imageMogr2/thumbnail/160x160/format/webp/quality/80"
         let path = "\(base)/\(reference)?presetVersion=\(version)"
         return Self(id: path, mode: mode, name: name, thumbnailURL: URL(string: thumbnail)!, referencePath: path)
