@@ -73,7 +73,7 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
 
     /// Error presentation and observation ownership
     private let toast = RealtimeCanvas(color: .white.withAlphaComponent(0.96), radius: 14)
-    private let toastIcon = realtimeLabel("ⓘ", size: 18, color: .systemRed)
+    private let toastIcon = NSImageView()
     private let toastMessage = realtimeLabel(size: 14)
     private let toastDismiss = RealtimeButton("×", style: .plain)
     private var observation: AnyCancellable?
@@ -277,7 +277,13 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         toast.layer?.borderWidth = 1; toast.layer?.borderColor = RealtimePalette.text.withAlphaComponent(0.08).cgColor
         toast.layer?.shadowColor = NSColor.black.cgColor; toast.layer?.shadowOpacity = 0.14
         toast.layer?.shadowRadius = 16; toast.layer?.shadowOffset = CGSize(width: 0, height: 8)
+        toastIcon.image = NSImage(systemSymbolName: "exclamationmark.circle", accessibilityDescription: nil)
+        toastIcon.contentTintColor = .systemRed
+        toastIcon.imageScaling = .scaleProportionallyUpOrDown
         toastMessage.maximumNumberOfLines = 0; toastMessage.lineBreakMode = .byWordWrapping
+        toastMessage.cell?.usesSingleLineMode = false
+        toastMessage.cell?.wraps = true
+        toastMessage.cell?.isScrollable = false
         toastMessage.isSelectable = true
         toastDismiss.setAccessibilityLabel("Dismiss")
         toastDismiss.onClick = { [weak self] in self?.controller.dismissError() }
@@ -536,14 +542,27 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
     }
 
     private func layoutToast() {
-        let width = min(590, max(0, root.bounds.width - 56))
-        let textWidth = max(1, width - 90)
-        let textHeight = (toastMessage.stringValue as NSString).boundingRect(with: NSSize(width: textWidth, height: 500), options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: [.font: toastMessage.font!]).height
-        let height = max(52, ceil(textHeight) + 24)
+        let horizontalPadding: CGFloat = 16
+        let verticalPadding: CGFloat = 12
+        let iconSize: CGFloat = 20
+        let gap: CGFloat = 10
+        let dismissSize: CGFloat = 24
+        let accessoryWidth = horizontalPadding * 2 + iconSize + dismissSize + gap * 2
+        let maximumWidth = min(560, max(0, root.bounds.width - 56))
+        // Include NSTextField's cell insets, then wrap only when the maximum width is reached.
+        let naturalTextWidth = ceil(toastMessage.attributedStringValue.size().width) + 4
+        let width = min(maximumWidth, naturalTextWidth + accessoryWidth)
+        let textWidth = max(1, width - accessoryWidth)
+        let textHeight = ceil(toastMessage.cell?.cellSize(forBounds: NSRect(
+            x: 0, y: 0, width: textWidth, height: .greatestFiniteMagnitude
+        )).height ?? 0)
+        let height = max(textHeight, iconSize, dismissSize) + verticalPadding * 2
         toast.frame = NSRect(x: (root.bounds.width - width) / 2, y: 84, width: width, height: height)
-        toastIcon.frame = NSRect(x: 16, y: (height - 24) / 2, width: 24, height: 24)
-        toastMessage.frame = NSRect(x: 48, y: 12, width: textWidth, height: height - 24)
-        toastDismiss.frame = NSRect(x: width - 38, y: (height - 26) / 2, width: 24, height: 26)
+        toastIcon.frame = NSRect(x: horizontalPadding, y: (height - iconSize) / 2, width: iconSize, height: iconSize)
+        toastMessage.frame = NSRect(x: horizontalPadding + iconSize + gap, y: (height - textHeight) / 2,
+                                    width: textWidth, height: textHeight)
+        toastDismiss.frame = NSRect(x: width - horizontalPadding - dismissSize, y: (height - dismissSize) / 2,
+                                    width: dismissSize, height: dismissSize)
     }
 
     /// Popovers use native fields and controls, keeping keyboard editing independent of session redraws.
