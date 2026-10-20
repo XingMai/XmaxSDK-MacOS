@@ -36,6 +36,24 @@ public final class XmaxRealtimeVideoView: NSView {
         }
     }
 
+    /// Enables trajectories on the generated result only.
+    public var isInteractionEnabled: Bool {
+        get { remoteVideoView.isInteractionEnabled }
+        set { remoteVideoView.isInteractionEnabled = newValue }
+    }
+
+    /// Mirrors the generated result; interaction coordinates follow the displayed pointer.
+    public var isMirrored: Bool {
+        get { remoteVideoView.isMirrored }
+        set { remoteVideoView.isMirrored = newValue }
+    }
+
+    /// Overrides result trajectory visuals; nil selects the built-in effect.
+    public var trajectoryRenderer: (any TrajectoryEffectRendering)? {
+        get { remoteVideoView.trajectoryRenderer }
+        set { remoteVideoView.trajectoryRenderer = newValue }
+    }
+
     /// Video views
     private let localVideoView = XmaxVideoView()
     private let remoteVideoView = XmaxVideoView()

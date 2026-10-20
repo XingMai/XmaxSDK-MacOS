@@ -454,6 +454,7 @@ private extension XmaxRealtimeGenerationManagerTests {
             manager: XmaxRealtimeGenerationManager(
                 interactionController: interactionController,
                 streamController: streamController,
+                renderController: RenderController(rtcManager: rtcManager),
                 taskIDGenerator: { "task-fixed" }
             ),
             interactionController: interactionController,

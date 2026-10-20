@@ -22,6 +22,7 @@ actor XmaxRealtimeGenerationManager {
     /// Business layer components
     private let interactionController: any InteractionControlling
     private let streamController: any StreamControlling
+    private let renderController: any RenderControlling
 
     /// Generation configuration
     private let taskIDGenerator: @Sendable () -> String
@@ -38,15 +39,18 @@ actor XmaxRealtimeGenerationManager {
     /// - Parameters:
     ///   - interactionController: The component managing trajectory interaction during generation.
     ///   - streamController: The component sending generation signals and confirming remote results.
+    ///   - renderController: The component enabling pointer input only for a confirmed generation task.
     ///   - taskIDGenerator: The callback creating generation task identifiers.
     init(
         interactionController: any InteractionControlling,
         streamController: any StreamControlling,
+        renderController: any RenderControlling,
         taskIDGenerator: @escaping @Sendable () -> String =
             XmaxRealtimeGenerationManager.createTaskID
     ) {
         self.interactionController = interactionController
         self.streamController = streamController
+        self.renderController = renderController
         self.taskIDGenerator = taskIDGenerator
     }
 
@@ -92,6 +96,7 @@ actor XmaxRealtimeGenerationManager {
         }
 
         let taskID = taskIDGenerator()
+        await renderController.setInteractionEnabled(false)
         let confirmation = try await streamController.beginGeneration(
             taskID: taskID,
             videoFormat: generationVideoFormat ?? videoFormat,
@@ -115,6 +120,8 @@ actor XmaxRealtimeGenerationManager {
             try ensureCurrent()
             currentContext = resolvedContext
             currentFaceRestoration = faceRestoration
+            await renderController.setInteractionEnabled(true)
+            try ensureCurrent()
             return taskID
         } catch {
             try? await stop(taskID: taskID)
@@ -160,6 +167,7 @@ actor XmaxRealtimeGenerationManager {
             paddingContain: paddingContain
         )
         try ensureCurrent()
+        await renderController.setInteractionEnabled(false)
         await interactionController.startInteraction(
             taskID: taskID,
             videoFormat: videoFormat
@@ -167,6 +175,8 @@ actor XmaxRealtimeGenerationManager {
         try ensureCurrent()
         currentContext = resolvedContext
         currentFaceRestoration = faceRestoration
+        await renderController.setInteractionEnabled(true)
+        try ensureCurrent()
     }
 
     /// Stops interaction and sends the generation stop signal.
@@ -174,6 +184,7 @@ actor XmaxRealtimeGenerationManager {
     /// - Parameter taskID: The generation task identifier to stop.
     /// - Throws: An error if sending the generation stop signal fails.
     func stop(taskID: String) async throws {
+        await renderController.setInteractionEnabled(false)
         await interactionController.stopInteraction()
         try await streamController.stopGeneration(taskID: taskID)
     }

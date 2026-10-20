@@ -23,6 +23,9 @@ protocol RenderControlling: AnyObject, Sendable {
     /// Whether remote video interpolation is currently enabled.
     var isFrameInterpolationEnabled: Bool { get async }
 
+    /// Enables interaction only after generation confirmation; false cancels active gestures.
+    func setInteractionEnabled(_ enabled: Bool)
+
     /// Updates the decoded frame source and invalidates old stream caches and waits.
     ///
     /// - Parameter stream: The new remote stream; `nil` clears the source.

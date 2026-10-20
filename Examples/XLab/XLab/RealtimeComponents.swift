@@ -84,6 +84,166 @@ private final class RealtimeLabel: NSTextField {
     }
 }
 
+/// Matches xlab-react's micToggle, micSwitch and micKnob without NSSwitch's internal margins.
+final class RealtimeMicrophoneToggle: NSButton {
+    override var isFlipped: Bool { true }
+    override var state: NSControl.StateValue { didSet { updateAppearance() } }
+    override var isEnabled: Bool { didSet { alphaValue = isEnabled ? 1 : 0.5 } }
+    @objc dynamic private var onProgress: CGFloat = 0 {
+        didSet { needsDisplay = true }
+    }
+    private var targetProgress: CGFloat = 0
+
+    override class func defaultAnimation(forKey key: NSAnimatablePropertyKey) -> Any? {
+        if key == "onProgress" { return CABasicAnimation() }
+        return super.defaultAnimation(forKey: key)
+    }
+
+    init() {
+        super.init(frame: .zero)
+        title = "Microphone"
+        font = RealtimeHeaderTypography.font(size: 13)
+        // Checkbox cells only track their native indicator/title, not the custom track on the right.
+        setButtonType(.pushOnPushOff)
+        // Keep full-bounds mouse tracking; draw(_:) supplies the Web appearance instead of the native bezel.
+        isBordered = true
+        target = self
+        action = #selector(didToggle)
+        setAccessibilityLabel(title)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override var intrinsicContentSize: NSSize {
+        let text = RealtimeHeaderTypography.size(title, font: font!)
+        // CSS padding: 6px 7px 6px 14px; 8px gaps; 1px border.
+        return NSSize(width: 2 + 14 + 14 + 8 + ceil(text.width) + 8 + 30 + 7,
+                      height: 2 + 6 + max(18, ceil(text.height)) + 6)
+    }
+
+    @objc private func didToggle() {
+        // Native button cells can change their state without invoking our state setter.
+        updateAppearance()
+        NSAccessibility.post(element: self, notification: .valueChanged)
+    }
+
+    private func updateAppearance() {
+        let progress: CGFloat = state == .on ? 1 : 0
+        guard progress != targetProgress else { return }
+        targetProgress = progress
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = window != nil && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+                ? 0.18 : 0
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            animator().onProgress = progress
+        }
+    }
+
+    override func isAccessibilityElement() -> Bool { true }
+    override func accessibilityRole() -> NSAccessibility.Role? { .checkBox }
+    override func accessibilityChildren() -> [Any]? { [] }
+    override func accessibilityValue() -> Any? { NSNumber(value: state == .on) }
+    override func accessibilityPerformPress() -> Bool {
+        guard isEnabled else { return false }
+        performClick(nil)
+        return true
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let progress = min(1, max(0, onProgress))
+        let foreground = NSColor.white.withAlphaComponent(0.55 + 0.45 * progress)
+        let outline = NSBezierPath(roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5),
+                                   xRadius: bounds.height / 2, yRadius: bounds.height / 2)
+        NSColor.black.withAlphaComponent(0.28).setFill()
+        outline.fill()
+        NSColor.white.withAlphaComponent(0.16 + 0.14 * progress).setStroke()
+        outline.lineWidth = 1
+        outline.stroke()
+
+        RealtimeWebIcon.draw(.microphone,
+                            in: NSRect(x: 15, y: (bounds.height - 14) / 2, width: 14, height: 14),
+                            color: foreground)
+        let text = RealtimeHeaderTypography.size(title, font: font!)
+        (title as NSString).draw(at: NSPoint(x: 37, y: (bounds.height - text.height) / 2),
+                                 withAttributes: [.font: font!, .foregroundColor: foreground])
+        let track = NSRect(x: bounds.width - 1 - 7 - 30, y: (bounds.height - 18) / 2,
+                           width: 30, height: 18)
+        let trackColor = NSColor(srgbRed: 1 + (47.0 / 255 - 1) * progress,
+                                 green: 1 + (70.0 / 255 - 1) * progress,
+                                 blue: 1 + (226.0 / 255 - 1) * progress,
+                                 alpha: 0.18 + 0.82 * progress)
+        trackColor.setFill()
+        NSBezierPath(roundedRect: track, xRadius: 9, yRadius: 9).fill()
+        NSColor.white.setFill()
+        NSBezierPath(ovalIn: NSRect(x: track.minX + 2 + 12 * progress,
+                                   y: track.minY + 2, width: 14, height: 14)).fill()
+    }
+
+    override func drawFocusRingMask() {
+        NSBezierPath(roundedRect: bounds, xRadius: bounds.height / 2, yRadius: bounds.height / 2).fill()
+    }
+}
+
+/// Draws the placeholder at the text origin and preserves input-method composition.
+final class RealtimePromptTextView: NSTextView {
+    var placeholder = "" { didSet { needsDisplay = true } }
+    var placeholderColor: NSColor = .placeholderTextColor
+    var onCommittedTextChange: ((String) -> Void)?
+    private var inputOperationDepth = 0
+
+    var showsPlaceholder: Bool { string.isEmpty && !hasMarkedText() }
+
+    override var string: String {
+        didSet { needsDisplay = true }
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        guard showsPlaceholder else { return }
+        let origin = textContainerOrigin
+        let padding = textContainer?.lineFragmentPadding ?? 0
+        (placeholder as NSString).draw(
+            at: NSPoint(x: origin.x + padding, y: origin.y),
+            withAttributes: [.font: font ?? NSFont.systemFont(ofSize: 15),
+                             .foregroundColor: placeholderColor]
+        )
+    }
+
+    override func didChangeText() {
+        super.didChangeText()
+        updateInputState()
+    }
+
+    override func setMarkedText(_ string: Any, selectedRange: NSRange, replacementRange: NSRange) {
+        inputOperationDepth += 1
+        defer { finishInputOperation() }
+        super.setMarkedText(string, selectedRange: selectedRange, replacementRange: replacementRange)
+    }
+
+    override func insertText(_ string: Any, replacementRange: NSRange) {
+        inputOperationDepth += 1
+        defer { finishInputOperation() }
+        super.insertText(string, replacementRange: replacementRange)
+    }
+
+    override func unmarkText() {
+        inputOperationDepth += 1
+        defer { finishInputOperation() }
+        super.unmarkText()
+    }
+
+    private func finishInputOperation() {
+        inputOperationDepth -= 1
+        updateInputState()
+    }
+
+    private func updateInputState() {
+        needsDisplay = true
+        guard inputOperationDepth == 0, !hasMarkedText() else { return }
+        onCommittedTextChange?(string)
+    }
+}
+
 /// Keeps the Web loading ring independent of control state updates.
 final class RealtimeSpinner: RealtimeCanvas {
     private let ring = CAShapeLayer()
@@ -128,7 +288,7 @@ final class RealtimeSpinner: RealtimeCanvas {
 
 /// Native buttons retain their identity, loading animation, keyboard focus, and target action.
 final class RealtimeButton: NSButton {
-    enum Appearance { case pill, primary, destructive, statistics, interpolation, volume, tab, plain }
+    enum Appearance { case pill, primary, destructive, statistics, interpolation, volume, tab, plain, dismiss }
     var style = Appearance.pill { didSet { needsDisplay = true } }
     var selected = false { didSet { if selected != oldValue { needsDisplay = true } } }
     var icon: RealtimeWebIcon.Kind? { didSet { needsDisplay = true } }
@@ -138,6 +298,9 @@ final class RealtimeButton: NSButton {
     var iconSize: CGFloat = 18
     var iconSpacing: CGFloat = 8
     var tracking: CGFloat = 0
+    /// Shrinks the visible background without reducing the control's hit area.
+    var backgroundInset: CGFloat = 0 { didSet { needsDisplay = true } }
+    var showsShadow = true { didSet { needsDisplay = true } }
     var foregroundColor: NSColor?
     var loading = false { didSet { updateLoading() } }
     var passive = false
@@ -228,7 +391,7 @@ final class RealtimeButton: NSButton {
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        let rect = bounds.insetBy(dx: 0.5, dy: 0.5)
+        let rect = bounds.insetBy(dx: backgroundInset + 0.5, dy: backgroundInset + 0.5)
         let path = NSBezierPath(roundedRect: rect, xRadius: rect.height / 2, yRadius: rect.height / 2)
         let hot = hovered && isEnabled && !passive
         var top = NSColor.white
@@ -238,6 +401,10 @@ final class RealtimeButton: NSButton {
         switch style {
         case .primary:
             top = hot ? RealtimePalette.accentHover : RealtimePalette.accent
+            bottom = top; border = .clear
+        case .dismiss:
+            let gray: CGFloat = hot ? 0.32 : 0.24
+            top = NSColor(srgbRed: gray, green: gray, blue: gray, alpha: 1)
             bottom = top; border = .clear
         case .destructive:
             bottom = NSColor(srgbRed: 253 / 255, green: hot ? 232 / 255 : 242 / 255, blue: hot ? 232 / 255 : 242 / 255, alpha: 1)
@@ -265,7 +432,7 @@ final class RealtimeButton: NSButton {
         border.setStroke(); path.lineWidth = 1; path.stroke()
         layer?.shadowColor = (style == .primary ? RealtimePalette.accent : NSColor.black).cgColor
         let flat = style == .plain || (style == .tab && !selected) || (selected && (style == .statistics || style == .interpolation))
-        layer?.shadowOpacity = flat ? 0 : style == .primary ? 0.35 : style == .tab ? 0.1 : hot ? 0.08 : 0.05
+        layer?.shadowOpacity = !showsShadow || flat ? 0 : style == .primary ? 0.35 : style == .tab ? 0.1 : hot ? 0.08 : 0.05
         layer?.shadowRadius = style == .primary ? 15 : style == .tab ? 4 : hot ? 8 : 6
         layer?.shadowOffset = CGSize(width: 0, height: style == .primary ? 10 : style == .tab ? 2 : hot ? 6 : 4)
         layer?.shadowPath = CGPath(roundedRect: rect, cornerWidth: rect.height / 2, cornerHeight: rect.height / 2, transform: nil)
@@ -421,16 +588,8 @@ final class RealtimeVideoPanel: RealtimeCanvas {
     override func layout() {
         super.layout()
         videoContainer.frame = bounds; video.frame = videoContainer.bounds
-        CATransaction.begin(); CATransaction.setDisableActions(true)
-        // Flip only the rendered video. Labels, statistics, and frame callbacks stay unchanged.
-        var transform = CATransform3DIdentity
-        if mirrored {
-            let anchorX = videoContainer.layer?.anchorPoint.x ?? 0.5
-            transform = CATransform3DTranslate(transform, bounds.width * (1 - 2 * anchorX), 0, 0)
-            transform = CATransform3DScale(transform, -1, 1, 1)
-        }
-        videoContainer.layer?.sublayerTransform = transform
-        CATransaction.commit()
+        // Mirror the SDK video layer so pointer coordinates and trajectory visuals stay aligned.
+        video.isMirrored = mirrored
         placeholder.frame = NSRect(x: 20, y: bounds.midY - 10, width: bounds.width - 40, height: 20)
         let captionSize = RealtimeHeaderTypography.size(caption.stringValue, font: caption.font!)
         captionBackground.frame = NSRect(x: 14, y: bounds.height - 12 - captionSize.height - 6, width: ceil(captionSize.width) + 16, height: captionSize.height + 6)
@@ -501,7 +660,7 @@ extension RealtimeSessionController {
 /// Draws the existing Web icon coordinates directly into the AppKit graphics context.
 @MainActor
 enum RealtimeWebIcon {
-    enum Kind { case camera, microphone, statistics, muted, volume, volumeLow, lightning, plus, arrow, globe, socialX, wechat, key, stop }
+    enum Kind { case camera, microphone, statistics, muted, volume, volumeLow, lightning, plus, close, arrow, globe, socialX, wechat, key, stop }
 
     static func draw(_ kind: Kind, in rect: CGRect, color: NSColor) {
         guard let context = NSGraphicsContext.current?.cgContext else { return }
@@ -510,7 +669,7 @@ enum RealtimeWebIcon {
         context.scaleBy(x: rect.width / 24, y: rect.height / 24)
         context.addPath(path(kind))
         context.setFillColor(color.cgColor); context.setStrokeColor(color.cgColor)
-        context.setLineWidth(kind == .arrow ? 3 : kind == .plus || kind == .microphone ? 2 : 1.8)
+        context.setLineWidth(kind == .arrow || kind == .close ? 3 : kind == .plus || kind == .microphone ? 2 : 1.8)
         context.setLineCap(.round); context.setLineJoin(.round)
         if kind == .lightning || kind == .socialX || kind == .wechat || kind == .stop { context.drawPath(using: .eoFill) }
         else { context.strokePath() }
@@ -558,6 +717,7 @@ enum RealtimeWebIcon {
         case .lightning:
             line(points([(13.7,2.3),(4.2,13),(10.4,14.2),(9.5,21.7),(19.8,11),(12.9,9.8),(13.7,2.3)])); p.closeSubpath()
         case .plus: line(points([(12,4),(12,20)])); line(points([(4,12),(20,12)]))
+        case .close: line(points([(5,5),(19,19)])); line(points([(19,5),(5,19)]))
         case .arrow: line(points([(4,12),(20,12)])); line(points([(14,6),(20,12),(14,18)]))
         case .globe:
             p.addEllipse(in: CGRect(x: 2,y: 2,width: 20,height: 20)); line(points([(2,12),(22,12)]))

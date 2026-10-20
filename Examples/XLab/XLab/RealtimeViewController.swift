@@ -12,7 +12,7 @@ import XmaxSDK
 
 /// Owns persistent AppKit pages and applies coalesced session state updates to individual controls.
 @MainActor
-final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTextViewDelegate {
+final class RealtimeViewController: NSViewController, NSTextFieldDelegate {
     let controller = RealtimeSessionController()
 
     /// Window content and page containers
@@ -29,10 +29,7 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
     private let titleLabel = realtimeLabel("Reimagining Live Video with Xmax", size: 32, weight: .medium)
     private let checkerboard = RealtimeCheckerboard()
     private let startButton = RealtimeButton("Start Camera", icon: .camera, style: .primary)
-    private let microphonePill = RealtimeCanvas(color: .black.withAlphaComponent(0.2), radius: 16)
-    private let microphoneLabel = realtimeLabel("Microphone", size: 13, color: NSColor(white: 0.65, alpha: 1))
-    private let microphoneIcon = RealtimeButton(icon: .microphone, style: .plain)
-    private let microphoneSwitch = NSSwitch()
+    private let microphoneToggle = RealtimeMicrophoneToggle()
     private let terms = NSTextView()
     private let copyright = realtimeLabel("Copyright © 2026 XMAX.AI PTE.LTD. All rights reserved.", size: 13, color: RealtimePalette.secondary)
     private let wechat = RealtimeButton(icon: .wechat, style: .plain)
@@ -65,10 +62,9 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
     private var lists: [RealtimeExampleMode: RealtimeReferenceList] = [:]
     private let promptContainer = RealtimeCanvas(color: RealtimePalette.surface, radius: 18)
     private let promptScroll = NSScrollView()
-    private let promptEditor = NSTextView()
-    private let promptPlaceholder = realtimeLabel("Describe how you want the video to change", size: 15, color: RealtimePalette.secondary)
+    private let promptEditor = RealtimePromptTextView()
     private let freeReference = RealtimeReferenceButton()
-    private let removeReference = RealtimeButton("×", style: .plain)
+    private let removeReference = RealtimeButton(icon: .close, style: .dismiss)
     private let submitButton = RealtimeButton(icon: .arrow, style: .primary)
 
     /// Error presentation and observation ownership
@@ -190,21 +186,10 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
     private func configureLanding() {
         [titleLabel, checkerboard, copyright].forEach(landing.addSubview)
         titleLabel.alignment = .center; copyright.alignment = .center
-        [startButton, microphonePill, terms].forEach(checkerboard.addSubview)
-        [microphoneIcon, microphoneLabel, microphoneSwitch].forEach(microphonePill.addSubview)
-        microphonePill.layer?.borderWidth = 1
-        microphonePill.layer?.borderColor = NSColor.white.withAlphaComponent(0.12).cgColor
-        microphoneIcon.passive = true
-        microphoneIcon.iconSize = 14
-        microphoneIcon.foregroundColor = .white.withAlphaComponent(0.55)
-        microphonePill.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.28).cgColor
-        microphonePill.layer?.borderColor = NSColor.white.withAlphaComponent(0.16).cgColor
-        microphoneSwitch.controlSize = .small
-        microphoneSwitch.target = self; microphoneSwitch.action = #selector(microphoneChanged)
-        microphoneSwitch.setAccessibilityLabel("Microphone")
+        [startButton, microphoneToggle, terms].forEach(checkerboard.addSubview)
         startButton.onClick = { [weak self] in
             guard let self else { return }
-            let enabled = self.microphoneSwitch.state == .on
+            let enabled = self.microphoneToggle.state == .on
             Task { [weak self] in await self?.controller.start(useMicrophone: enabled) }
         }
         terms.isEditable = false; terms.isSelectable = true; terms.drawsBackground = false
@@ -233,18 +218,24 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         }
         promptContainer.layer?.borderWidth = 1
         promptContainer.layer?.borderColor = RealtimePalette.border.cgColor
-        promptEditor.delegate = self
+        promptEditor.placeholder = "Describe how you want the video to change"
+        promptEditor.placeholderColor = RealtimePalette.secondary
+        promptEditor.onCommittedTextChange = { [weak self] text in
+            guard let self, self.controller.prompt != text else { return }
+            self.controller.prompt = text
+        }
         promptEditor.font = RealtimeHeaderTypography.font(size: 15)
         promptEditor.textColor = RealtimePalette.text
         promptEditor.isRichText = false; promptEditor.drawsBackground = false
         promptEditor.isVerticallyResizable = true; promptEditor.isHorizontallyResizable = false
         promptEditor.autoresizingMask = [.width]
-        promptEditor.textContainerInset = NSSize(width: 5, height: 6)
+        promptEditor.textContainerInset = .zero
+        promptEditor.textContainer?.lineFragmentPadding = 0
         promptEditor.textContainer?.widthTracksTextView = true
         promptEditor.setAccessibilityLabel("Describe how you want the video to change")
         promptScroll.drawsBackground = false; promptScroll.hasVerticalScroller = true
         promptScroll.documentView = promptEditor
-        [promptScroll, promptPlaceholder, freeReference, removeReference, submitButton].forEach(promptContainer.addSubview)
+        [promptScroll, freeReference, removeReference, submitButton].forEach(promptContainer.addSubview)
         freeReference.compact = true
         freeReference.onClick = { [weak self] in
             guard let self else { return }
@@ -254,8 +245,16 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         }
         removeReference.toolTip = "Remove reference"
         removeReference.setAccessibilityLabel("Remove reference")
+        removeReference.iconSize = 11
+        removeReference.foregroundColor = .white
+        removeReference.backgroundInset = 6
+        removeReference.leadingPadding = 0
+        removeReference.trailingPadding = 0
+        // Keep a 32pt hit area around the smaller 20pt circular background.
+        removeReference.isBordered = true
         removeReference.onClick = { [weak self] in self?.controller.removeFreeReference() }
         submitButton.iconSize = 20
+        submitButton.showsShadow = false
         submitButton.setAccessibilityLabel("Submit prompt")
         submitButton.onClick = { [weak self] in Task { [weak self] in await self?.controller.submitPrompt() } }
     }
@@ -303,7 +302,7 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         startButton.title = controller.isClosing ? "Stopping…" : controller.isBusy ? "Starting…" : "Start Camera"
         startButton.loading = controller.isBusy
         startButton.isEnabled = !controller.isBusy
-        microphoneSwitch.isEnabled = !controller.isBusy
+        microphoneToggle.isEnabled = !controller.isBusy
         statisticsButton.selected = controller.statisticsVisible
         statisticsButton.toolTip = controller.statisticsVisible ? "Hide statistics (collection and logging continue)" : "Show statistics"
         statisticsButton.setAccessibilityValue(controller.statisticsVisible ? "On" : "Off")
@@ -347,8 +346,9 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         }
         promptContainer.isHidden = controller.activeMode != .free
         promptEditor.isEditable = !controller.isClosing
-        if promptEditor.string != controller.prompt { promptEditor.string = controller.prompt }
-        promptPlaceholder.isHidden = !controller.prompt.isEmpty
+        if !promptEditor.hasMarkedText(), promptEditor.string != controller.prompt {
+            promptEditor.string = controller.prompt
+        }
         if active && controller.activeMode == .free {
             freeReference.configure(controller.freeReference, selected: false, enabled: controller.canGenerate)
         } else { freeReference.thumbnail.cancel() }
@@ -469,11 +469,14 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         for list in lists.values { list.frame = NSRect(x: 0, y: listY, width: contentWidth, height: 190) }
         let promptWidth = min(contentWidth, 880)
         promptContainer.frame = NSRect(x: (contentWidth - promptWidth) / 2, y: listY + 4, width: promptWidth, height: 160)
-        promptScroll.frame = NSRect(x: 20, y: 12, width: promptWidth - 40, height: 84)
-        promptEditor.setFrameSize(NSSize(width: promptScroll.contentSize.width, height: max(84, promptEditor.frame.height)))
-        promptPlaceholder.frame = NSRect(x: 29, y: 18, width: promptWidth - 58, height: 22)
+        let promptPadding: CGFloat = 18
+        let promptHeight: CGFloat = 96 - promptPadding
+        promptScroll.frame = NSRect(x: promptPadding, y: promptPadding,
+                                    width: promptWidth - 2 * promptPadding, height: promptHeight)
+        promptEditor.setFrameSize(NSSize(width: promptScroll.contentSize.width,
+                                         height: max(promptHeight, promptEditor.frame.height)))
         freeReference.frame = NSRect(x: promptWidth - 110, y: 104, width: 44, height: 44)
-        removeReference.frame = NSRect(x: promptWidth - 79, y: 96, width: 22, height: 22)
+        removeReference.frame = NSRect(x: promptWidth - 88, y: 92, width: 32, height: 32)
         submitButton.frame = NSRect(x: promptWidth - 56, y: 104, width: 44, height: 44)
         footer.frame = NSRect(x: 28, y: documentHeight - 48 - footerHeight, width: contentWidth, height: footerHeight)
         wechat.frame = NSRect(x: 0, y: 56, width: 24, height: 24)
@@ -518,15 +521,14 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         startButton.trailingPadding = startButton.leadingPadding
         let buttonHeight = max(20, ceil(RealtimeHeaderTypography.size(startButton.title, font: startButton.font!).height)) + min(16, max(12, width * 0.0028 + 9)) * 2
         let buttonWidth = startButton.preferredWidth
-        let groupHeight = buttonHeight + 12 + 30
+        microphoneToggle.font = RealtimeHeaderTypography.font(size: smallSize)
+        let microphoneSize = microphoneToggle.intrinsicContentSize
+        let actionGap: CGFloat = 20
+        let groupHeight = buttonHeight + actionGap + microphoneSize.height
         startButton.frame = NSRect(x: (checkerboard.bounds.width - buttonWidth) / 2, y: (checkerboard.bounds.height - groupHeight) / 2, width: buttonWidth, height: buttonHeight)
-        microphoneLabel.font = RealtimeHeaderTypography.font(size: smallSize)
-        let microphoneText = RealtimeHeaderTypography.size("Microphone", font: microphoneLabel.font!)
-        let microphoneWidth = 14 + 14 + 8 + ceil(microphoneText.width) + 8 + 30 + 7
-        microphonePill.frame = NSRect(x: (checkerboard.bounds.width - microphoneWidth) / 2, y: startButton.frame.maxY + 12, width: microphoneWidth, height: 30)
-        microphoneIcon.frame = NSRect(x: 14, y: 8, width: 14, height: 14)
-        microphoneLabel.frame = NSRect(x: 34, y: (30 - microphoneText.height) / 2, width: ceil(microphoneText.width) + 4, height: microphoneText.height)
-        microphoneSwitch.frame = NSRect(x: microphoneWidth - 37, y: 6, width: 30, height: 18)
+        microphoneToggle.frame = NSRect(x: (checkerboard.bounds.width - microphoneSize.width) / 2,
+                                        y: startButton.frame.maxY + actionGap,
+                                        width: microphoneSize.width, height: microphoneSize.height)
         let text = "By clicking Start, you agree to our Terms of Use and Privacy Policy."
         let paragraph = NSMutableParagraphStyle(); paragraph.alignment = .center
         let attributed = NSMutableAttributedString(string: text, attributes: [
@@ -609,15 +611,6 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
         presentPopover(content: content, from: volumeButton)
     }
 
-    @objc private func microphoneChanged() {
-        let enabled = microphoneSwitch.state == .on
-        let color = NSColor.white.withAlphaComponent(enabled ? 1 : 0.55)
-        microphoneLabel.textColor = color
-        microphoneIcon.foregroundColor = color
-        microphoneIcon.needsDisplay = true
-        microphonePill.layer?.borderColor = NSColor.white.withAlphaComponent(enabled ? 0.3 : 0.16).cgColor
-    }
-
     @objc private func volumeChanged() {
         let value = Float(volumeSlider.doubleValue)
         volumeValue.stringValue = value == 0 ? "Muted" : "\(Int(value * 100))%"
@@ -667,8 +660,5 @@ final class RealtimeViewController: NSViewController, NSTextFieldDelegate, NSTex
             popover?.close(); return true
         }
         return false
-    }
-    func textDidChange(_ notification: Notification) {
-        if notification.object as? NSTextView === promptEditor { controller.prompt = promptEditor.string }
     }
 }

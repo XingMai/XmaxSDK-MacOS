@@ -69,6 +69,19 @@ final class RenderController: RenderControlling {
     private weak var remoteView: XmaxVideoView?
     private var remoteContentMode = VideoContentMode.fill
     private var latestRemoteFrame: RealtimeVideoFrame?
+    private weak var registeredRemoteTrack: RealtimeVideoTrack?
+    private var interactionEnabled = false
+
+    func setInteractionEnabled(_ enabled: Bool) {
+        interactionEnabled = enabled
+        refreshInteractionAvailability()
+    }
+
+    private func refreshInteractionAvailability() {
+        guard let track = registeredRemoteTrack else { return }
+        TrajectoryRegistry.binding(for: track)?.update(enabled:
+            interactionEnabled && remoteStream != nil && latestRemoteFrame != nil)
+    }
     private var remoteFrameReadyWaiters:
         [UUID: RemoteFrameReadyWaiter] = [:]
 
@@ -144,6 +157,12 @@ final class RenderController: RenderControlling {
         _ track: RealtimeVideoTrack,
         interactionListener: @escaping RenderInteractionListener
     ) {
+        if let previous = registeredRemoteTrack, previous !== track {
+            TrajectoryRegistry.unregister(previous)
+        }
+        registeredRemoteTrack = track
+        TrajectoryRegistry.register(track, binding: TrajectoryBinding(listener: interactionListener))
+        refreshInteractionAvailability()
         VideoRenderRegistry.register(
             track,
             binding: VideoRenderBinding(
@@ -272,6 +291,11 @@ final class RenderController: RenderControlling {
     /// - Parameter track: The remote track to unregister; frame processing is cleared even without a track.
     /// - Throws: An error if removing the RTC frame listener fails.
     func resetRemoteTrack(_ track: RealtimeVideoTrack?) async throws {
+        interactionEnabled = false
+        if let registeredRemoteTrack {
+            TrajectoryRegistry.unregister(registeredRemoteTrack)
+        }
+        registeredRemoteTrack = nil
         if let track {
             VideoRenderRegistry.unregister(track)
         }
@@ -387,6 +411,7 @@ private extension RenderController {
             error: Self.remoteFrameWaitCancelledError()
         )
         latestRemoteFrame = nil
+        refreshInteractionAvailability()
         remoteVideoFrameDispatcher.invalidatePendingFrames()
         renderingToken &+= 1
         let token = renderingToken
@@ -405,7 +430,9 @@ private extension RenderController {
         outputToken: UInt64
     ) {
         guard outputToken == renderingToken else { return }
+        let wasWaiting = latestRemoteFrame == nil
         latestRemoteFrame = frame
+        if wasWaiting { refreshInteractionAvailability() }
         finishAllRemoteFrameReadyWaiters()
         remoteVideoFrameDispatcher.dispatch(frame)
         if let remoteView {

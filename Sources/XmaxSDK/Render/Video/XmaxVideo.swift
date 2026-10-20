@@ -20,18 +20,33 @@ public struct XmaxVideo: NSViewRepresentable {
 
     /// The video content display mode in its container.
     public let videoContentMode: VideoContentMode
+    /// Whether a ready remote track accepts pointer trajectories.
+    public let isInteractionEnabled: Bool
+    /// Whether to mirror video; interaction coordinates remain in displayed orientation.
+    public let isMirrored: Bool
+    /// Custom trajectory visuals; nil uses the built-in green glow.
+    public let trajectoryRenderer: (any TrajectoryEffectRendering)?
 
     /// Creates a SwiftUI video rendering component.
     ///
     /// - Parameters:
     ///   - track: The video track to display; nil shows an empty container.
     ///   - videoContentMode: The video content display mode.
+    ///   - isInteractionEnabled: Whether to accept pointer trajectories on a ready result.
+    ///   - isMirrored: Whether to mirror video without reversing interaction coordinates.
+    ///   - trajectoryRenderer: Custom visuals; nil uses the built-in effect.
     public init(
         track: RealtimeVideoTrack?,
-        videoContentMode: VideoContentMode = .fill
+        videoContentMode: VideoContentMode = .fill,
+        isInteractionEnabled: Bool = true,
+        isMirrored: Bool = false,
+        trajectoryRenderer: (any TrajectoryEffectRendering)? = nil
     ) {
         self.track = track
         self.videoContentMode = videoContentMode
+        self.isInteractionEnabled = isInteractionEnabled
+        self.isMirrored = isMirrored
+        self.trajectoryRenderer = trajectoryRenderer
     }
 
     /// Creates an AppKit view hosting SwiftUI video content.
@@ -43,6 +58,9 @@ public struct XmaxVideo: NSViewRepresentable {
             track: track,
             videoContentMode: videoContentMode
         )
+        view.isInteractionEnabled = isInteractionEnabled
+        view.isMirrored = isMirrored
+        view.trajectoryRenderer = trajectoryRenderer
         return view
     }
 
@@ -56,6 +74,9 @@ public struct XmaxVideo: NSViewRepresentable {
         context: Context
     ) {
         view.videoContentMode = videoContentMode
+        view.isInteractionEnabled = isInteractionEnabled
+        view.isMirrored = isMirrored
+        view.trajectoryRenderer = trajectoryRenderer
         view.track = track
     }
 

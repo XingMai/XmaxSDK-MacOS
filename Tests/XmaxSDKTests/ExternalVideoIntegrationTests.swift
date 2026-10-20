@@ -195,7 +195,7 @@ final class ExternalVideoIntegrationTests: XCTestCase {
             sessionService: RealtimeSessionServicingStub(session: session),
             interactionController: media, renderController: render, streamController: stream, timing: timing
         )
-        let generation = XmaxRealtimeGenerationManager(interactionController: media, streamController: stream)
+        let generation = XmaxRealtimeGenerationManager(interactionController: media, streamController: stream, renderController: render)
         let manager = XmaxRealtimeManager(
             options: RealtimeConfiguration(model: .x2_1_1_preview_cn),
             streamController: stream, mediaController: media, renderController: render,

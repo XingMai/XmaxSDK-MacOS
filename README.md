@@ -296,6 +296,33 @@ See the [SwiftUI guide](./Materials/usage.md#appkit-and-swiftui) for state bindi
 
 <br>
 
+### Pointer trajectory interaction
+
+Once generation is confirmed and a result frame is ready, drag with the primary
+mouse button in the remote video to send interaction trajectories. The SDK samples
+the current pointer at about 30 Hz and shows the same white-core, green-glow trail,
+pulsing rings, and fading tail as the Web and iOS SDKs. Local previews do not send
+trajectories.
+
+```swift
+videoView.isInteractionEnabled = true // XmaxVideoView or XmaxRealtimeVideoView
+videoView.isMirrored = true           // Mirrors the result; pointer coordinates keep their displayed orientation
+videoView.trajectoryRenderer = nil    // Built-in effect
+```
+
+Use `isInteractionEnabled`, `isMirrored`, and `trajectoryRenderer` in the SwiftUI
+`XmaxVideo` and `XmaxRealtimeVideo` initializers as well. To customize visuals,
+implement `TrajectoryEffectRendering` with an `NSView` and its began, moved, ended,
+and reset callbacks. The SDK continues to own input collection, coordinate mapping,
+and signaling independently of the renderer.
+
+Trajectory coordinates follow the displayed video: the left edge is `x = 0` and the
+right edge is `x = 1`, regardless of display mirroring. Fit-mode black bars ignore clicks. Dragging beyond the viewport clamps to the
+visible video edge. Releasing the button ends sampling; Escape, focus loss,
+resizing, track changes, and generation shutdown cancel the active gesture.
+Trajectory effects are display overlays and are not included in frame callbacks
+or virtual-camera output.
+
 ### Listen for events
 
 After creating `realtime`, register the listeners you need before creating the

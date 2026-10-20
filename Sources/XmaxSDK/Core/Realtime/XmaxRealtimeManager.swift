@@ -101,7 +101,8 @@ actor XmaxRealtimeManager: XmaxRealtimeManaging {
 
         let generationManager = XmaxRealtimeGenerationManager(
             interactionController: mediaController,
-            streamController: streamController
+            streamController: streamController,
+            renderController: renderController
         )
         let coordinator = RealtimeCoordinator(
             errorHandler: errorHandler,

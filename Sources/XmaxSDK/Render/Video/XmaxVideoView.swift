@@ -32,8 +32,35 @@ public final class XmaxVideoView: NSView {
         didSet {
             guard oldValue != videoContentMode else { return }
             attachCurrentTrackIfNeeded()
+            updateTrajectoryConfiguration()
         }
     }
+
+    /// Enables pointer trajectories on a ready remote generation track.
+    public var isInteractionEnabled = true {
+        didSet { updateTrajectoryConfiguration() }
+    }
+
+    /// Mirrors the video horizontally. Interaction coordinates still follow the displayed pointer.
+    public var isMirrored = false {
+        didSet {
+            applyPreviewMirroring()
+            updateTrajectoryConfiguration()
+        }
+    }
+
+    /// Overrides trajectory visuals only; nil restores the SDK's green glow effect.
+    public var trajectoryRenderer: (any TrajectoryEffectRendering)? {
+        didSet {
+            guard oldValue !== trajectoryRenderer else { return }
+            trajectoryOverlay?.setRenderer(trajectoryRenderer ?? DefaultTrajectoryEffectRenderer())
+        }
+    }
+
+    private var trajectoryOverlay: TrajectoryOverlayView?
+    private weak var trajectoryBinding: TrajectoryBinding?
+    private var displayedVideoSize: CGSize?
+    private var sourceMirrored = false
 
     /// Render state
     private weak var attachedTrack: RealtimeVideoTrack?
@@ -54,9 +81,12 @@ public final class XmaxVideoView: NSView {
     /// - Parameters:
     ///   - track: The video track to display; may be assigned later.
     ///   - videoContentMode: The video content scaling and cropping mode.
-    public init(track: RealtimeVideoTrack? = nil, videoContentMode: VideoContentMode = .fill) {
+    ///   - isInteractionEnabled: Whether to accept pointer trajectories on a ready result.
+    public init(track: RealtimeVideoTrack? = nil, videoContentMode: VideoContentMode = .fill,
+                isInteractionEnabled: Bool = true) {
         self.track = track
         self.videoContentMode = videoContentMode
+        self.isInteractionEnabled = isInteractionEnabled
         super.init(frame: .zero)
         configureView()
     }
@@ -99,6 +129,7 @@ public final class XmaxVideoView: NSView {
         CATransaction.setDisableActions(true)
         decodedVideoLayer?.frame = bounds
         CATransaction.commit()
+        trajectoryOverlay?.frame = bounds
     }
 
     /// Uses top-down view coordinates.
@@ -113,6 +144,38 @@ public final class XmaxVideoView: NSView {
 }
 
 extension XmaxVideoView {
+    private func applyPreviewMirroring() {
+        decodedVideoLayer?.setAffineTransform(
+            CGAffineTransform(scaleX: isMirrored || sourceMirrored ? -1 : 1, y: 1)
+        )
+    }
+
+    private func attachTrajectory(for track: RealtimeVideoTrack) {
+        guard let binding = TrajectoryRegistry.binding(for: track) else { return }
+        if trajectoryOverlay == nil {
+            let overlay = TrajectoryOverlayView(
+                renderer: trajectoryRenderer ?? DefaultTrajectoryEffectRenderer()
+            )
+            overlay.frame = bounds
+            overlay.autoresizingMask = [.width, .height]
+            addSubview(overlay)
+            trajectoryOverlay = overlay
+        }
+        guard let trajectoryOverlay else { return }
+        if trajectoryBinding !== binding {
+            trajectoryBinding?.detach(from: trajectoryOverlay)
+            trajectoryBinding = binding
+            binding.attach(to: trajectoryOverlay)
+        }
+        updateTrajectoryConfiguration()
+    }
+
+    private func updateTrajectoryConfiguration() {
+        trajectoryOverlay?.configure(contentMode: videoContentMode,
+            mirrored: isMirrored || sourceMirrored, requested: isInteractionEnabled,
+            displayedSize: displayedVideoSize)
+    }
+
     /// Creates or updates the decoded video layer and its display clock.
     ///
     /// - Parameter contentMode: The video scaling and cropping mode.
@@ -148,13 +211,16 @@ extension XmaxVideoView {
         }
         decodedVideoLayer.videoGravity = contentMode == .fit ?
             .resizeAspect : .resizeAspectFill
+        applyPreviewMirroring()
     }
 
     /// Sets horizontal mirroring for decoded video preview.
     ///
     /// - Parameter mirrored: Whether to mirror video horizontally.
     func setDecodedVideoPreviewMirrored(_ mirrored: Bool) {
-        decodedVideoLayer?.setAffineTransform(CGAffineTransform(scaleX: mirrored ? -1 : 1, y: 1))
+        sourceMirrored = mirrored
+        applyPreviewMirroring()
+        updateTrajectoryConfiguration()
     }
 
     /// Converts local NV12 frames to samples and submits them for immediate preview.
@@ -224,6 +290,9 @@ extension XmaxVideoView {
         _ frame: RealtimeVideoFrame,
         contentMode: VideoContentMode
     ) {
+        displayedVideoSize = CGSize(width: CVPixelBufferGetWidth(frame.pixelBuffer),
+                                    height: CVPixelBufferGetHeight(frame.pixelBuffer))
+        updateTrajectoryConfiguration()
         if decodedVideoLayer == nil {
             prepareDecodedVideoPreview(contentMode: contentMode)
         }
@@ -314,6 +383,7 @@ extension XmaxVideoView {
         do {
             try binding.attach(to: self, contentMode: videoContentMode)
             attachedTrack = track
+            attachTrajectory(for: track)
         } catch {
             attachedTrack = nil
             Self.logRenderingFailure(title: "绑定视频视图失败 (Failed to Attach Video View)", error: error)
@@ -325,6 +395,15 @@ extension XmaxVideoView {
     /// - Parameter track: The track to unbind; nil does nothing.
     func detach(track: RealtimeVideoTrack?) {
         guard let track, attachedTrack === track else { return }
+        if let trajectoryOverlay {
+            trajectoryBinding?.detach(from: trajectoryOverlay)
+            trajectoryOverlay.cancelInteraction()
+            trajectoryOverlay.removeFromSuperview()
+        }
+        trajectoryOverlay = nil
+        trajectoryBinding = nil
+        displayedVideoSize = nil
+        sourceMirrored = false
         do {
             try VideoRenderRegistry.binding(for: track)?.detach(from: self)
         } catch {
