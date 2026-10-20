@@ -291,11 +291,17 @@ final class RealtimeCheckerboard: RealtimeCanvas {
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func draw(_ dirtyRect: NSRect) {
+        guard let context = NSGraphicsContext.current?.cgContext else { return }
+        context.saveGState()
+        defer { context.restoreGState() }
+        // An opaque base and hard tile edges prevent seams at fractional view origins.
+        context.setShouldAntialias(false)
+        context.setFillColor(NSColor(srgbRed: 55 / 255, green: 55 / 255, blue: 59 / 255, alpha: 1).cgColor)
+        context.fill(bounds)
+        context.setFillColor(NSColor(srgbRed: 67 / 255, green: 67 / 255, blue: 71 / 255, alpha: 1).cgColor)
         for row in 0...Int(bounds.height / 38) {
-            for column in 0...Int(bounds.width / 38) {
-                let value: CGFloat = (row + column).isMultiple(of: 2) ? 0.263 : 0.216
-                NSColor(srgbRed: value, green: value, blue: value + 0.015, alpha: 1).setFill()
-                NSRect(x: column * 38, y: row * 38, width: 38, height: 38).fill()
+            for column in 0...Int(bounds.width / 38) where (row + column).isMultiple(of: 2) {
+                context.fill(CGRect(x: column * 38, y: row * 38, width: 38, height: 38))
             }
         }
     }
